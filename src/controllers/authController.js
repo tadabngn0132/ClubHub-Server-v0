@@ -3,6 +3,8 @@ export const login = async (req, res) => {
 
     try {
         // TODO: Add authentication logic here
+        // Check username and password against database
+        // If valid, sign a JWT token and send it in response
         res.status(200).json({ 
             success: true, 
             message: "Login successful" 
@@ -21,6 +23,8 @@ export const register = async (req, res) => {
 
     try {
         // TODO: Add registration logic here
+        // Check if user already exists
+        // Hash password and store user in database
         res.status(201).json({ 
             success: true, 
             message: "Registration successful" 
@@ -37,6 +41,7 @@ export const register = async (req, res) => {
 export const logout = async (req, res) => {
     try {
         // TODO: Add logout logic here
+        // Invalidate JWT token if using a token blacklist
         res.status(200).json({ 
             success: true, 
             message: "Logout successful" 
@@ -55,6 +60,8 @@ export const resetPassword = async (req, res) => {
     
     try {
         // TODO: Add reset password logic here
+        // Generate a password reset token and send it via email
+        // Send email with reset link
         res.status(200).json({ 
             success: true, 
             message: "Password reset link sent" 
@@ -73,6 +80,8 @@ export const changePassword = async (req, res) => {
 
     try {
         // TODO: Implement change password functionality
+        // Verify current password
+        // Hash new password and update in database
         res.status(200).json({ 
             success: true, 
             message: "Password changed successfully" 
