@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import helmet from 'helmet'
 import morgan from 'morgan'
 
-import { sql } from './src/config/database.js'
+import { prisma } from './src/lib/prisma.js'
 import authRoutes from './src/routes/authRoute.js'
 
 const app = express()
@@ -21,7 +21,7 @@ app.use('/api/auth', authRoutes)
 
 async function testDatabaseConnection() {
     try {
-        await sql`SELECT version()`
+        await prisma.$queryRaw`SELECT 1`
         console.log('Database connection successful')
     } catch (error) {
         console.error('Database connection failed:', error)
@@ -34,3 +34,4 @@ testDatabaseConnection().then(() => {
         console.log(`Go to http://localhost:${PORT}`)
     })
 })
+
