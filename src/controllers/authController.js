@@ -1,82 +1,12 @@
 import { prisma } from '../lib/prisma.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import { v4 as uuidv4 } from 'uuid'
-
-const createRefreshToken = async (userId) => {
-    const jti = uuidv4()
-
-    const refreshToken = jwt.sign(
-        { 
-            jti,
-            userId: userId,
-            type: 'refresh'
-        }, 
-        process.env.REFRESH_TOKEN_SECRET, 
-        { expiresIn: '15d' }
-    )
-
-    await prisma.refreshToken.create({
-        data: {
-            token: jti,
-            userId: userId,
-            expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
-        }
-    })
-
-    return refreshToken
-}
-
-const verifyRefreshToken = async (token) => {
-    try {
-        const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
-
-        const storedToken = await prisma.refreshToken.findUnique({
-            where: {
-                id: decodedToken.jti,
-                isRevoked: false,
-                expiresAt: {
-                    gt: new Date()
-                }
-            }
-        })
-
-        if (!storedToken) {
-            throw new Error('Refresh token is expired or revoked')
-        }
-
-        await prisma.refreshToken.update({
-            where: { id: decodedToken.jti },
-            data: { lastUsedAt: new Date() }
-        })
-
-        return storedToken.userId 
-    } catch (error) {
-        console.error("Error verifying refresh token:", error)
-        throw new Error('Invalid refresh token')
-    }
-}
-
-const revokeRefreshToken = async (jti) => {
-    await prisma.refreshToken.update({
-        where: { id: jti },
-        data: { 
-            isRevoked: true,
-            revokedAt: new Date()
-        }
-    })
-}
-
-const createAccessToken = async (userId) => {
-    return accessToken = jwt.sign(
-        { 
-            userId: userId,
-            type: 'access'
-        }, 
-        process.env.ACCESS_TOKEN_SECRET, 
-        { expiresIn: '30m' }
-    )
-}
+import { 
+    createRefreshToken,
+    verifyRefreshToken,
+    revokeRefreshToken,
+    createAccessToken 
+} from '../utils/handleToken.js'
 
 export const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.cookies
