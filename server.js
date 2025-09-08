@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
 
 import { prisma } from './src/lib/prisma.js'
 import authRoutes from './src/routes/authRoute.js'
@@ -16,6 +17,7 @@ app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 
 app.use('/api/auth', authRoutes)
 

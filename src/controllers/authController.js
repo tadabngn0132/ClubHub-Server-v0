@@ -2,7 +2,6 @@ import { prisma } from '../lib/prisma.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import cookieParser from 'cookie-parser'
 
 const createRefreshToken = async (userId) => {
     const jti = uuidv4()
