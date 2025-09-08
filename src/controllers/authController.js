@@ -1,17 +1,160 @@
 import { prisma } from '../lib/prisma.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
+import cookieParser from 'cookie-parser'
+
+const createRefreshToken = async (userId) => {
+    const jti = uuidv4()
+
+    const refreshToken = jwt.sign(
+        { 
+            jti,
+            userId: userId,
+            type: 'refresh'
+        }, 
+        process.env.REFRESH_TOKEN_SECRET, 
+        { expiresIn: '15d' }
+    )
+
+    await prisma.refreshToken.create({
+        data: {
+            token: jti,
+            userId: userId,
+            expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+        }
+    })
+
+    return refreshToken
+}
+
+const verifyRefreshToken = async (token) => {
+    try {
+        const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
+
+        const storedToken = await prisma.refreshToken.findUnique({
+            where: {
+                id: decodedToken.jti,
+                isRevoked: false,
+                expiresAt: {
+                    gt: new Date()
+                }
+            }
+        })
+
+        if (!storedToken) {
+            throw new Error('Refresh token is expired or revoked')
+        }
+
+        await prisma.refreshToken.update({
+            where: { id: decodedToken.jti },
+            data: { lastUsedAt: new Date() }
+        })
+
+        return storedToken.userId 
+    } catch (error) {
+        console.error("Error verifying refresh token:", error)
+        throw new Error('Invalid refresh token')
+    }
+}
+
+const revokeRefreshToken = async (jti) => {
+    await prisma.refreshToken.update({
+        where: { id: jti },
+        data: { 
+            isRevoked: true,
+            revokedAt: new Date()
+        }
+    })
+}
+
+const createAccessToken = (userId) => {
+    return accessToken = jwt.sign(
+        { 
+            userId: userId,
+            type: 'access'
+        }, 
+        process.env.ACCESS_TOKEN_SECRET, 
+        { expiresIn: '30m' }
+    )
+}
+
+export const refreshAccessToken = async (req, res) => {
+    const { refreshToken } = req.cookies
+
+    if (!refreshToken) {
+        return res.status(401).json({ 
+            success: false, 
+            message: "No refresh token provided" 
+        })
+    }
+
+    try {
+        const userId = await verifyRefreshToken(refreshToken)
+
+        const newAccessToken = createAccessToken(userId)
+
+        res.status(200).json({
+            success: true,
+            message: "Access token refreshed successfully",
+            data: {
+                accessToken: newAccessToken
+            }
+        })
+    } catch (error) {
+        console.log("Error in refreshAccessToken function", error)
+        res.status(500).json({
+            success: false,
+            message: `Internal Server Error / Refresh Token Error: ${error.message}`
+        })
+    }
+}
 
 export const login = async (req, res) => {
-    const { username, password } = req.body
+    const { email, password } = req.body
 
     try {
         // TODO: Add authentication logic here
-        // Check username and password against database
+        // Check email and password against database
+        const user = await prisma.user.findUnique({
+            where: {
+                email: email
+            }
+        })
+
+        if (!user) {
+            return res.status(401).json({ 
+                success: false,
+                message: "User with this email does not exist"
+            })
+        }
+
+        const correctPassword = await bcrypt.compare(password, user.password)
+
+        if (!correctPassword) {
+            return res.status(401).json({ 
+                success: false,
+                message: "Incorrect password"
+            })
+        }
+        
         // If valid, sign a JWT token and send it in response
+        const accessToken = createAccessToken(user.id)
+        const refreshToken = await createRefreshToken(user.id)
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Strict',
+            maxAge: 15 * 24 * 60 * 60 * 1000
+        })
+
         res.status(200).json({ 
             success: true, 
-            message: "Login successful" 
+            message: "Login successful",
+            data: {
+                accessToken
+            }
         })
     } catch (error) {
         console.log("Error in login function", error)
