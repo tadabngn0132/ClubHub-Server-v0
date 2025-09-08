@@ -68,7 +68,7 @@ const revokeRefreshToken = async (jti) => {
     })
 }
 
-const createAccessToken = (userId) => {
+const createAccessToken = async (userId) => {
     return accessToken = jwt.sign(
         { 
             userId: userId,
@@ -116,20 +116,20 @@ export const login = async (req, res) => {
     try {
         // TODO: Add authentication logic here
         // Check email and password against database
-        const user = await prisma.user.findUnique({
+        const storedUser = await prisma.user.findUnique({
             where: {
                 email: email
             }
         })
 
-        if (!user) {
+        if (!storedUser) {
             return res.status(401).json({ 
                 success: false,
                 message: "User with this email does not exist"
             })
         }
 
-        const correctPassword = await bcrypt.compare(password, user.password)
+        const correctPassword = await bcrypt.compare(password, storedUser.password)
 
         if (!correctPassword) {
             return res.status(401).json({ 
@@ -139,8 +139,8 @@ export const login = async (req, res) => {
         }
         
         // If valid, sign a JWT token and send it in response
-        const accessToken = createAccessToken(user.id)
-        const refreshToken = await createRefreshToken(user.id)
+        const accessToken = createAccessToken(storedUser.id)
+        const refreshToken = await createRefreshToken(storedUser.id)
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -153,7 +153,8 @@ export const login = async (req, res) => {
             success: true, 
             message: "Login successful",
             data: {
-                accessToken
+                accessToken,
+                storedUser
             }
         })
     } catch (error) {
@@ -171,10 +172,34 @@ export const register = async (req, res) => {
     try {
         // TODO: Add registration logic here
         // Check if user already exists
+        const hashedPassword = bcrypt.hash(password)
+
+        const createdUser = await prisma.user.create({
+            data: {
+                username: username,
+                email: email,
+                password: hashedPassword
+            }
+        })
+
+        const accessToken = await createAccessToken(createdUser.id)
+        const refreshToken = await createRefreshToken(createdUser.id)
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Strict',
+            maxAge: 15 * 24 * 60 * 60 * 1000
+        })
+
         // Hash password and store user in database
         res.status(201).json({ 
             success: true, 
-            message: "Registration successful" 
+            message: "Registration successful",
+            data: {
+                accessToken,
+                createdUser
+            }
         })
     } catch (error) {
         console.log("Error in register function", error)
@@ -188,7 +213,12 @@ export const register = async (req, res) => {
 export const logout = async (req, res) => {
     try {
         // TODO: Add logout logic here
-        // Invalidate JWT token if using a token blacklist
+        const { refreshToken } = req.cookies
+
+        const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+        await revokeRefreshToken(decodedToken.jti)
+
         res.status(200).json({ 
             success: true, 
             message: "Logout successful" 
