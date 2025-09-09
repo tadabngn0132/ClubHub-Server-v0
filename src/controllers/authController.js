@@ -5,8 +5,11 @@ import {
     createRefreshToken,
     verifyRefreshToken,
     revokeRefreshToken,
-    createAccessToken 
+    createAccessToken,
+    createResetPasswordToken,
+    verifyResetPasswordToken
 } from '../utils/handleToken.js'
+import { sendResetPasswordEmail } from '../utils/handleEmail.js'
 
 export const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.cookies
@@ -161,19 +164,30 @@ export const logout = async (req, res) => {
     }
 }
 
-export const resetPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
     const { email } = req.body
     
     try {
         // TODO: Add reset password logic here
+        const storedUser = await prisma.user.findUnique({
+            where: {
+                email: email
+            }
+        })
+
         // Generate a password reset token and send it via email
-        // Send email with reset link
+        const resetToken = createResetPasswordToken(storedUser.id)
+
+        // Send reset password email with reset token url
+        sendResetPasswordEmail(resetToken, email)
+        
         res.status(200).json({ 
             success: true, 
-            message: "Password reset link sent" 
+            message: "Password reset link sent. Please check your email to reset password" 
         })
+
     } catch (error) {
-        console.log("Error in resetPassword function", error)
+        console.log("Error in forgotPassword function", error)
         res.status(500).json({ 
             success: false, 
             message: `Internal Server Error / Reset Password Error: ${error.message}` 
@@ -181,16 +195,87 @@ export const resetPassword = async (req, res) => {
     }
 }
 
+export const resetPassword = async (req, res) => {
+    const { newPassword } = req.body
+    const { resetToken, email } = req.query
+
+    try {
+        const storedUser = await prisma.user.findUnique({
+            where: {
+                email: email
+            }
+        })
+    
+        try {
+            verifyResetPasswordToken(resetToken, storedUser.id)
+
+        } catch (error) {
+            return res.status(401).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        const hashedNewPassword = bcrypt.hash(newPassword)
+
+        await prisma.user.update({
+            where: {
+                id: storedUser.id
+            },
+            data: {
+                password: hashedNewPassword
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: 'Reset password successfully'
+        })
+    } catch (error) {
+        console.log("Error in resetPassword function", error)
+        return res.status(500).json({
+            success: false,
+            message: `Internal Server Error / Reset Password Error: ${error.message}`
+        })
+    }
+}
+
 export const changePassword = async (req, res) => {
-    const { currentPassword, newPassword } = req.body
+    const { email, currentPassword, newPassword } = req.body
 
     try {
         // TODO: Implement change password functionality
         // Verify current password
+        const storedUser = await prisma.user.findUnique({
+            where: {
+                email: email
+            }
+        })
+        
         // Hash new password and update in database
+        const correctPassword = bcrypt.compare(currentPassword, storedUser.password)
+
+        if (!correctPassword) {
+            return res.status(401).json({
+                success: false,
+                message: "Current password is wrong"
+            })
+        }
+
+        const hashedNewPassword = bcrypt.hash(newPassword)
+
+        await prisma.user.update({
+            where: {
+                id: storedUser.id
+            },
+            data: {
+                password: hashedNewPassword
+            }
+        })
+
         res.status(200).json({ 
             success: true, 
-            message: "Password changed successfully" 
+            message: "Password changed successfully",
         })
     } catch (error) {
         console.log("Error in changePassword function", error)

@@ -17,6 +17,7 @@ model User {
   createAt      DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   refreshTokens RefreshToken[]
+  resetToken    ResetPasswordToken[]
 }
 
 model RefreshToken {
@@ -28,6 +29,17 @@ model RefreshToken {
   revokedAt   DateTime?   @map("revoked_at")
   user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int?        @map("user_id")
+}
+
+model ResetPasswordToken {
+  id            Int         @id @default(autoincrement())
+  hashedToken   String      @map("hashed_token")
+  expiresAt     DateTime    @map("expires_at")
+  createdAt     DateTime    @default(now())
+  isUsed        Boolean     @map("is_used")
+  usedAt        DateTime    @map("used_at")
+  user          User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int?        @map("user_id")
 }
 
 enum Role {

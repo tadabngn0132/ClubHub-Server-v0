@@ -1,9 +1,10 @@
-import { prisma } from "../lib/prisma.js";
-import jwt from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid";
+import { prisma } from "../lib/prisma.js"
+import jwt from "jsonwebtoken"
+import { v4 as uuidv4 } from "uuid"
+import crypto from "crypto"
 
 export const createRefreshToken = async (userId) => {
-    const jti = uuidv4();
+    const jti = uuidv4()
 
     const refreshToken = jwt.sign(
         {
@@ -57,7 +58,7 @@ export const verifyRefreshToken = async (token) => {
 };
 
 export const revokeRefreshToken = async (jti) => {
-    await prisma.refreshToken.update({
+    return await prisma.refreshToken.update({
         where: { id: jti },
         data: {
             isRevoked: true,
@@ -76,3 +77,40 @@ export const createAccessToken = async (userId) => {
         { expiresIn: "30m" }
     ));
 };
+
+export const createResetPasswordToken = async (userId) => {
+    const resetPasswordToken = uuidv4()
+    const resetPasswordHashedToken = crypto.createHash('sha256').update(resetPasswordToken).digest('hex')
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+
+    await prisma.resetPasswordToken.create({
+        data: {
+            hashedToken: resetPasswordHashedToken,
+            expiresAt: expiresAt,
+            userId: userId
+        }
+    })
+
+    return resetPasswordToken
+}
+
+export const verifyResetPasswordToken = async (token, userId) => {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex')
+
+    const storedToken = await prisma.resetPasswordToken.findFirst({
+        where: {
+            userId: userId,
+            hashedToken: hashedToken,
+            expiresAt: {
+                gt: new Date()
+            },
+            isUsed: false
+        }
+    })
+
+    if (!storedToken) {
+        throw new Error("Reset token is used or has expired")
+    }
+
+    return true
+}

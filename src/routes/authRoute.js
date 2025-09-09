@@ -4,6 +4,7 @@ import {
     login,
     register,
     logout,
+    forgotPassword,
     resetPassword,
     changePassword,
     googleAuth,
@@ -16,8 +17,9 @@ router.get("/refresh-access-token", refreshAccessToken)
 router.post("/login", login)
 router.post("/register", register)
 router.post("/logout", logout)
-router.post("/reset-password", resetPassword)
-router.post("/change-password", changePassword)
+router.post("forgot-password", forgotPassword)
+router.put("/reset-password", resetPassword)
+router.put("/change-password", changePassword)
 router.get("/google-auth", googleAuth)
 router.get("/google-auth/callback", googleAuthCallback)
 
