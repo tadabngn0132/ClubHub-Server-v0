@@ -10,6 +10,8 @@ import {
     verifyResetPasswordToken
 } from '../utils/handleToken.js'
 import { sendResetPasswordEmail } from '../utils/handleEmail.js'
+import { authorizationUrl } from '../lib/google.js'
+import url from 'url'
 
 export const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.cookies
@@ -289,6 +291,8 @@ export const changePassword = async (req, res) => {
 export const googleAuth = async (req, res) => {
     try {
         // TODO: Implement Google authentication logic
+        res.redirect(authorizationUrl)
+
         res.status(200).json({ 
             success: true, 
             message: "Google authentication initiated" 
@@ -305,6 +309,18 @@ export const googleAuth = async (req, res) => {
 export const googleAuthCallback = async (req, res) => {
     try {
         // TODO: Implement Google authentication callback logic
+        let q = url.parse(req.url, true).query;
+
+        if (q.error) { // An error response e.g. error=access_denied
+            console.log('Error:' + q.error);
+        } else if (q.state !== req.session.state) { //check state value
+            console.log('State mismatch. Possible CSRF attack');
+            res.end('State mismatch. Possible CSRF attack');
+        } else { // Get access and refresh tokens (if access_type is offline)
+            let { tokens } = await oauth2Client.getToken(q.code);
+            oauth2Client.setCredentials(tokens);
+        }
+
         res.status(200).json({ 
             success: true, 
             message: "Google authentication callback successful" 
