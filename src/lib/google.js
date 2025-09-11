@@ -1,40 +1,65 @@
 import { google } from 'googleapis'
-import crypto from 'crypto'
-import express from 'express'
-import session from 'express-session'
 
 /**
  * To use OAuth2 authentication, we need access to a CLIENT_ID, CLIENT_SECRET, AND REDIRECT_URI
  * from the client_secret.json file. To get these credentials for your application, visit
  * https://console.cloud.google.com/apis/credentials.
  */
-const oauth2Client = new google.auth.OAuth2(
+export const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.GOOGLE_REDIRECT_URL
 )
 
-// Access scopes for two non-Sign-In scopes: Read-only Drive activity and Google Calendar.
-const scopes = [
-  'https://www.googleapis.com/auth/drive.metadata.readonly',
-  'https://www.googleapis.com/auth/calendar.readonly'
-]
+const scopes = {
+  // Google OAuth 2.0
+  userInfoProfile: 'https://www.googleapis.com/auth/userinfo.profile',
+  userInfoEmail: 'https://www.googleapis.com/auth/userinfo.email',
 
-// Generate a secure random state value
-const state = crypto.randomBytes(32).toString('hex')
+  // Google Drive
+  drive: 'https://www.googleapis.com/auth/drive',
+  driveFile: 'https://www.googleapis.com/auth/drive.file',
+  driveReadonly: 'https://www.googleapis.com/auth/drive.readonly',
 
-// Store state in the session
-req.session.state = state
+  // Google Forms
+  formsBody: 'https://www.googleapis.com/auth/forms.body',
+  formsBodyReadonly: 'https://www.googleapis.com/auth/forms.body.readonly',
+  formsResponsesReadonly: 'https://www.googleapis.com/auth/forms.responses.readonly',
 
-// Generate a url that asks permissions for the Drive activity and Google Calendar scope
-export const authorizationUrl = oauth2Client.generateAuthUrl({
-  // 'online' (default) or 'offline' (gets refresh_token)
-  access_type: 'offline',
-  /** Pass in the scopes array defined above.
-    * Alternatively, if only one scope is needed, you can pass a scope URL as a string */
-  scope: scopes,
-  // Enable incremental authorization. Recommended as a best practice.
-  include_granted_scopes: true,
-  // Include the state parameter to reduce the risk of CSRF attacks.
-  state: state
-})
+  // Google Meet
+  meetingsSpaceCreated: 'https://www.googleapis.com/auth/meetings.space.created',
+  meetingsSpaceReadonly: 'https://www.googleapis.com/auth/meetings.space.readonly',
+  meetingsSpaceSettings: 'https://www.googleapis.com/auth/meetings.space.settings',
+
+  // Google Calendar
+  calendar: 'https://www.googleapis.com/auth/calendar',
+  calendarEvents: 'https://www.googleapis.com/auth/calendar.events',
+  calendarReadonly: 'https://www.googleapis.com/auth/calendar.readonly'
+}
+
+export const roleBasedScopes = {
+  admin : [
+    scopes.userInfoProfile,
+    scopes.userInfoEmail,
+    scopes.drive,
+    scopes.calendar,
+    scopes.formsBody,
+    scopes.formsResponsesReadonly,
+    scopes.meetingsSpaceCreated,
+    scopes.meetingsSpaceSettings
+  ],
+  moderator: [
+    scopes.userInfoProfile,
+    scopes.userInfoEmail,
+    scopes.driveFile,
+    scopes.calendarEvents,
+    scopes.formsResponsesReadonly,
+    scopes.meetingsSpaceCreated
+  ],
+  member: [
+    scopes.userInfoProfile,
+    scopes.userInfoEmail,
+    scopes.driveReadonly,
+    scopes.calendarReadonly
+  ]
+}

@@ -10,8 +10,8 @@ import {
     verifyResetPasswordToken
 } from '../utils/handleToken.js'
 import { sendResetPasswordEmail } from '../utils/handleEmail.js'
-import { authorizationUrl } from '../lib/google.js'
-import url from 'url'
+import { oauth2Client, roleBasedScopes } from '../lib/google.js'
+import crypto from 'crypto'
 
 export const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.cookies
@@ -291,6 +291,21 @@ export const changePassword = async (req, res) => {
 export const googleAuth = async (req, res) => {
     try {
         // TODO: Implement Google authentication logic
+        const userRole = req.query.role || req.user?.role || 'member'
+        const scopes = roleBasedScopes[userRole] || roleBasedScopes.member
+
+        const state = crypto.randomBytes(32).toString('hex')
+
+        req.session.state = state
+        req.session.requestedRole = userRole
+
+        const authorizationUrl = oauth2Client.generateAuthUrl({
+            access_type: 'offline',
+            scope: scopes,
+            include_granted_scopes: true,
+            state: state
+        })
+
         res.redirect(authorizationUrl)
 
         res.status(200).json({ 
@@ -307,19 +322,46 @@ export const googleAuth = async (req, res) => {
 }
 
 export const googleAuthCallback = async (req, res) => {
+    const { code, state, error } = req.query
+
     try {
         // TODO: Implement Google authentication callback logic
-        let q = url.parse(req.url, true).query;
-
-        if (q.error) { // An error response e.g. error=access_denied
-            console.log('Error:' + q.error);
-        } else if (q.state !== req.session.state) { //check state value
-            console.log('State mismatch. Possible CSRF attack');
-            res.end('State mismatch. Possible CSRF attack');
-        } else { // Get access and refresh tokens (if access_type is offline)
-            let { tokens } = await oauth2Client.getToken(q.code);
-            oauth2Client.setCredentials(tokens);
+        // Handle the OAuth 2.0 server response
+        if (error) {
+            return res.status(400).json({
+                error: 'Access denied'
+            })
         }
+        
+        if (state !== req.session.state) {
+            return res.status(400).json({
+                error: 'State mismatch'
+            })
+        }
+
+        const { tokens } = await oauth2Client.getToken(code)
+        oauth2Client.setCredentials(tokens)
+
+        oauth2Client.on('token', (tokens) => {
+            if (tokens.refresh_token) {
+                console.log(tokens.refresh_token)
+                process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token
+            }
+            console.log(tokens.access_token)
+            process.env.GOOGLE_ACCESS_TOKEN = tokens.access_token
+        })
+
+        const requestedRole = req.session.requestedRole
+        
+        const oauth2 = google.oauth2({
+            version: "v2",
+            auth: oauth2Client
+        })
+
+        const { data: userInfo } = await oauth2.userInfo.get()
+
+        // TODO: Save user to database
+        // TODO: Generate JWT
 
         res.status(200).json({ 
             success: true, 
