@@ -361,10 +361,27 @@ export const googleAuthCallback = async (req, res) => {
         const { data: userInfo } = await oauth2.userInfo.get()
 
         // TODO: Save user to database
+        const createdUser = prisma.user.create({
+            data: {
+                fullname: userInfo.name,
+                googleId: userInfo.id,
+                email: userInfo.email
+            }
+        })
         // TODO: Generate JWT
+        const access_token = createAccessToken(createdUser.id)
+        const refresh_token = createRefreshToken(createdUser.id)
+
+        res.cookie('refresh_token', refresh_token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Strict',
+            maxAge: 15 * 24 * 60 * 60 * 1000
+        })
 
         res.status(200).json({ 
-            success: true, 
+            success: true,
+            access_token,
             message: "Google authentication callback successful" 
         })
     } catch (error) {
