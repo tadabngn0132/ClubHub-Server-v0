@@ -100,6 +100,8 @@ export const login = async (req, res) => {
     }
 }
 
+// Tạm thời giữ lại trong quá trình dev để test authController
+// Khi nào test xong hoạt triển khai được phần CRUD cho user thì loại bỏ
 export const register = async (req, res) => {
     const { username, email, password } = req.body
 
