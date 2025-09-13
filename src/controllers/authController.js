@@ -50,7 +50,7 @@ export const login = async (req, res) => {
     try {
         // TODO: Add authentication logic here
         // Check email and password against database
-        const storedUser = await prisma.user.findUnique({
+        const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
             }
@@ -103,18 +103,20 @@ export const login = async (req, res) => {
 // Tạm thời giữ lại trong quá trình dev để test authController
 // Khi nào test xong hoạt triển khai được phần CRUD cho user thì loại bỏ
 export const register = async (req, res) => {
-    const { username, email, password } = req.body
+    const userData = req.body
 
     try {
         // TODO: Add registration logic here
         // Check if user already exists
-        const hashedPassword = bcrypt.hash(password)
+        const hashedPassword = bcrypt.hash(userData.password)
 
-        const createdUser = await prisma.user.create({
+        const createdUser = await prisma.users.create({
             data: {
-                username: username,
-                email: email,
-                password: hashedPassword
+                fullname: userData.fullname,
+                email: userData.email,
+                password: hashedPassword,
+                phoneNumber: phoneNumber,
+                dateOfBirth: dateOfBirth
             }
         })
 
@@ -173,7 +175,7 @@ export const forgotPassword = async (req, res) => {
     
     try {
         // TODO: Add reset password logic here
-        const storedUser = await prisma.user.findUnique({
+        const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
             }
@@ -204,7 +206,7 @@ export const resetPassword = async (req, res) => {
     const { resetToken, email } = req.query
 
     try {
-        const storedUser = await prisma.user.findUnique({
+        const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
             }
@@ -222,7 +224,7 @@ export const resetPassword = async (req, res) => {
 
         const hashedNewPassword = bcrypt.hash(newPassword)
 
-        await prisma.user.update({
+        await prisma.users.update({
             where: {
                 id: storedUser.id
             },
@@ -250,7 +252,7 @@ export const changePassword = async (req, res) => {
     try {
         // TODO: Implement change password functionality
         // Verify current password
-        const storedUser = await prisma.user.findUnique({
+        const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
             }
@@ -268,7 +270,7 @@ export const changePassword = async (req, res) => {
 
         const hashedNewPassword = bcrypt.hash(newPassword)
 
-        await prisma.user.update({
+        await prisma.users.update({
             where: {
                 id: storedUser.id
             },
@@ -363,7 +365,7 @@ export const googleAuthCallback = async (req, res) => {
         const { data: userInfo } = await oauth2.userInfo.get()
 
         // TODO: Save user to database
-        const createdUser = prisma.user.create({
+        const createdUser = prisma.users.create({
             data: {
                 fullname: userInfo.name,
                 googleId: userInfo.id,
