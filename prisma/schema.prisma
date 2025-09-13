@@ -20,16 +20,16 @@ model User {
   provider            Provider              @default(LOCAL)
   locate              String?               
   phoneNumber         String                @map("phone_number")
-  department          String                @map("department")
   dateOfBirth         String                @map("date_of_birth")
-  position            String                @map("position")
   status              Status                @default(ACTIVE)
   lastLogin           DateTime?             
-  role                Role                  @default(MEMBER)
   createAt            DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   refreshTokens       RefreshToken[]
   resetToken          ResetPasswordToken[]
+  userPosition        UserPosition[]
+
+  @@map("users")
 }
 
 model RefreshToken {
@@ -41,6 +41,8 @@ model RefreshToken {
   revokedAt   DateTime?   @map("revoked_at")
   user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int?        @map("user_id")
+
+  @@map("refreshTokens")
 }
 
 model ResetPasswordToken {
@@ -48,10 +50,46 @@ model ResetPasswordToken {
   hashedToken   String      @map("hashed_token")
   expiresAt     DateTime    @map("expires_at")
   createdAt     DateTime    @default(now())
-  isUsed        Boolean     @map("is_used")
-  usedAt        DateTime    @map("used_at")
+  isUsed        Boolean     @default(false)
+  usedAt        DateTime?
   user          User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        Int?        @map("user_id")
+
+  @@map("resetPasswordTokens")
+}
+
+model Department {
+  id            Int           @id @default(autoincrement())
+  name          String        @map("name")
+  description   String        @map("description")
+  isActive      Boolean       @default(true)
+  positions     Position[]
+
+  @@map("departments")
+}
+
+model Position {
+  id              Int               @id @default(autoincrement())
+  title           String            @map("title")
+  level           Int               @map("level")
+  systemRole      Role
+  department      Department?       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId    Int?              @map("department_id")
+  userPosition    UserPosition[]
+
+  @@map("positions")
+}
+
+model UserPosition {
+  userId          Int
+  positionId      Int
+  isPrimary       Boolean         @default(false)
+  assignedAt      DateTime        @default(now())
+  user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position        Position?       @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, positionId])
+  @@map("userPositions")
 }
 
 enum Role {
@@ -63,6 +101,7 @@ enum Role {
 enum Provider {
   LOCAL
   GOOGLE
+  BOTH
 }
 
 enum Status {
