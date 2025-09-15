@@ -78,7 +78,7 @@ export const login = async (req, res) => {
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'Strict',
             maxAge: 15 * 24 * 60 * 60 * 1000
         })
@@ -125,7 +125,7 @@ export const register = async (req, res) => {
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'Strict',
             maxAge: 15 * 24 * 60 * 60 * 1000
         })
@@ -295,13 +295,9 @@ export const changePassword = async (req, res) => {
 export const googleAuth = async (req, res) => {
     try {
         // TODO: Implement Google authentication logic
-        const userRole = req.query.role || req.user?.role || 'member'
-        const scopes = roleBasedScopes[userRole] || roleBasedScopes.member
-
         const state = crypto.randomBytes(32).toString('hex')
 
         req.session.state = state
-        req.session.requestedRole = userRole
 
         const authorizationUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
@@ -354,8 +350,6 @@ export const googleAuthCallback = async (req, res) => {
             console.log(tokens.access_token)
             process.env.GOOGLE_ACCESS_TOKEN = tokens.access_token
         })
-
-        const requestedRole = req.session.requestedRole
         
         const oauth2 = google.oauth2({
             version: "v2",
@@ -364,21 +358,50 @@ export const googleAuthCallback = async (req, res) => {
 
         const { data: userInfo } = await oauth2.userInfo.get()
 
-        // TODO: Save user to database
-        const createdUser = prisma.users.create({
-            data: {
-                fullname: userInfo.name,
-                googleId: userInfo.id,
+        const storedUser = prisma.users.findFirst({
+            where: {
                 email: userInfo.email
             }
         })
-        // TODO: Generate JWT
-        const access_token = createAccessToken(createdUser.id)
-        const refresh_token = createRefreshToken(createdUser.id)
+
+        let user
+
+        if (!storedUser) {
+            user = await prisma.users.create({
+                data: {
+                    fullname: userInfo.name,
+                    googleId: userInfo.id,
+                    email: userInfo.email,
+                    locate: userInfo.locale,
+                    firstName: userInfo.given_name,
+                    lastName: userInfo.family_name,
+                    isEmailVerified: userInfo.verified_email
+                }
+            })
+        } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
+            user = await prisma.users.update({
+                where: {
+                    id: storedUser.id
+                },
+                data: {
+                    fullname: userInfo.name,
+                    googleId: userInfo.id,
+                    locate: userInfo.locale,
+                    firstName: userInfo.firstName,
+                    lastName: userInfo.lastName,
+                    isEmailVerified: userInfo.verifiedEmail
+                }
+            })
+        } else {
+            user = storedUser
+        }
+
+        const access_token = createAccessToken(user.id)
+        const refresh_token = createRefreshToken(user.id)
 
         res.cookie('refresh_token', refresh_token, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'Strict',
             maxAge: 15 * 24 * 60 * 60 * 1000
         })
