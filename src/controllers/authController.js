@@ -12,7 +12,9 @@ import {
 import { sendResetPasswordEmail } from '../utils/handleEmail.js'
 import { oauth2Client, roleBasedScopes } from '../lib/google.js'
 import crypto from 'crypto'
+import { google } from 'googleapis'
 
+// Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
 export const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.cookies
 
@@ -44,12 +46,13 @@ export const refreshAccessToken = async (req, res) => {
     }
 }
 
+// Xử lý logic đăng nhập kiểm tra, xác thực email, mật khẩu, trả về thông tin và token
 export const login = async (req, res) => {
     const { email, password } = req.body
 
+    // TODO: Validate email, password
+
     try {
-        // TODO: Add authentication logic here
-        // Check email and password against database
         const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
@@ -76,6 +79,8 @@ export const login = async (req, res) => {
         const accessToken = createAccessToken(storedUser.id)
         const refreshToken = await createRefreshToken(storedUser.id)
 
+        // TODO: Cập nhật lastLogin
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -83,12 +88,20 @@ export const login = async (req, res) => {
             maxAge: 15 * 24 * 60 * 60 * 1000
         })
 
+        const {
+            password,
+            googleId,
+            refreshTokens,
+            resetToken,
+            ...necessaryUserInfo
+        } = storedUser
+
         res.status(200).json({ 
             success: true, 
             message: "Login successful",
             data: {
                 accessToken,
-                storedUser
+                necessaryUserInfo
             }
         })
     } catch (error) {
@@ -396,10 +409,18 @@ export const googleAuthCallback = async (req, res) => {
             user = storedUser
         }
 
-        const access_token = createAccessToken(user.id)
-        const refresh_token = createRefreshToken(user.id)
+        const accessToken = createAccessToken(user.id)
+        const refreshToken = createRefreshToken(user.id)
 
-        res.cookie('refresh_token', refresh_token, {
+        const {
+            password,
+            googleId,
+            refreshTokens,
+            resetToken,
+            ...necessaryUserInfo
+        } = user
+
+        res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'Strict',
@@ -408,8 +429,11 @@ export const googleAuthCallback = async (req, res) => {
 
         res.status(200).json({ 
             success: true,
-            access_token,
-            message: "Google authentication callback successful" 
+            message: "Google authentication callback successful",
+            data: {
+                accessToken,
+                necessaryUserInfo
+            } 
         })
     } catch (error) {
         console.log("Error in googleAuthCallback function", error)
