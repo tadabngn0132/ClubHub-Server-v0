@@ -51,6 +51,24 @@ export const login = async (req, res) => {
     const { email, password } = req.body
 
     // TODO: Validate email, password
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email cannot be empty'
+        })
+    } else if (/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email must be Example123456@fpt.edu.vn'
+        })
+    }
+
+    if (!password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Password cannot be empty'
+        })
+    }
 
     try {
         const storedUser = await prisma.users.findUnique({
@@ -80,6 +98,14 @@ export const login = async (req, res) => {
         const refreshToken = await createRefreshToken(storedUser.id)
 
         // TODO: Cập nhật lastLogin
+        const updateUser = await prisma.users.update({
+            where: {
+                id: storedUser.id
+            },
+            data: {
+                lastLogin: Date.now()
+            }
+        })
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -94,7 +120,7 @@ export const login = async (req, res) => {
             refreshTokens,
             resetToken,
             ...necessaryUserInfo
-        } = storedUser
+        } = updateUser
 
         res.status(200).json({ 
             success: true, 
