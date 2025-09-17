@@ -7,7 +7,9 @@ import cookieParser from 'cookie-parser'
 
 import { limiter } from './src/middlewares/rateLimiting.js'
 import { prisma } from './src/lib/prisma.js'
+
 import authRoutes from './src/routes/authRoute.js'
+import userRouter from './src/routes/userRoute.js'
 
 const app = express()
 dotenv.config()
@@ -22,6 +24,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/api/auth', authRoutes)
+app.use('/api/users', userRouter)
 
 async function testDatabaseConnection() {
     try {
