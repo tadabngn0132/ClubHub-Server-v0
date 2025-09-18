@@ -34,14 +34,14 @@ export const refreshAccessToken = async (req, res) => {
             success: true,
             message: "Access token refreshed successfully",
             data: {
-                accessToken: newAccessToken
+                newAccessToken
             }
         })
     } catch (error) {
         console.log("Error in refreshAccessToken function", error)
         res.status(500).json({
             success: false,
-            message: `Internal Server Error / Refresh Token Error: ${error.message}`
+            message: `Internal server error / Refresh token error: ${error.message}`
         })
     }
 }
@@ -50,7 +50,7 @@ export const refreshAccessToken = async (req, res) => {
 export const login = async (req, res) => {
     const { email, password } = req.body
 
-    // TODO: Validate email, password
+    // TODO: Change to middleware for validation
     if (!email) {
         return res.status(400).json({
             success: false,
@@ -134,7 +134,7 @@ export const login = async (req, res) => {
         console.log("Error in login function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Login Error: ${error.message}` 
+            message: `Internal server error / Login error: ${error.message}` 
         })
     }
 }
@@ -142,12 +142,14 @@ export const login = async (req, res) => {
 // Tạm thời giữ lại trong quá trình dev để test authController
 // Khi nào test xong hoạt triển khai được phần CRUD cho user thì loại bỏ
 export const register = async (req, res) => {
-    const userData = req.body
-
     try {
+        const userData = req.body
+
+        // TODO: Create validation middleware
+
         // TODO: Add registration logic here
         // Check if user already exists
-        const hashedPassword = bcrypt.hash(userData.password)
+        const hashedPassword = await bcrypt.hash(userData.password, 12)
 
         const createdUser = await prisma.users.create({
             data: {
@@ -182,7 +184,7 @@ export const register = async (req, res) => {
         console.log("Error in register function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Register Error: ${error.message}` 
+            message: `Internal server error / Register error: ${error.message}` 
         })
     }
 }
@@ -204,15 +206,17 @@ export const logout = async (req, res) => {
         console.log("Error in logout function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Logout Error: ${error.message}` 
+            message: `Internal server error / Logout error: ${error.message}` 
         })
     }
 }
 
 export const forgotPassword = async (req, res) => {
-    const { email } = req.body
-    
     try {
+        const { email } = req.body
+
+        // TODO: Create validation middleware
+
         // TODO: Add reset password logic here
         const storedUser = await prisma.users.findUnique({
             where: {
@@ -235,16 +239,18 @@ export const forgotPassword = async (req, res) => {
         console.log("Error in forgotPassword function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Reset Password Error: ${error.message}` 
+            message: `Internal server error / Reset password error: ${error.message}` 
         })
     }
 }
 
 export const resetPassword = async (req, res) => {
-    const { newPassword } = req.body
-    const { resetToken, email } = req.query
-
     try {
+        const { newPassword } = req.body
+        const { resetToken, email } = req.query
+
+        // TODO: Create validation middleware
+
         const storedUser = await prisma.users.findUnique({
             where: {
                 email: email
@@ -253,7 +259,6 @@ export const resetPassword = async (req, res) => {
     
         try {
             verifyResetPasswordToken(resetToken, storedUser.id)
-
         } catch (error) {
             return res.status(401).json({
                 success: false,
@@ -261,7 +266,7 @@ export const resetPassword = async (req, res) => {
             })
         }
 
-        const hashedNewPassword = bcrypt.hash(newPassword)
+        const hashedNewPassword = await bcrypt.hash(newPassword, 12)
 
         await prisma.users.update({
             where: {
@@ -280,15 +285,17 @@ export const resetPassword = async (req, res) => {
         console.log("Error in resetPassword function", error)
         return res.status(500).json({
             success: false,
-            message: `Internal Server Error / Reset Password Error: ${error.message}`
+            message: `Internal server error / Reset password error: ${error.message}`
         })
     }
 }
 
 export const changePassword = async (req, res) => {
-    const { email, currentPassword, newPassword } = req.body
-
     try {
+        const { email, currentPassword, newPassword } = req.body
+
+        // TODO: Create validation middleware
+
         // TODO: Implement change password functionality
         // Verify current password
         const storedUser = await prisma.users.findUnique({
@@ -307,7 +314,7 @@ export const changePassword = async (req, res) => {
             })
         }
 
-        const hashedNewPassword = bcrypt.hash(newPassword)
+        const hashedNewPassword = await bcrypt.hash(newPassword, 12)
 
         await prisma.users.update({
             where: {
@@ -326,7 +333,7 @@ export const changePassword = async (req, res) => {
         console.log("Error in changePassword function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Change Password Error: ${error.message}` 
+            message: `Internal server error / Change password error: ${error.message}` 
         })
     }
 }
@@ -355,7 +362,7 @@ export const googleAuth = async (req, res) => {
         console.log("Error in googleAuth function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Google Auth Error: ${error.message}` 
+            message: `Internal server error / Google auth error: ${error.message}` 
         })
     }
 }
@@ -465,7 +472,7 @@ export const googleAuthCallback = async (req, res) => {
         console.log("Error in googleAuthCallback function", error)
         res.status(500).json({ 
             success: false, 
-            message: `Internal Server Error / Google Auth Callback Error: ${error.message}` 
+            message: `Internal server error / Google auth callback error: ${error.message}` 
         })
     }
 }

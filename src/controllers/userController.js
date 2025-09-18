@@ -2,9 +2,11 @@ import { prisma } from '../lib/prisma.js'
 import bcrypt from 'bcryptjs'
 
 export const createUser = async (req, res) => {
-  const payload = req.body
-
   try {
+    const payload = req.body
+
+    // TODO: Create validation middleware
+
     const storedUser = await prisma.users.findUnique({
       where: {
         email: payload.email
@@ -18,7 +20,7 @@ export const createUser = async (req, res) => {
       })
     }
 
-    const hashedPassword = bcrypt.hash(payload.password)
+    const hashedPassword = await bcrypt.hash(payload.password, 12)
 
     const newUser = await prisma.users.create({
       data: {
@@ -49,18 +51,18 @@ export const createUser = async (req, res) => {
     console.log("Error in createUser function:", err)
     res.status(500).json({
       success: false,
-      message: `Internal server error: ${err.message}`
+      message: `Internal server error / Create user error: ${err.message}`
     })
   }
 }
 
 export const getUser = async (req, res) => {
-  const { id } = req.params
-  
   try {
-    const storedUser = await prisma.users.finUnique({
+    const { id } = req.params
+
+    const storedUser = await prisma.users.findUnique({
       where: {
-        id: parseInt(id)
+        id: Number(id)
       }
     })
 
@@ -87,7 +89,7 @@ export const getUser = async (req, res) => {
     console.log("Error in getUser function:", err)
     res.status(500).json({
       success: false,
-      message: `Internal server error: ${err.message}`
+      message: `Internal server error / Get user error: ${err.message}`
     })
   }
 }
@@ -116,16 +118,18 @@ export const getUsers = async (req, res) => {
     console.log("Error in getUsers function:", err)
     res.status(500).json({
       success: false,
-      message: `Internal server error: ${err.message}`
+      message: `Internal server error / Get users error: ${err.message}`
     })
   }
 }
 
-export const updateUser = async (req, res) => {
-  const { id } = req.params
-  const payload = req.body
-
+export const updateUser = async (req, res) => {  
   try {
+    const { id } = req.params
+    const payload = req.body
+
+    // TODO: Create validation middleware
+
     const storedUser = await prisma.users.findUnique({
       where: {
         id: parseInt(id)
@@ -138,6 +142,8 @@ export const updateUser = async (req, res) => {
         message: 'Not found user to update'
       })
     }
+
+    const hashedPassword = await bcrypt.hash(payload.password, 12)
 
     const updatedUser = await prisma.users.update({
       where: {
@@ -173,15 +179,15 @@ export const updateUser = async (req, res) => {
     console.log("Error in updateUser function:", err)
     res.status(500).json({
       success: false,
-      message: `Internal server error: ${err.message}`
+      message: `Internal server error / Update user error: ${err.message}`
     })
   }
 }
 
 export const deleteUser = async (req, res) => {
-  const { id } = req.params
-
   try {
+    const { id } = req.params
+
     const storedUser = await prisma.users.findUnique({
       where: {
         id: parseInt(id)
@@ -218,7 +224,7 @@ export const deleteUser = async (req, res) => {
     console.log("Error in deleteUser function:", err)
     res.status(500).json({
       success: false,
-      message: `Internal server error: ${err.message}`
+      message: `Internal server error / Delete user error: ${err.message}`
     })
   }
 }
