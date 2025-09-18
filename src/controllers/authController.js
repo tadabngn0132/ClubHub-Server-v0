@@ -8,8 +8,8 @@ import {
     createAccessToken,
     createResetPasswordToken,
     verifyResetPasswordToken
-} from '../utils/handleToken.js'
-import { sendResetPasswordEmail } from '../utils/handleEmail.js'
+} from '../services/tokenService.js'
+import { sendResetPasswordEmail } from '../services/emailService.js'
 import { oauth2Client, roleBasedScopes } from '../lib/google.js'
 import crypto from 'crypto'
 import { google } from 'googleapis'
