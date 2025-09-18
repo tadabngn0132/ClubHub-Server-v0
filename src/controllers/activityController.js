@@ -69,6 +69,35 @@ export const getActivityById = async (req, res) => {
   }
 }
 
+export const getActivitiesBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params
+
+    const activity = await prisma.activities.findUnique({
+      where: { slug: slug }
+    })
+
+    if (!activity) {
+      return res.status(404).json({
+        success: false,
+        message: 'Activity not found'
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Get activities by slug successfully',
+      data: activity
+    })
+  } catch (err) {
+    console.log("Error get activities by slug function: ", err.message)
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Get activities by slug error: ${err.message}`
+    })
+  }
+}
+
 export const updateActivity = async (req, res) => {
   try {
     const { id } = req.params
