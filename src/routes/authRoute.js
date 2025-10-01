@@ -4,7 +4,8 @@ import {
     // refreshAccessToken,
     login,
     register,
-    logout,
+    // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
+    // logout,
     forgotPassword,
     resetPassword,
     changePassword,
@@ -19,7 +20,8 @@ const router = express.Router()
 // router.get("/refresh-access-token", refreshAccessToken)
 router.post("/login", login)
 router.post("/register", register)
-router.post("/logout", logout)
+// ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
+// router.post("/logout", logout)
 router.post("forgot-password", forgotPassword)
 router.put("/reset-password", resetPassword)
 router.put("/change-password", changePassword)

@@ -6,14 +6,19 @@ import {
   updateUser,
   deleteUser
 } from '../controllers/userController.js'
-import { verifyAccessToken } from '../middlewares/authMiddleware.js'
+import { verifyAccessToken } from '../middlewares/authentication.js'
 
 const router = express.Router()
 
-router.post('/', verifyAccessToken, createUser)
-router.get('/:id', verifyAccessToken, getUser)
-router.get('/', verifyAccessToken, getUsers)
-router.put('/:id', verifyAccessToken, updateUser)
-router.delete('/:id', verifyAccessToken, deleteUser)
+// router.post('/', verifyAccessToken, createUser)
+// router.get('/:id', verifyAccessToken, getUser)
+// router.get('/', verifyAccessToken, getUsers)
+// router.put('/:id', verifyAccessToken, updateUser)
+// router.delete('/:id', verifyAccessToken, deleteUser)
+router.post('/', createUser)
+router.get('/:id', getUser)
+router.get('/', getUsers)
+router.put('/:id', updateUser)
+router.delete('/:id', deleteUser)
 
 export default router

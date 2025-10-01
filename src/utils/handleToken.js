@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma.js"
+import { prisma } from "../libs/prisma.js"
 import jwt from "jsonwebtoken"
 import { v4 as uuidv4 } from "uuid"
 import crypto from "crypto"
@@ -68,15 +68,17 @@ export const revokeRefreshToken = async (jti) => {
 };
 
 export const createAccessToken = async (userId) => {
-    return (accessToken = jwt.sign(
+    const accessToken = jwt.sign(
         {
             userId: userId,
             type: "access",
         },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "30m" }
-    ));
-};
+    )
+
+    return accessToken
+}
 
 export const createResetPasswordToken = async (userId) => {
     const resetPasswordToken = uuidv4()

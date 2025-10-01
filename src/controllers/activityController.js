@@ -1,4 +1,4 @@
-import { prisma } from '../config/prismaClient.js'
+import { prisma } from '../libs/prisma.js'
 
 export const createActivity = async (req, res) => {
   try {

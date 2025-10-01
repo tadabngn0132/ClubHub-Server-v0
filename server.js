@@ -6,7 +6,7 @@ import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 
 import { limiter } from './src/middlewares/rateLimiting.js'
-import { prisma } from './src/lib/prisma.js'
+import { prisma } from './src/libs/prisma.js'
 
 import authRouter from './src/routes/authRoute.js'
 import userRouter from './src/routes/userRoute.js'

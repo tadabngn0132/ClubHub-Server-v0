@@ -1,11 +1,11 @@
-import { prisma } from '../lib/prisma.js'
+import { prisma } from '../libs/prisma.js'
 // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
 // import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { 
-    createRefreshToken,
-    verifyRefreshToken,
     // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
+    // createRefreshToken,
+    // verifyRefreshToken,
     // revokeRefreshToken,
     createAccessToken,
     createResetPasswordToken,
@@ -53,29 +53,28 @@ import { sendResetPasswordEmail } from '../utils/handleEmail.js'
 
 // Xử lý logic đăng nhập kiểm tra, xác thực email, mật khẩu, trả về thông tin và token
 export const login = async (req, res) => {
-    const { email, password } = req.body
-
-    if (!email) {
-        return res.status(400).json({
-            success: false,
-            message: 'Email cannot be empty'
-        })
-    } else if (/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
-        return res.status(400).json({
-            success: false,
-            message: 'Email must be Example123456@fpt.edu.vn'
-        })
-    }
-
-    if (!password) {
-        return res.status(400).json({
-            success: false,
-            message: 'Password cannot be empty'
-        })
-    }
-
     try {
-        const storedUser = await prisma.users.findUnique({
+        const { email, password } = req.body
+    
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email cannot be empty'
+            })
+        } else if (!/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email must be Example123456@fpt.edu.vn'
+            })
+        }
+    
+        if (!password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password cannot be empty'
+            })
+        }
+        const storedUser = await prisma.user.findUnique({
             where: {
                 email: email
             }
@@ -97,19 +96,20 @@ export const login = async (req, res) => {
             })
         }
         
-        const accessToken = createAccessToken(storedUser.id)
-        // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-        // const refreshToken = await createRefreshToken(storedUser.id)
-
-        const updateUser = await prisma.users.update({
+        
+        const updatedUser = await prisma.user.update({
             where: {
                 id: storedUser.id
             },
             data: {
-                lastLogin: Date.now()
+                lastLogin: new Date()
             }
         })
 
+        const accessToken = await createAccessToken(updatedUser.id)
+        // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
+        // const refreshToken = await createRefreshToken(storedUser.id)
+        
         // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
         // res.cookie('refreshToken', refreshToken, {
         //     httpOnly: true,
@@ -119,12 +119,11 @@ export const login = async (req, res) => {
         // })
 
         const {
-            password,
             googleId,
             refreshTokens,
             resetToken,
             ...necessaryUserInfo
-        } = updateUser
+        } = updatedUser
 
         res.status(200).json({ 
             success: true, 
@@ -155,34 +154,19 @@ export const register = async (req, res) => {
         // Check if user already exists
         const hashedPassword = await bcrypt.hash(userData.password, 12)
 
-        const createdUser = await prisma.users.create({
+        const createdUser = await prisma.user.create({
             data: {
                 fullname: userData.fullname,
                 email: userData.email,
                 password: hashedPassword,
-                phoneNumber: phoneNumber,
-                dateOfBirth: dateOfBirth
+                phoneNumber: userData.phoneNumber
             }
         })
 
-        const accessToken = await createAccessToken(createdUser.id)
-        // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-        // const refreshToken = await createRefreshToken(createdUser.id)
-
-        // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-        // res.cookie('refreshToken', refreshToken, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === 'production',
-        //     sameSite: 'Strict',
-        //     maxAge: 15 * 24 * 60 * 60 * 1000
-        // })
-
-        // Hash password and store user in database
         res.status(201).json({ 
             success: true, 
             message: "Registration successful",
             data: {
-                accessToken,
                 createdUser
             }
         })
