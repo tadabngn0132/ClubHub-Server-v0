@@ -10,12 +10,13 @@ import {
     createAccessToken,
     createResetPasswordToken,
     verifyResetPasswordToken
-} from '../utils/handleToken.js'
-import { sendResetPasswordEmail } from '../utils/handleEmail.js'
+} from '../utils/tokenHelper.js'
+import { sendResetPasswordEmail } from '../utils/emailHelper.js'
 // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
 // import { oauth2Client, roleBasedScopes } from '../lib/google.js'
 // import crypto from 'crypto'
 // import { google } from 'googleapis'
+import { removeSensitiveUserData } from '../utils/userHelper.js'
 
 
 // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
@@ -87,7 +88,7 @@ export const login = async (req, res) => {
             })
         }
 
-        const correctPassword = await bcrypt.compare(password, storedUser.password)
+        const correctPassword = await bcrypt.compare(password, storedUser.hashedPassword)
 
         if (!correctPassword) {
             return res.status(401).json({ 
@@ -118,19 +119,14 @@ export const login = async (req, res) => {
         //     maxAge: 15 * 24 * 60 * 60 * 1000
         // })
 
-        const {
-            googleId,
-            refreshTokens,
-            resetToken,
-            ...necessaryUserInfo
-        } = updatedUser
+        const necessaryUserData = removeSensitiveUserData(updatedUser)
 
         res.status(200).json({ 
             success: true, 
             message: "Login successful",
             data: {
                 accessToken,
-                necessaryUserInfo
+                necessaryUserData
             }
         })
     } catch (error) {
@@ -158,7 +154,7 @@ export const register = async (req, res) => {
             data: {
                 fullname: userData.fullname,
                 email: userData.email,
-                password: hashedPassword,
+                hashedPassword: hashedPassword,
                 phoneNumber: userData.phoneNumber
             }
         })
@@ -209,7 +205,7 @@ export const forgotPassword = async (req, res) => {
         // TODO: Create validation middleware
 
         // TODO: Add reset password logic here
-        const storedUser = await prisma.users.findUnique({
+        const storedUser = await prisma.user.findUnique({
             where: {
                 email: email
             }
@@ -242,7 +238,7 @@ export const resetPassword = async (req, res) => {
 
         // TODO: Create validation middleware
 
-        const storedUser = await prisma.users.findUnique({
+        const storedUser = await prisma.user.findUnique({
             where: {
                 email: email
             }
@@ -259,7 +255,7 @@ export const resetPassword = async (req, res) => {
 
         const hashedNewPassword = await bcrypt.hash(newPassword, 12)
 
-        await prisma.users.update({
+        await prisma.user.update({
             where: {
                 id: storedUser.id
             },
@@ -289,14 +285,14 @@ export const changePassword = async (req, res) => {
 
         // TODO: Implement change password functionality
         // Verify current password
-        const storedUser = await prisma.users.findUnique({
+        const storedUser = await prisma.user.findUnique({
             where: {
                 email: email
             }
         })
         
         // Hash new password and update in database
-        const correctPassword = bcrypt.compare(currentPassword, storedUser.password)
+        const correctPassword = bcrypt.compare(currentPassword, storedUser.hashedPassword)
 
         if (!correctPassword) {
             return res.status(401).json({
@@ -307,12 +303,12 @@ export const changePassword = async (req, res) => {
 
         const hashedNewPassword = await bcrypt.hash(newPassword, 12)
 
-        await prisma.users.update({
+        await prisma.user.update({
             where: {
                 id: storedUser.id
             },
             data: {
-                password: hashedNewPassword
+                hashedPassword: hashedNewPassword
             }
         })
 
@@ -397,7 +393,7 @@ export const changePassword = async (req, res) => {
 
 //         const { data: userInfo } = await oauth2.userInfo.get()
 
-//         const storedUser = prisma.users.findFirst({
+//         const storedUser = prisma.user.findFirst({
 //             where: {
 //                 email: userInfo.email
 //             }
@@ -406,7 +402,7 @@ export const changePassword = async (req, res) => {
 //         let user
 
 //         if (!storedUser) {
-//             user = await prisma.users.create({
+//             user = await prisma.user.create({
 //                 data: {
 //                     fullname: userInfo.name,
 //                     googleId: userInfo.id,
@@ -418,7 +414,7 @@ export const changePassword = async (req, res) => {
 //                 }
 //             })
 //         } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
-//             user = await prisma.users.update({
+//             user = await prisma.user.update({
 //                 where: {
 //                     id: storedUser.id
 //                 },
@@ -438,13 +434,7 @@ export const changePassword = async (req, res) => {
 //         const accessToken = createAccessToken(user.id)
 //         const refreshToken = createRefreshToken(user.id)
 
-//         const {
-//             password,
-//             googleId,
-//             refreshTokens,
-//             resetToken,
-//             ...necessaryUserInfo
-//         } = user
+//         const necessaryUserData = removeSensitiveUserData(user)
 
 //         res.cookie('refresh_token', refreshToken, {
 //             httpOnly: true,
@@ -458,7 +448,7 @@ export const changePassword = async (req, res) => {
 //             message: "Google authentication callback successful",
 //             data: {
 //                 accessToken,
-//                 necessaryUserInfo
+//                 necessaryUserData
 //             } 
 //         })
 //     } catch (error) {

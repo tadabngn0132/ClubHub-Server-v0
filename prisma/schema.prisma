@@ -11,7 +11,7 @@ model User {
   id                        Int                   @id @default(autoincrement())
   fullname                  String                // lấy name từ Google
   email                     String                @unique
-  password                  String?               // nullable for Google OAuth
+  hashedPassword            String                @map("hashed_password")
   googleId                  String?               // for Google OAuth
   firstName                 String?               // given_name từ Google
   lastName                  String?               // family name từ Google

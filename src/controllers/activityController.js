@@ -1,10 +1,12 @@
 import { prisma } from '../libs/prisma.js'
 
+// ==========CHƯA ĐẾN SPRINT -> CHƯA TRIỂN KHAI CHÍNH XÁC -> CHƯA TEST==========
+
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body
     
-    const newActivity = await prisma.activities.create({
+    const newActivity = await prisma.activity.create({
       data: payload
     })
 
@@ -24,7 +26,7 @@ export const createActivity = async (req, res) => {
 
 export const getActivities = async (req, res) => {
   try {
-    const activities = await prisma.activities.findMany()
+    const activities = await prisma.activity.findMany()
 
     res.status(200).json({
       success: true,
@@ -44,7 +46,7 @@ export const getActivityById = async (req, res) => {
   try {
     const { id } = req.params
 
-    const storedActivity = await prisma.activities.findUnique({
+    const storedActivity = await prisma.activity.findUnique({
       where: { id: Number(id) }
     })
 
@@ -73,7 +75,7 @@ export const getActivitiesBySlug = async (req, res) => {
   try {
     const { slug } = req.params
 
-    const activity = await prisma.activities.findUnique({
+    const activity = await prisma.activity.findUnique({
       where: { slug: slug }
     })
 
@@ -103,7 +105,7 @@ export const updateActivity = async (req, res) => {
     const { id } = req.params
     const payload = req.body
 
-    const updatedActivity = await prisma.activities.update({
+    const updatedActivity = await prisma.activity.update({
       where: { id: Number(id) },
       data: payload
     })
@@ -126,7 +128,7 @@ export const deleteActivity = async (req, res) => {
   try {
     const { id } = req.params
 
-    const deletedActivity = await prisma.activities.delete({
+    const deletedActivity = await prisma.activity.delete({
       where: { id: Number(id) }
     })
 

@@ -1,5 +1,6 @@
-import { prisma } from "../libs/prisma.js";
-import bcrypt from "bcryptjs";
+import { prisma } from "../libs/prisma.js"
+import bcrypt from "bcryptjs"
+import { removeSensitiveUserData } from "../utils/userHelper.js"
 
 export const createUser = async (req, res) => {
   try {
@@ -7,121 +8,97 @@ export const createUser = async (req, res) => {
 
     // TODO: Create validation middleware
 
-    const storedUser = await prisma.users.findUnique({
+    const storedUser = await prisma.user.findUnique({
       where: {
         email: payload.email,
       },
-    });
+    })
 
     if (storedUser) {
       return res.status(400).json({
         success: false,
         message: "User with this email already exists",
-      });
+      })
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 12);
 
-    const newUser = await prisma.users.create({
+    const newUser = await prisma.user.create({
       data: {
-        name: payload.name,
         email: payload.email,
         password: hashedPassword,
-        fullname: userData.fullname,
-        phoneNumber: phoneNumber,
-        dateOfBirth: dateOfBirth,
-        role: payload.role,
+        fullname: payload.fullname,
+        phoneNumber: payload.phoneNumber,
+        dateOfBirth: payload.dateOfBirth
       },
-    });
+    })
 
-    const {
-      password,
-      googleId,
-      refreshTokens,
-      resetToken,
-      ...neccessaryUserInfo
-    } = newUser;
+    const necessaryUserData = removeSensitiveUserData(newUser)
 
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      data: neccessaryUserInfo,
-    });
+      data: necessaryUserData,
+    })
   } catch (err) {
     console.log("Error in createUser function:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Create user error: ${err.message}`,
-    });
+    })
   }
-};
+}
 
 export const getUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const storedUser = await prisma.users.findUnique({
+    const storedUser = await prisma.user.findUnique({
       where: {
         id: Number(id),
       },
-    });
+    })
 
     if (!storedUser) {
       return res.status(404).json({
         success: false,
         message: "User not found",
-      });
+      })
     }
 
-    const {
-      password,
-      googleId,
-      refreshTokens,
-      resetToken,
-      ...neccessaryUserInfo
-    } = storedUser;
+    const necessaryUserData = removeSensitiveUserData(storedUser)
 
     res.status(200).json({
       success: true,
-      data: neccessaryUserInfo,
-    });
+      data: necessaryUserData,
+    })
   } catch (err) {
     console.log("Error in getUser function:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Get user error: ${err.message}`,
-    });
+    })
   }
-};
+}
 
 export const getUsers = async (req, res) => {
   try {
-    const storedUsers = await prisma.users.findMany();
+    const storedUsers = await prisma.user.findMany();
 
-    const users = storedUsers.map((user) => {
-      const {
-        password,
-        googleId,
-        refreshTokens,
-        resetToken,
-        ...neccessaryUserInfo
-      } = user;
-
-      return neccessaryUserInfo;
-    });
+    const users = storedUsers.map((user) => removeSensitiveUserData(user))
 
     res.status(200).json({
       success: true,
       data: users,
-    });
+    })
   } catch (err) {
     console.log("Error in getUsers function:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Get users error: ${err.message}`,
-    });
+    })
   }
-};
+}
 
 export const updateUser = async (req, res) => {
   try {
@@ -130,101 +107,87 @@ export const updateUser = async (req, res) => {
 
     // TODO: Create validation middleware
 
-    const storedUser = await prisma.users.findUnique({
+    const storedUser = await prisma.user.findUnique({
       where: {
-        id: parseInt(id),
+        id: Number(id),
       },
-    });
+    })
 
     if (!storedUser) {
       return res.status(404).json({
         success: false,
         message: "Not found user to update",
-      });
+      })
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 12);
 
-    const updatedUser = await prisma.users.update({
+    const updatedUser = await prisma.user.update({
       where: {
-        id: parseInt(id),
+        id: Number(id),
       },
       data: {
-        name: payload.name,
         email: payload.email,
         password: hashedPassword,
-        fullname: userData.fullname,
-        phoneNumber: phoneNumber,
-        dateOfBirth: dateOfBirth,
-        role: payload.role,
+        fullname: payload.fullname,
+        phoneNumber: payload.phoneNumber,
+        dateOfBirth: payload.dateOfBirth,
         status: payload.status,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
       },
-    });
+    })
 
-    const {
-      password,
-      googleId,
-      refreshTokens,
-      resetToken,
-      ...neccessaryUserInfo
-    } = updatedUser;
+    const necessaryUserData = removeSensitiveUserData(updatedUser)
 
     res.status(200).json({
       success: true,
       message: "User updated successfully",
-      data: neccessaryUserInfo,
-    });
+      data: necessaryUserData,
+    })
   } catch (err) {
     console.log("Error in updateUser function:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Update user error: ${err.message}`,
-    });
+    })
   }
-};
+}
 
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const storedUser = await prisma.users.findUnique({
+    const storedUser = await prisma.user.findUnique({
       where: {
-        id: parseInt(id),
+        id: Number(id),
       },
-    });
+    })
 
     if (!storedUser) {
       return res.status(404).json({
         success: false,
         message: "Not found user to delete",
-      });
+      })
     }
 
-    const deletedUser = await prisma.users.delete({
+    const deletedUser = await prisma.user.delete({
       where: {
-        id: parseInt(id),
+        id: Number(id),
       },
-    });
+    })
 
-    const {
-      password,
-      googleId,
-      refreshTokens,
-      resetToken,
-      ...neccessaryUserInfo
-    } = deletedUser;
+    const necessaryUserData = removeSensitiveUserData(deletedUser)
 
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
-      data: neccessaryUserInfo,
-    });
+      data: necessaryUserData,
+    })
   } catch (err) {
     console.log("Error in deleteUser function:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Delete user error: ${err.message}`,
-    });
+    })
   }
-};
+}
