@@ -11,16 +11,18 @@ model User {
   fullname                  String                // lấy name từ Google
   email                     String                @unique
   hashedPassword            String                @map("hashed_password")
-  googleId                  String?               // for Google OAuth
-  firstName                 String?               // given_name từ Google
-  lastName                  String?               // family name từ Google
-  avatarUrl                 String?               // picture URL từ Google hoặc avt tùy chọn
-  isEmailVerified           Boolean               @default(false)
-  provider                  Provider              @default(LOCAL)
-  locale                    String?               
+  // googleId                  String?               // for Google OAuth
+  // firstName                 String?               // given_name từ Google
+  // lastName                  String?               // family name từ Google
+  // avatarUrl                 String?               // picture URL từ Google hoặc avt tùy chọn
+  // isEmailVerified           Boolean               @default(false)
+  // provider                  Provider              @default(LOCAL)
+  // locale                    String?               
   phoneNumber               String?               @map("phone_number") @db.VarChar(15)
   dateOfBirth               DateTime?             @map("date_of_birth")
   role                      String                @default("member")
+  position                  String?               @map("position")
+  department                String?               @map("department")
   status                    String                @default("active")
   lastLogin                 DateTime?             
   createdAt                 DateTime              @default(now())
@@ -33,7 +35,7 @@ model User {
 
   @@map("users")
   @@index([email])
-  @@index([googleId])
+  // @@index([googleId])
 }
 
 // model RefreshToken {
@@ -155,46 +157,46 @@ model ResetPasswordToken {
 //   @@index([activityId, status])
 // }
 
-enum Role {
-  ADMIN
-  MODERATOR
-  MEMBER
-}
+// enum Role {
+//   ADMIN
+//   MODERATOR
+//   MEMBER
+// }
 
-enum Provider {
-  LOCAL
-  GOOGLE
-  BOTH
-}
+// enum Provider {
+//   LOCAL
+//   GOOGLE
+//   BOTH
+// }
 
-enum Status {
-  ACTIVE
-  INACTIVE
-}
+// enum Status {
+//   ACTIVE
+//   INACTIVE
+// }
 
-enum ActivityType {
-  MEETING
-  WORKSHOP
-  TRAINING
-  PERFORMANCE
-  COMPETITION
-  SOCIAL
-  VOLUNTEER
-}
+// enum ActivityType {
+//   MEETING
+//   WORKSHOP
+//   TRAINING
+//   PERFORMANCE
+//   COMPETITION
+//   SOCIAL
+//   VOLUNTEER
+// }
 
-enum ActivityStatus {
-  DRAFT
-  PUBLISHED
-  ONGOING
-  COMPLETED
-  CANCELLED
-  POSTPONED
-}
+// enum ActivityStatus {
+//   DRAFT
+//   PUBLISHED
+//   ONGOING
+//   COMPLETED
+//   CANCELLED
+//   POSTPONED
+// }
 
-enum ParticipationStatus {
-  REGISTERED
-  CONFIRMED
-  ATTENDED
-  ABSENT
-  CANCELLED
-}
+// enum ParticipationStatus {
+//   REGISTERED
+//   CONFIRMED
+//   ATTENDED
+//   ABSENT
+//   CANCELLED
+// }
