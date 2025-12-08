@@ -155,7 +155,10 @@ export const register = async (req, res) => {
                 fullname: userData.fullname,
                 email: userData.email,
                 hashedPassword: hashedPassword,
-                phoneNumber: userData.phoneNumber
+                phoneNumber: userData.phoneNumber,
+                role: userData.role,
+                position: userData.position,
+                department: userData.department
             }
         })
 
