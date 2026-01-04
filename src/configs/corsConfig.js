@@ -7,3 +7,5 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }
+
+export { corsOptions }

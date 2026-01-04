@@ -12,11 +12,13 @@ import authRouter from './src/routes/authRoute.js'
 import userRouter from './src/routes/userRoute.js'
 import activityRouter from './src/routes/activityRoute.js'
 
+import { corsOptions } from './src/configs/corsConfig.js'
+
 const app = express()
 dotenv.config()
 const PORT = process.env.PORT || 3000
 
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(limiter)
 app.use(cookieParser())
 app.use(helmet())
