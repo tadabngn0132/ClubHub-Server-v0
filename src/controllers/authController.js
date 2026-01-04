@@ -104,7 +104,7 @@ export const login = async (req, res) => {
         })
 
         const accessToken = await createAccessToken(updatedUser.id)
-        const refreshToken = await createRefreshToken(storedUser.id)
+        const refreshToken = await createRefreshToken(updatedUser.id)
         
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,

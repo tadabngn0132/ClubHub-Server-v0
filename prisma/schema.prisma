@@ -11,13 +11,13 @@ model User {
   fullname                  String                // lấy name từ Google
   email                     String                @unique
   hashedPassword            String                @map("hashed_password")
-  // googleId                  String?               // for Google OAuth
-  // firstName                 String?               // given_name từ Google
-  // lastName                  String?               // family name từ Google
-  // avatarUrl                 String?               // picture URL từ Google hoặc avt tùy chọn
-  // isEmailVerified           Boolean               @default(false)
-  // provider                  Provider              @default(LOCAL)
-  // locale                    String?               
+  googleId                  String?               // for Google OAuth
+  firstName                 String?               // given_name từ Google
+  lastName                  String?               // family name từ Google
+  avatarUrl                 String?               // picture URL từ Google hoặc avt tùy chọn
+  isEmailVerified           Boolean               @default(false)
+  provider                  Provider              @default(LOCAL)
+  locale                    String?               
   phoneNumber               String?               @map("phone_number") @db.VarChar(15)
   dateOfBirth               DateTime?             @map("date_of_birth")
   role                      String                @default("member")
@@ -27,30 +27,30 @@ model User {
   lastLogin                 DateTime?             
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @updatedAt
-  // refreshTokens             RefreshToken[]
+  refreshTokens             RefreshToken[]
   resetToken                ResetPasswordToken[]
-  // userPosition              UserPosition[]
-  // activityParticipations    ActivityParticipation[]
-  // activitiesOrganized       Activity[]           
+  userPosition              UserPosition[]
+  activityParticipations    ActivityParticipation[]
+  activitiesOrganized       Activity[]           
 
   @@map("users")
   @@index([email])
-  // @@index([googleId])
+  @@index([googleId])
 }
 
-// model RefreshToken {
-//   id          String      @id @default(uuid())
-//   expiresAt   DateTime    @map("expires_at")
-//   createdAt   DateTime    @default(now())
-//   lastUsedAt  DateTime?   @map("last_used_at")
-//   isRevoked   Boolean     @default(false) @map("is_revoked")
-//   revokedAt   DateTime?   @map("revoked_at")
-//   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   userId      Int         @map("user_id")
+model RefreshToken {
+  id          String      @id @default(uuid())
+  expiresAt   DateTime    @map("expires_at")
+  createdAt   DateTime    @default(now())
+  lastUsedAt  DateTime?   @map("last_used_at")
+  isRevoked   Boolean     @default(false) @map("is_revoked")
+  revokedAt   DateTime?   @map("revoked_at")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int         @map("user_id")
 
-//   @@map("refreshTokens")
-//   @@index([userId])
-// }
+  @@map("refreshTokens")
+  @@index([userId])
+}
 
 model ResetPasswordToken {
   id            Int         @id @default(autoincrement())
@@ -65,138 +65,138 @@ model ResetPasswordToken {
   @@map("resetPasswordTokens")
 }
 
-// model Department {
-//   id            Int           @id @default(autoincrement())
-//   name          String        @map("name")
-//   description   String        @map("description")
-//   isActive      Boolean       @default(true)
-//   createdAt     DateTime      @default(now()) @map("created_at")
-//   updatedAt     DateTime      @updatedAt @map("updated_at")
-//   // positions     Position[]
+model Department {
+  id            Int           @id @default(autoincrement())
+  name          String        @map("name")
+  description   String        @map("description")
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  positions     Position[]
 
-//   @@map("departments")
-// }
+  @@map("departments")
+}
 
-// model Position {
-//   id              Int               @id @default(autoincrement())
-//   title           String            @map("title")
-//   level           Int               @map("level")
-//   systemRole      Role
-//   department      Department?       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-//   departmentId    Int?              @map("department_id")
-//   userPosition    UserPosition[]
+model Position {
+  id              Int               @id @default(autoincrement())
+  title           String            @map("title")
+  level           Int               @map("level")
+  systemRole      Role
+  department      Department?       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId    Int?              @map("department_id")
+  userPosition    UserPosition[]
 
-//   @@map("positions")
-// }
+  @@map("positions")
+}
 
-// model UserPosition {
-//   id              Int             @id @default(autoincrement())
-//   userId          Int             @map("user_id")
-//   positionId      Int             @map("position_id")
-//   isPrimary       Boolean         @default(false)
-//   assignedAt      DateTime        @default(now())
-//   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   position        Position        @relation(fields: [positionId], references: [id], onDelete: Cascade)
+model UserPosition {
+  id              Int             @id @default(autoincrement())
+  userId          Int             @map("user_id")
+  positionId      Int             @map("position_id")
+  isPrimary       Boolean         @default(false)
+  assignedAt      DateTime        @default(now())
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position        Position        @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
-//   @@unique([userId, positionId])
-//   @@map("userPositions")
-//   @@index([userId])
-//   @@index([positionId])
-// }
+  @@unique([userId, positionId])
+  @@map("userPositions")
+  @@index([userId])
+  @@index([positionId])
+}
 
-// model Activity {
-//   id                      Int                       @id @default(autoincrement())
-//   title                   String                    @map("title")
-//   description             String                    @map("description")
-//   shortDescription        String?                   @map("short_description")
-//   slug                    String                    @unique
-//   startDate               DateTime                  @map("start_date")
-//   endDate                 DateTime                  @map("end_date")
-//   isOnline                Boolean                   @default(false) @map("is_online")
-//   location                String?                   @map("location")
-//   meetLink                String?                   @map("meet_link")
-//   createdAt               DateTime                  @default(now())
-//   updatedAt               DateTime                  @updatedAt
-//   type                    ActivityType              @map("type")
-//   status                  ActivityStatus            @default(DRAFT)
-//   thumbnailUrl            String?                   @map("thumbnail_url")
-//   images                  String[]                  @default([]) @map("images")
-//   videos                  String[]                  @default([]) @map("videos")
-//   maxParticipants         Int?                      @map("max_participants")
-//   registrationDeadline    DateTime?                 @map("registration_deadline")
-//   requireRegistration     Boolean                   @default(false) @map("require_registration")
-//   organizerId             Int                       @map("organizer_id")
-//   organizer               User                      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
-//   activityParticipations  ActivityParticipation[]
-//   isPublic                Boolean                   @default(true) @map("is_public")
-//   isFeatured              Boolean                   @default(false) @map("is_featured")
-//   priority                Int                       @default(0) @db.SmallInt
+model Activity {
+  id                      Int                       @id @default(autoincrement())
+  title                   String                    @map("title")
+  description             String                    @map("description")
+  shortDescription        String?                   @map("short_description")
+  slug                    String                    @unique
+  startDate               DateTime                  @map("start_date")
+  endDate                 DateTime                  @map("end_date")
+  isOnline                Boolean                   @default(false) @map("is_online")
+  location                String?                   @map("location")
+  meetLink                String?                   @map("meet_link")
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  type                    ActivityType              @map("type")
+  status                  ActivityStatus            @default(DRAFT)
+  thumbnailUrl            String?                   @map("thumbnail_url")
+  images                  String[]                  @default([]) @map("images")
+  videos                  String[]                  @default([]) @map("videos")
+  maxParticipants         Int?                      @map("max_participants")
+  registrationDeadline    DateTime?                 @map("registration_deadline")
+  requireRegistration     Boolean                   @default(false) @map("require_registration")
+  organizerId             Int                       @map("organizer_id")
+  organizer               User                      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  activityParticipations  ActivityParticipation[]
+  isPublic                Boolean                   @default(true) @map("is_public")
+  isFeatured              Boolean                   @default(false) @map("is_featured")
+  priority                Int                       @default(0) @db.SmallInt
 
-//   @@map("activities")
-//   @@index([organizerId])
-//   @@index([status])
-//   @@index([startDate])
-//   @@index([slug])
-// }
+  @@map("activities")
+  @@index([organizerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([slug])
+}
 
-// model ActivityParticipation {
-//   id                  Int                     @id @default(autoincrement())
-//   userId              Int                     @map("user_id")
-//   activityId          Int                     @map("activity_id")
-//   status              ParticipationStatus     @default(REGISTERED)
-//   registeredAt        DateTime                @default(now()) @map("registered_at")
-//   updatedAt           DateTime                @updatedAt
-//   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   activity            Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+model ActivityParticipation {
+  id                  Int                     @id @default(autoincrement())
+  userId              Int                     @map("user_id")
+  activityId          Int                     @map("activity_id")
+  status              ParticipationStatus     @default(REGISTERED)
+  registeredAt        DateTime                @default(now()) @map("registered_at")
+  updatedAt           DateTime                @updatedAt
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity            Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
-//   @@unique([userId, activityId])
-//   @@map("activityParticipations")
-//   @@index([userId])
-//   @@index([activityId])
-//   @@index([status])
-//   @@index([activityId, status])
-// }
+  @@unique([userId, activityId])
+  @@map("activityParticipations")
+  @@index([userId])
+  @@index([activityId])
+  @@index([status])
+  @@index([activityId, status])
+}
 
-// enum Role {
-//   ADMIN
-//   MODERATOR
-//   MEMBER
-// }
+enum Role {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
 
-// enum Provider {
-//   LOCAL
-//   GOOGLE
-//   BOTH
-// }
+enum Provider {
+  LOCAL
+  GOOGLE
+  BOTH
+}
 
-// enum Status {
-//   ACTIVE
-//   INACTIVE
-// }
+enum Status {
+  ACTIVE
+  INACTIVE
+}
 
-// enum ActivityType {
-//   MEETING
-//   WORKSHOP
-//   TRAINING
-//   PERFORMANCE
-//   COMPETITION
-//   SOCIAL
-//   VOLUNTEER
-// }
+enum ActivityType {
+  MEETING
+  WORKSHOP
+  TRAINING
+  PERFORMANCE
+  COMPETITION
+  SOCIAL
+  VOLUNTEER
+}
 
-// enum ActivityStatus {
-//   DRAFT
-//   PUBLISHED
-//   ONGOING
-//   COMPLETED
-//   CANCELLED
-//   POSTPONED
-// }
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
 
-// enum ParticipationStatus {
-//   REGISTERED
-//   CONFIRMED
-//   ATTENDED
-//   ABSENT
-//   CANCELLED
-// }
+enum ParticipationStatus {
+  REGISTERED
+  CONFIRMED
+  ATTENDED
+  ABSENT
+  CANCELLED
+}
