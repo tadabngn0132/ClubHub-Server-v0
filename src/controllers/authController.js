@@ -104,14 +104,14 @@ export const login = async (req, res) => {
         })
 
         const accessToken = await createAccessToken(updatedUser.id)
-        const refreshToken = await createRefreshToken(updatedUser.id)
+        // const refreshToken = await createRefreshToken(updatedUser.id)
         
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 15 * 24 * 60 * 60 * 1000
-        })
+        // res.cookie('refreshToken', refreshToken, {
+        //     httpOnly: true,
+        //     secure: process.env.NODE_ENV === 'production',
+        //     sameSite: 'Strict',
+        //     maxAge: 15 * 24 * 60 * 60 * 1000
+        // })
 
         const necessaryUserData = removeSensitiveUserData(updatedUser)
 
@@ -279,7 +279,7 @@ export const changePassword = async (req, res) => {
         })
         
         // Hash new password and update in database
-        const correctPassword = bcrypt.compare(currentPassword, storedUser.hashedPassword)
+        const correctPassword = await bcrypt.compare(currentPassword, storedUser.hashedPassword)
 
         if (!correctPassword) {
             return res.status(401).json({
