@@ -8,12 +8,12 @@ import {
     createAccessToken,
     createResetPasswordToken,
     verifyResetPasswordToken
-} from '../utils/tokenHelper.js'
-import { sendResetPasswordEmail } from '../utils/emailHelper.js'
-import { oauth2Client, roleBasedScopes } from '../lib/google.js'
+} from '../utils/jwtUtil.js'
+import { sendResetPasswordEmail } from '../utils/emailUtil.js'
+import { oauth2Client, roleBasedScopes } from '../libs/google.js'
 import crypto from 'crypto'
 import { google } from 'googleapis'
-import { removeSensitiveUserData } from '../utils/userHelper.js'
+import { removeSensitiveUserData } from '../utils/userUtil.js'
 
 
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập

@@ -7,7 +7,7 @@ import {
   updateActivity,
   deleteActivity
 } from '../controllers/activityController.js'
-import { verifyAccessToken } from '../middlewares/authentication.js'
+import { verifyAccessToken } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 

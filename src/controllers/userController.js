@@ -1,6 +1,6 @@
 import { prisma } from "../libs/prisma.js"
 import bcrypt from "bcryptjs"
-import { removeSensitiveUserData } from "../utils/userHelper.js"
+import { removeSensitiveUserData } from "../utils/userUtil.js"
 
 export const createUser = async (req, res) => {
   try {
