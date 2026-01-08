@@ -1,32 +1,26 @@
 import express from "express"
 import {
-    // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-    // refreshAccessToken,
+    refreshAccessToken,
     login,
     register,
-    // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-    // logout,
+    logout,
     forgotPassword,
     resetPassword,
     changePassword,
-    // ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-    // googleAuth,
-    // googleAuthCallback
+    googleAuth,
+    googleAuthCallback
 } from "../controllers/authController.js"
 
 const router = express.Router()
 
-// ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-// router.get("/refresh-access-token", refreshAccessToken)
+router.get("/refresh-access-token", refreshAccessToken)
 router.post("/login", login)
 router.post("/register", register)
-// ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-// router.post("/logout", logout)
+router.post("/logout", logout)
 router.post("forgot-password", forgotPassword)
 router.put("/reset-password", resetPassword)
 router.put("/change-password", changePassword)
-// ==========TÍNH NĂNG NÂNG CAO (Tạm thời backup)==========
-// router.get("/google-auth", googleAuth)
-// router.get("/google-auth/callback", googleAuthCallback)
+router.get("/google-auth", googleAuth)
+router.get("/google-auth/callback", googleAuthCallback)
 
 export default router
