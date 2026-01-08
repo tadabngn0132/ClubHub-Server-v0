@@ -16,9 +16,9 @@ export const createRefreshToken = async (userId) => {
         { expiresIn: "15d" }
     );
 
-    await prisma.refreshTokens.create({
+    await prisma.refreshToken.create({
         data: {
-            token: jti,
+            id: jti,
             userId: userId,
             expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
         },

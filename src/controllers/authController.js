@@ -104,14 +104,14 @@ export const login = async (req, res) => {
         })
 
         const accessToken = await createAccessToken(updatedUser.id)
-        // const refreshToken = await createRefreshToken(updatedUser.id)
+        const refreshToken = await createRefreshToken(updatedUser.id)
         
-        // res.cookie('refreshToken', refreshToken, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === 'production',
-        //     sameSite: 'Strict',
-        //     maxAge: 15 * 24 * 60 * 60 * 1000
-        // })
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 15 * 24 * 60 * 60 * 1000
+        })
 
         const necessaryUserData = removeSensitiveUserData(updatedUser)
 
@@ -177,6 +177,8 @@ export const logout = async (req, res) => {
         const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
 
         await revokeRefreshToken(decodedToken.jti)
+
+        res.clearCookie('refreshToken')
 
         res.status(200).json({ 
             success: true, 
