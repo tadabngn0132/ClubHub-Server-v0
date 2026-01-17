@@ -25,13 +25,13 @@ export const createRefreshToken = async (userId) => {
     });
 
     return refreshToken;
-};
+}
 
 export const verifyRefreshToken = async (token) => {
     try {
         const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
-        const storedToken = await prisma.refreshTokens.findFirst({
+        const storedToken = await prisma.refreshToken.findFirst({
             where: {
                 id: decodedToken.jti,
                 isRevoked: false,
@@ -45,7 +45,7 @@ export const verifyRefreshToken = async (token) => {
             throw new Error("Refresh token is expired or revoked");
         }
 
-        await prisma.refreshTokens.update({
+        await prisma.refreshToken.update({
             where: { id: decodedToken.jti },
             data: { lastUsedAt: new Date() },
         });
@@ -55,17 +55,17 @@ export const verifyRefreshToken = async (token) => {
         console.error("Error verifying refresh token:", error.message);
         throw new Error("Invalid refresh token");
     }
-};
+}
 
 export const revokeRefreshToken = async (jti) => {
-    return await prisma.refreshTokens.update({
+    return await prisma.refreshToken.update({
         where: { id: jti },
         data: {
             isRevoked: true,
             revokedAt: new Date(),
         },
     });
-};
+}
 
 export const createAccessToken = async (userId) => {
     const accessToken = jwt.sign(
@@ -85,7 +85,7 @@ export const createResetPasswordToken = async (userId) => {
     const resetPasswordHashedToken = crypto.createHash('sha256').update(resetPasswordToken).digest('hex')
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
 
-    await prisma.resetPasswordTokens.create({
+    await prisma.resetPasswordToken.create({
         data: {
             hashedToken: resetPasswordHashedToken,
             expiresAt: expiresAt,
@@ -99,7 +99,7 @@ export const createResetPasswordToken = async (userId) => {
 export const verifyResetPasswordToken = async (token, userId) => {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex')
 
-    const storedToken = await prisma.resetPasswordTokens.findFirst({
+    const storedToken = await prisma.resetPasswordToken.findFirst({
         where: {
             userId: userId,
             hashedToken: hashedToken,
