@@ -204,10 +204,10 @@ export const forgotPassword = async (req, res) => {
         })
 
         // Generate a password reset token and send it via email
-        const resetToken = createResetPasswordToken(storedUser.id)
+        const resetToken = await createResetPasswordToken(storedUser.id)
 
         // Send reset password email with reset token url
-        sendResetPasswordEmail(resetToken, email)
+        await sendResetPasswordEmail(resetToken, email)
         
         res.status(200).json({ 
             success: true, 
