@@ -1,34 +1,18 @@
 const ROLE_PERMISSIONS = {
-  superAdmin: {
-    users: {
-      create: true,
-      read: true,
-      update: true,
-      softDelete: true,
-      hardDelete: true
-    },
-    activities: {
-      create: true,
-      read: true,
-      update: true,
-      softDelete: true,
-      hardDelete: true
-    }
-  },
   admin: {
     users: {
       create: true,
       read: true,
       update: true,
       softDelete: true,
-      hardDelete: false
+      hardDelete: true
     },
     activities: {
       create: true,
       read: true,
       update: true,
       softDelete: true,
-      hardDelete: false
+      hardDelete: true
     }
   },
   moderator: {
