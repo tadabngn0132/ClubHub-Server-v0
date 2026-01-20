@@ -329,7 +329,7 @@ export const googleAuth = async (req, res) => {
 
         const authorizationUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
-            scope: scopes,
+            scope: roleBasedScopes, // Adjust scopes based on role if needed
             include_granted_scopes: true,
             state: state
         })
@@ -386,7 +386,7 @@ export const googleAuthCallback = async (req, res) => {
 
         const { data: userInfo } = await oauth2.userInfo.get()
 
-        const storedUser = prisma.user.findFirst({
+        const storedUser = await prisma.user.findFirst({
             where: {
                 email: userInfo.email
             }
