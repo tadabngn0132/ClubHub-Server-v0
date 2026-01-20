@@ -9,7 +9,10 @@ import {
     createResetPasswordToken,
     verifyResetPasswordToken
 } from '../utils/jwtUtil.js'
-import { sendResetPasswordEmail } from '../utils/emailUtil.js'
+import {
+    sendResetPasswordEmail,
+    sendChangePasswordConfirmationEmail
+} from '../utils/emailUtil.js'
 import { oauth2Client, roleBasedScopes } from '../libs/google.js'
 import crypto from 'crypto'
 import { google } from 'googleapis'
@@ -301,6 +304,8 @@ export const changePassword = async (req, res) => {
                 hashedPassword: hashedNewPassword
             }
         })
+
+        await sendChangePasswordConfirmationEmail(storedUser.email)
 
         res.status(200).json({ 
             success: true, 
