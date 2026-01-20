@@ -226,7 +226,7 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
     try {
         const { newPassword } = req.body
-        const { resetToken, email } = req.query
+        const { token, email } = req.query
 
         // TODO: Create validation middleware
 
@@ -236,14 +236,7 @@ export const resetPassword = async (req, res) => {
             }
         })
     
-        try {
-            verifyResetPasswordToken(resetToken, storedUser.id)
-        } catch (error) {
-            return res.status(401).json({
-                success: false,
-                message: error.message
-            })
-        }
+        verifyResetPasswordToken(token, storedUser.id)
 
         const hashedNewPassword = await bcrypt.hash(newPassword, 12)
 
@@ -252,7 +245,7 @@ export const resetPassword = async (req, res) => {
                 id: storedUser.id
             },
             data: {
-                password: hashedNewPassword
+                hashedPassword: hashedNewPassword
             }
         })
 
@@ -262,6 +255,14 @@ export const resetPassword = async (req, res) => {
         })
     } catch (error) {
         console.log("Error in resetPassword function", error)
+
+        if (error.message === "Reset token is used or has expired") {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            })
+        }
+        
         return res.status(500).json({
             success: false,
             message: `Internal server error / Reset password error: ${error.message}`

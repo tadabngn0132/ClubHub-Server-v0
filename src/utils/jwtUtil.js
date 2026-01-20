@@ -114,5 +114,15 @@ export const verifyResetPasswordToken = async (token, userId) => {
         throw new Error("Reset token is used or has expired")
     }
 
+    await prisma.resetPasswordToken.update({
+        where: {
+            id: storedToken.id
+        },
+        data: {
+            isUsed: true,
+            usedAt: new Date()
+        }
+    })
+
     return true
 }
