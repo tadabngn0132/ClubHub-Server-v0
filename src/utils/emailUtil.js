@@ -30,3 +30,14 @@ export const sendChangePasswordConfirmationEmail = async (email) => {
 
   await transporter.sendMail(message)
 }
+
+export const sendWelcomeEmail = async (email, name, password) => {
+  const signInUrl = `${process.env.CLIENT_URL}/sign-in`
+
+  message.to = email
+  message.subject = 'Welcome to GDC Website!'
+  message.text = `Hello ${name},\n\nWelcome to the GDC Website! We're excited to have you on board.`
+  message.html = `<p>Hello ${name},</p><p>Welcome to the GDC Website! We're excited to have you on board.</p><br/><p>Email: ${email}</p><p>Password: ${password}</p><a href="${signInUrl}">Sign In Now</a><br/><p>Please change your password after your first login.</p><br/><p>Best regards,<br/>GDC - Greenwich Dance Crew</p>`
+  
+  await transporter.sendMail(message)
+}
