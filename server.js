@@ -11,6 +11,7 @@ import { prisma } from './src/libs/prisma.js'
 import authRouter from './src/routes/authRoute.js'
 import userRouter from './src/routes/userRoute.js'
 import activityRouter from './src/routes/activityRoute.js'
+import taskRouter from './src/routes/taskRoute.js'
 
 import { corsOptions } from './src/configs/corsConfig.js'
 
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/auth', authRouter)
 app.use('/api/users', userRouter)
 app.use('/api/activities', activityRouter)
+app.use('/api/tasks', taskRouter)
 
 async function testDatabaseConnection() {
     try {
