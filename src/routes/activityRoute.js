@@ -5,7 +5,8 @@ import {
   getActivityById,
   getActivitiesBySlug,
   updateActivity,
-  deleteActivity
+  deleteActivity,
+  getActivitiesByUserId
 } from '../controllers/activityController.js'
 import { verifyAccessToken } from '../middlewares/authMiddleware.js'
 
@@ -14,6 +15,7 @@ const router = express.Router()
 router.post('/', verifyAccessToken, createActivity)
 router.get('/', verifyAccessToken, getActivities)
 router.get('/:id', verifyAccessToken, getActivityById)
+router.get('/:userId', verifyAccessToken, getActivitiesByUserId)
 router.get('/:slug', verifyAccessToken, getActivitiesBySlug)
 router.put('/:id', verifyAccessToken, updateActivity)
 router.delete('/:id', verifyAccessToken, deleteActivity)

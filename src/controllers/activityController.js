@@ -145,3 +145,25 @@ export const deleteActivity = async (req, res) => {
     })
   }
 }
+
+export const getActivitiesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params
+    
+    const activities = await prisma.activity.findMany({
+      where: { userId: Number(userId) }
+    })
+    
+    res.status(200).json({
+      success: true,
+      message: 'Get activities by user ID successfully',
+      data: activities
+    })
+  } catch (err) {
+    console.log("Error get activities by user ID function: ", err.message)
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Get activities by user ID error: ${err.message}`
+    })
+  }
+}
