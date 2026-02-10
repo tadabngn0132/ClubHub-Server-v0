@@ -152,7 +152,14 @@ export const register = async (req, res) => {
                 phoneNumber: userData.phoneNumber,
                 role: userData.role,
                 position: userData.position,
-                department: userData.department
+                department: userData.department,
+                dateOfBirth: userData.dateOfBirth,
+                gender: userData.gender,
+                major: userData.major,
+                studentId: userData.studentId,
+                generation: userData.generation,
+                joinedAt: userData.joinedAt,
+                bio: userData.bio
             }
         })
 

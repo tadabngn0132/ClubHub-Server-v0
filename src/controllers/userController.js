@@ -21,7 +21,7 @@ export const createUser = async (req, res) => {
       })
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, 12);
+    const hashedPassword = await bcrypt.hash("WelcometoGDC22%^&", 12);
 
     const newUser = await prisma.user.create({
       data: {
@@ -29,7 +29,13 @@ export const createUser = async (req, res) => {
         password: hashedPassword,
         fullname: payload.fullname,
         phoneNumber: payload.phoneNumber,
-        dateOfBirth: payload.dateOfBirth
+        dateOfBirth: payload.dateOfBirth,
+        gender: payload.gender,
+        major: payload.major,
+        studentId: payload.studentId,
+        generation: payload.generation,
+        joinedAt: payload.joinedAt,
+        bio: payload.bio,
       },
     })
 
@@ -120,20 +126,23 @@ export const updateUser = async (req, res) => {
       })
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, 12);
-
     const updatedUser = await prisma.user.update({
       where: {
         id: Number(id),
       },
       data: {
         email: payload.email,
-        password: hashedPassword,
         fullname: payload.fullname,
         phoneNumber: payload.phoneNumber,
         dateOfBirth: payload.dateOfBirth,
         status: payload.status,
         updatedAt: new Date(),
+        gender: payload.gender,
+        major: payload.major,
+        studentId: payload.studentId,
+        generation: payload.generation,
+        joinedAt: payload.joinedAt,
+        bio: payload.bio,
       },
     })
 
