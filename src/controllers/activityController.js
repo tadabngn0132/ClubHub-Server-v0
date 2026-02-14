@@ -5,9 +5,29 @@ import { prisma } from '../libs/prisma.js'
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body
+
+    // Tạo slug từ tiêu đề hoạt động
+    const activitySlug = payload.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '')
+
+    // Kiểm tra nếu slug đã tồn tại, thêm hậu tố ngẫu nhiên để đảm bảo tính duy nhất
     
+    const existingActivity = await prisma.activity.findUnique({
+      where: { slug: activitySlug }
+    })
+
+    let finalSlug = activitySlug
+    if (existingActivity) {
+      const randomSuffix = Math.random().toString(36).substring(2, 8) // Tạo hậu tố ngẫu nhiên
+      finalSlug = `${activitySlug}-${randomSuffix}`
+    }
+
     const newActivity = await prisma.activity.create({
-      data: payload
+      data: {
+        ...payload,
+        slug: finalSlug,
+        startDate: new Date(payload.startDate),
+        endDate: new Date(payload.endDate)
+      }
     })
 
     res.status(201).json({
