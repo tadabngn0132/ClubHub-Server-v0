@@ -27,7 +27,18 @@ export const createActivity = async (req, res) => {
     // Sửa để chỉ add những data bắt buộc và cần thiết, tránh add những data không cần thiết hoặc do client tự thêm vào (như createdAt, updatedAt, etc.)
     const newActivity = await prisma.activity.create({
       data: {
-        ...payload,
+        id: payload.id,
+        title: payload.title,
+        description: payload.description,
+        slug: finalSlug,
+        startDate: new Date(payload.startDate),
+        endDate: new Date(payload.endDate),
+        isOnline: payload.isOnline || false,
+        location: payload.location || null,
+        meetLink: payload.meetLink || null,
+        type: payload.type || null,
+        status: payload.status || "DRAFT",
+        organizerId: payload.organizerId,
         slug: finalSlug,
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
@@ -154,7 +165,18 @@ export const updateActivity = async (req, res) => {
 
     const updatedActivity = await prisma.activity.update({
       where: { id: Number(id) },
-      data: payload,
+      data: {
+        title: payload.title,
+        description: payload.description,
+        startDate: new Date(payload.startDate),
+        endDate: new Date(payload.endDate),
+        isOnline: payload.isOnline,
+        location: payload.location,
+        meetLink: payload.meetLink,
+        type: payload.type,
+        status: payload.status,
+        organizerId: payload.organizerId,
+      },
     });
 
     res.status(200).json({
