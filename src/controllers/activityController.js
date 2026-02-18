@@ -5,8 +5,8 @@ import { prisma } from "../libs/prisma.js";
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
-    const validTypes = ["WORKSHOP", "SEMINAR", "MEETUP", "COMPETITION", "OTHER"];
-    const validStatuses = ["DRAFT", "PUBLISHED", "CANCELED"];
+    const validTypes = ["MEETING", "WORKSHOP", "TRAINING", "PERFORMANCE", "COMPETITION", "SOCIAL", "VOLUNTEER"];
+    const validStatuses = ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED", "CANCELLED", "POSTPONED"];
 
     // Kiểm tra loại hoạt động hợp lệ
     if (!validTypes.includes(payload.type)) {
@@ -42,10 +42,8 @@ export const createActivity = async (req, res) => {
       finalSlug = `${activitySlug}-${randomSuffix}`;
     }
 
-    // Sửa để chỉ add những data bắt buộc và cần thiết, tránh add những data không cần thiết hoặc do client tự thêm vào (như createdAt, updatedAt, etc.)
     const newActivity = await prisma.activity.create({
       data: {
-        id: payload.id,
         title: payload.title,
         description: payload.description,
         slug: finalSlug,
@@ -56,21 +54,16 @@ export const createActivity = async (req, res) => {
         meetLink: payload.meetLink || null,
         type: payload.type || null,
         status: payload.status || "DRAFT",
-        organizerId: payload.organizerId,
+        organizerId: parseInt(payload.organizerId),
         slug: finalSlug,
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
-        organizer: {
-          connect: {
-            id: payload.organizerId
-          },
-        },
       },
       include: {
         organizer: {
           select: {
             id: true,
-            name: true,
+            fullname: true,
             email: true,
           },
         },
