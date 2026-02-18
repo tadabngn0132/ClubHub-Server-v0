@@ -5,6 +5,24 @@ import { prisma } from "../libs/prisma.js";
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
+    const validTypes = ["WORKSHOP", "SEMINAR", "MEETUP", "COMPETITION", "OTHER"];
+    const validStatuses = ["DRAFT", "PUBLISHED", "CANCELED"];
+
+    // Kiểm tra loại hoạt động hợp lệ
+    if (!validTypes.includes(payload.type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid activity type",
+      });
+    }
+
+    // Kiểm tra trạng thái hoạt động hợp lệ
+    if (!validStatuses.includes(payload.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid activity status",
+      });
+    }
 
     // Tạo slug từ tiêu đề hoạt động
     const activitySlug = payload.title
