@@ -112,7 +112,7 @@ export const getActivityById = async (req, res) => {
         organizer: {
           select: {
             id: true,
-            name: true,
+            fullname: true,
             email: true,
           },
         },
