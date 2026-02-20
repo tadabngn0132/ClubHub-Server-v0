@@ -59,7 +59,7 @@ export const createActivity = async (req, res) => {
         roomNumber: payload.roomNumber || null,
         type: payload.type || null,
         status: payload.status || "DRAFT",
-        organizerId: parseInt(payload.organizerId),
+        organizerId: Number(payload.organizerId),
         slug: finalSlug,
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
