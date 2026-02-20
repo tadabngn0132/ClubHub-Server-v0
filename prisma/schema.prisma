@@ -118,9 +118,14 @@ model Activity {
   slug                    String                    @unique
   startDate               DateTime                  @map("start_date")
   endDate                 DateTime                  @map("end_date")
-  isOnline                Boolean                   @default(false) @map("is_online")
-  location                String?                   @map("location")
-  meetLink                String?                   @map("meet_link")
+  locationType            String                    @map("location_type")
+  meetingPlatform         String?                   @map("meeting_platform")
+  meetingLink             String?                   @map("meeting_link")
+  meetingId               String?                   @map("meeting_id")
+  meetingPassword         String?                   @map("meeting_password")
+  venueName               String?                   @map("venue_name")
+  venueAddress            String?                   @map("venue_address")
+  roomNumber              String?                   @map("room_number")
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
   type                    ActivityType              @map("type")
