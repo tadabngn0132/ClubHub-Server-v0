@@ -12,6 +12,9 @@ import authRouter from './src/routes/authRoute.js'
 import userRouter from './src/routes/userRoute.js'
 import activityRouter from './src/routes/activityRoute.js'
 import taskRouter from './src/routes/taskRoute.js'
+import activityRegistrationRouter from './src/routes/activityRegistrationRoute.js'
+import memberApplicationRouter from './src/routes/memberApplicationRoute.js'
+import notificationRouter from './src/routes/notificationRoute.js'
 
 import { corsOptions } from './src/configs/corsConfig.js'
 
@@ -31,6 +34,9 @@ app.use('/api/auth', authRouter)
 app.use('/api/users', userRouter)
 app.use('/api/activities', activityRouter)
 app.use('/api/tasks', taskRouter)
+app.use('/api/activity-registrations', activityRegistrationRouter)
+app.use('/api/member-applications', memberApplicationRouter)
+app.use('/api/notifications', notificationRouter)
 
 async function testDatabaseConnection() {
     try {
