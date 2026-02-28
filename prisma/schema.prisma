@@ -37,7 +37,10 @@ model User {
   resetToken                ResetPasswordToken[]
   userPosition              UserPosition[]
   activityParticipations    ActivityParticipation[]
-  activitiesOrganized       Activity[]           
+  activitiesOrganized       Activity[]     
+  memberApplication         MemberApplication?      
+  reviewedApplications      MemberApplication[]     @relation("Reviewer")
+  notifications             Notification[]
 
   @@map("users")
   @@index([email])
@@ -166,6 +169,44 @@ model ActivityParticipation {
   @@index([activityId])
   @@index([status])
   @@index([activityId, status])
+}
+
+model Task {
+  id          Int         @id @default(autoincrement())
+  title       String      @map("title")
+  description String?     @map("description")
+  isCompleted Boolean     @default(false) @map("is_completed")
+  dueDate     DateTime?   @map("due_date")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt
+}
+
+model MemberApplication {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  appliedAt     DateTime    @default(now()) @map("applied_at")
+  status        String      @default("pending") @map("status")
+  reviewedAt    DateTime?   @map("reviewed_at")
+  reviewerId    Int?        @map("reviewer_id")
+  reviewComment String?     @map("review_comment")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer      User?       @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@unique([userId])
+  @@map("memberApplications")
+}
+
+model Notification {
+  id          Int         @id @default(autoincrement())
+  userId      Int         @map("user_id")
+  message     String      @map("message")
+  isRead      Boolean     @default(false) @map("is_read")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
 }
 
 enum Role {

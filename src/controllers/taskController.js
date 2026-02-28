@@ -1,4 +1,3 @@
-// TODO: Need to review and modify task controller functions for better business logic and exact prisma model
 import { prisma } from '../libs/prisma';
 
 export const createTask = async (req, res) => {
