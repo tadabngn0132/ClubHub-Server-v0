@@ -1,4 +1,4 @@
-import { prisma } from "../libs/prisma";
+import { prisma } from "../libs/prisma.js"
 
 export const createNotification = async (req, res) => {
   try {
