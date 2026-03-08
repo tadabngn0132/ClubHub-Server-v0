@@ -6,10 +6,10 @@ export const createTask = async (req, res) => {
     
     const newTask = await prisma.task.create({
       data: {
-        title: taskData.taskName,
-        description: taskData.taskDescription,
-        dueDate: taskData.taskDueDate ? new Date(taskData.taskDueDate) : new Date(),
-        isCompleted: taskData.isCompleteTask || false,
+        title: taskData.title,
+        description: taskData.description,
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
+        isCompleted: taskData.isCompleted || false,
       }
     });
     
@@ -70,7 +70,7 @@ export const getTaskById = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const { taskName, taskDescription, taskDueDate, isCompleteTask } = req.body;
+    const taskData = req.body;
     const task = await prisma.task.findUnique({
       where: { id: Number(taskId) },
     });
@@ -83,11 +83,10 @@ export const updateTask = async (req, res) => {
     const updatedTask = await prisma.task.update({
       where: { id: Number(taskId) },
       data: {
-        title: taskName || task.title,
-        description: taskDescription || task.description,
-        assignedTo: assignedTo || task.assignedTo,
-        dueDate: taskDueDate ? new Date(taskDueDate) : task.dueDate,
-        status: isCompleteTask || task.status,
+        title: taskData.title || task.title,
+        description: taskData.description || task.description,
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate) : task.dueDate,
+        isCompleted: taskData.isCompleted || task.isCompleted,
       },
     });
     res.status(200).json({
