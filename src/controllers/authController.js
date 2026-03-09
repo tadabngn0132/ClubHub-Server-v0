@@ -336,17 +336,12 @@ export const googleAuth = async (req, res) => {
 
         const authorizationUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
-            scope: roleBasedScopes, // Adjust scopes based on role if needed
+            scope: roleBasedScopes.member,
             include_granted_scopes: true,
             state: state
         })
 
         res.redirect(authorizationUrl)
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Google authentication initiated" 
-        })
     } catch (error) {
         console.log("Error in googleAuth function", error)
         res.status(500).json({ 
@@ -364,34 +359,34 @@ export const googleAuthCallback = async (req, res) => {
         // Handle the OAuth 2.0 server response
         if (error) {
             return res.status(400).json({
-                error: 'Access denied'
+                success: false,
+                message: 'Access denied'
             })
         }
         
         if (state !== req.session.state) {
             return res.status(400).json({
-                error: 'State mismatch'
+                success: false,
+                message: 'State mismatch'
             })
         }
 
         const { tokens } = await oauth2Client.getToken(code)
         oauth2Client.setCredentials(tokens)
-
-        oauth2Client.on('token', (tokens) => {
-            if (tokens.refresh_token) {
-                console.log(tokens.refresh_token)
-                process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token
-            }
-            console.log(tokens.access_token)
-            process.env.GOOGLE_ACCESS_TOKEN = tokens.access_token
-        })
         
         const oauth2 = google.oauth2({
             version: "v2",
             auth: oauth2Client
         })
 
-        const { data: userInfo } = await oauth2.userInfo.get()
+        const { data: userInfo } = await oauth2.userinfo.get()
+
+        if (!userInfo.email.endsWith('@fpt.edu.vn')) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only FPT email addresses are allowed'
+            })
+        } 
 
         const storedUser = await prisma.user.findFirst({
             where: {
@@ -410,7 +405,8 @@ export const googleAuthCallback = async (req, res) => {
                     locate: userInfo.locale,
                     firstName: userInfo.given_name,
                     lastName: userInfo.family_name,
-                    isEmailVerified: userInfo.verified_email
+                    isEmailVerified: userInfo.verified_email,
+                    lastLogin: new Date()
                 }
             })
         } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
@@ -422,13 +418,21 @@ export const googleAuthCallback = async (req, res) => {
                     fullname: userInfo.name,
                     googleId: userInfo.id,
                     locate: userInfo.locale,
-                    firstName: userInfo.firstName,
-                    lastName: userInfo.lastName,
-                    isEmailVerified: userInfo.verifiedEmail
+                    firstName: userInfo.given_name,
+                    lastName: userInfo.family_name,
+                    isEmailVerified: userInfo.verified_email,
+                    lastLogin: new Date()
                 }
             })
         } else {
-            user = storedUser
+            user = await prisma.user.update({
+                where: {
+                    id: storedUser.id
+                },
+                data: {
+                    lastLogin: new Date()
+                }
+            })
         }
 
         const accessToken = createAccessToken(user.id)
@@ -436,21 +440,17 @@ export const googleAuthCallback = async (req, res) => {
 
         const necessaryUserData = removeSensitiveUserData(user)
 
-        res.cookie('refresh_token', refreshToken, {
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'Strict',
             maxAge: 15 * 24 * 60 * 60 * 1000
         })
 
-        res.status(200).json({ 
-            success: true,
-            message: "Google authentication callback successful",
-            data: {
-                accessToken,
-                necessaryUserData
-            } 
-        })
+        delete req.session.state
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+        res.redirect(`${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}`)
     } catch (error) {
         console.log("Error in googleAuthCallback function", error)
         res.status(500).json({ 
