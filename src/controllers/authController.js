@@ -450,7 +450,7 @@ export const googleAuthCallback = async (req, res) => {
         delete req.session.state
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
-        res.redirect(`${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}`)
+        res.redirect(`${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData ))}&accessToken=${accessToken}`)
     } catch (error) {
         console.log("Error in googleAuthCallback function", error)
         res.status(500).json({ 
