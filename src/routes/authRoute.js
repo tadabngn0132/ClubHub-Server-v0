@@ -13,7 +13,7 @@ import {
 
 const router = express.Router()
 
-router.get("/refresh-access-token", refreshAccessToken)
+router.post("/refresh-access-token", refreshAccessToken)
 router.post("/login", login)
 router.post("/register", register)
 router.post("/logout", logout)

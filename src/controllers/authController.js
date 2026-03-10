@@ -33,7 +33,7 @@ export const refreshAccessToken = async (req, res) => {
     try {
         const userId = await verifyRefreshToken(refreshToken)
 
-        const newAccessToken = createAccessToken(userId)
+        const newAccessToken = await createAccessToken(userId)
 
         res.status(200).json({
             success: true,
@@ -435,8 +435,8 @@ export const googleAuthCallback = async (req, res) => {
             })
         }
 
-        const accessToken = createAccessToken(user.id)
-        const refreshToken = createRefreshToken(user.id)
+        const accessToken = await createAccessToken(user.id)
+        const refreshToken = await createRefreshToken(user.id)
 
         const necessaryUserData = removeSensitiveUserData(user)
 
