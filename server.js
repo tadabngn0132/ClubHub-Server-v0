@@ -1,6 +1,7 @@
+import dotenv from 'dotenv'
+dotenv.config()
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
@@ -17,9 +18,9 @@ import memberApplicationRouter from './src/routes/memberApplicationRoute.js'
 import notificationRouter from './src/routes/notificationRoute.js'
 
 import { corsOptions } from './src/configs/corsConfig.js'
+import session from 'express-session'
 
 const app = express()
-dotenv.config()
 const PORT = process.env.PORT || 3000
 
 app.use(cors(corsOptions))
@@ -29,6 +30,17 @@ app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  }
+}))
 
 app.use('/api/auth', authRouter)
 app.use('/api/users', userRouter)
