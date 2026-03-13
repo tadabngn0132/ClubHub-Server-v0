@@ -4,7 +4,8 @@ import {
   getUser,
   getUsers,
   updateUser,
-  deleteUser
+  softDeleteUser,
+  hardDeleteUser
 } from '../controllers/userController.js'
 import { verifyAccessToken } from '../middlewares/authMiddleware.js'
 
@@ -14,6 +15,7 @@ router.post('/', verifyAccessToken, createUser)
 router.get('/:id', verifyAccessToken, getUser)
 router.get('/', verifyAccessToken, getUsers)
 router.put('/:id', verifyAccessToken, updateUser)
-router.delete('/:id', verifyAccessToken, deleteUser)
+router.delete('/:id/soft', verifyAccessToken, softDeleteUser)
+router.delete('/:id/hard', verifyAccessToken, hardDeleteUser)
 
 export default router

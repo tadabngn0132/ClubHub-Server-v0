@@ -143,8 +143,8 @@ model Activity {
   maxParticipants         Int?                      @map("max_participants")
   registrationDeadline    DateTime?                 @map("registration_deadline")
   requireRegistration     Boolean                   @default(false) @map("require_registration")
-  organizerId             Int                       @map("organizer_id")
-  organizer               User                      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  organizerId             Int?                      @map("organizer_id")
+  organizer               User?                     @relation(fields: [organizerId], references: [id], onDelete: SetNull)
   activityParticipations  ActivityParticipation[]
   isPublic                Boolean                   @default(true) @map("is_public")
   isFeatured              Boolean                   @default(false) @map("is_featured")

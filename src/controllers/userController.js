@@ -1,6 +1,7 @@
 import { prisma } from "../libs/prisma.js"
 import bcrypt from "bcryptjs"
 import { removeSensitiveUserData } from "../utils/userUtil.js"
+import { USER_STATUS } from "../utils/constant.js"
 
 export const createUser = async (req, res) => {
   try {
@@ -21,30 +22,94 @@ export const createUser = async (req, res) => {
       })
     }
 
-    const hashedPassword = await bcrypt.hash("WelcometoGDC22%^&", 12);
-
-    const newUser = await prisma.user.create({
-      data: {
-        email: payload.email,
-        hashedPassword: hashedPassword,
-        fullname: payload.fullname,
-        phoneNumber: payload.phoneNumber,
-        dateOfBirth: new Date(payload.dateOfBirth),
-        gender: payload.gender,
-        major: payload.major,
-        generation: Number(payload.generation),
-        department: payload.department,
-        position: payload.position,
-        role: payload.role,
-        joinedAt: payload.joinedAt,
-        status: payload.status,
-        studentId: payload.studentId,
-        avatarUrl: payload.avatarUrl,
-        bio: payload.bio,
+    const position = await prisma.position.findUnique({
+      where: {
+        id: payload.positionId,
       },
     })
 
-    const necessaryUserData = removeSensitiveUserData(newUser)
+    if (!position) {
+      return res.status(400).json({
+        success: false,
+        message: "Position not found",
+      })
+    }
+
+    if (payload.rootDepartmentId !== null) {
+      const department = await prisma.department.findUnique({
+        where: { id: payload.rootDepartmentId },
+        select: { id: true },
+      });
+
+      if (!department) {
+        return res.status(400).json({
+          success: false,
+          message: "Root department not found",
+        });
+      }
+    }
+    
+    const hashedPassword = await bcrypt.hash("WelcometoGDC22%^&", 12);
+
+    const createdUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: payload.email,
+          hashedPassword: hashedPassword,
+          fullname: payload.fullname,
+          phoneNumber: payload.phoneNumber,
+          dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
+          gender: payload.gender,
+          major: payload.major,
+          generation: Number(payload.generation),
+          joinedAt: payload.joinedAt,
+          status: payload.status.trim().toLowerCase() === 'active' ? USER_STATUS.ACTIVE : USER_STATUS.INACTIVE,
+          studentId: payload.studentId,
+          avatarUrl: payload.avatarUrl,
+          bio: payload.bio,
+        },
+      });
+
+      await tx.userPosition.create({
+        data: {
+          userId: user.id,
+          positionId: Number(payload.positionId),
+          isPrimary: true,
+        },
+      });
+
+      return tx.user.findUnique({
+        where: { id: user.id },
+        include: {
+          rootDepartment: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          userPosition: {
+            include: {
+              position: {
+                select: {
+                  id: true,
+                  title: true,
+                  level: true,
+                  systemRole: true,
+                  department: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    const necessaryUserData = removeSensitiveUserData(createdUser);
 
     res.status(201).json({
       success: true,
@@ -171,7 +236,49 @@ export const updateUser = async (req, res) => {
   }
 }
 
-export const deleteUser = async (req, res) => {
+export const softDeleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+    })
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found user to delete",
+      })
+    }
+
+    const deletedUser = await prisma.user.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        status: "inactive",
+      },
+    })
+
+    const necessaryUserData = removeSensitiveUserData(deletedUser)
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+      data: necessaryUserData,
+    })
+  } catch (err) {
+    console.log("Error in softDeleteUser function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Soft delete user error: ${err.message}`,
+    })
+  }
+}
+
+export const hardDeleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -202,10 +309,10 @@ export const deleteUser = async (req, res) => {
       data: necessaryUserData,
     })
   } catch (err) {
-    console.log("Error in deleteUser function:", err);
+    console.log("Error in hardDeleteUser function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete user error: ${err.message}`,
+      message: `Internal server error / Hard delete user error: ${err.message}`,
     })
   }
 }
