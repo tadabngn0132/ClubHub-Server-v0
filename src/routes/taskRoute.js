@@ -5,7 +5,8 @@ import {
   getTaskById,
   getTasksByUserId,
   updateTask,
-  deleteTask,
+  softDeleteTask,
+  hardDeleteTask,
 } from '../controllers/taskController.js';
 import { verifyAccessToken } from '../middlewares/authMiddleware.js';
 
@@ -16,6 +17,7 @@ router.get('/', verifyAccessToken, getTasks);
 router.get('/:taskId', verifyAccessToken, getTaskById);
 router.get('/user/:userId', verifyAccessToken, getTasksByUserId);
 router.put('/:taskId', verifyAccessToken, updateTask);
-router.delete('/:taskId', verifyAccessToken, deleteTask);
+router.delete('/:taskId/soft', verifyAccessToken, softDeleteTask);
+router.delete('/:taskId/hard', verifyAccessToken, hardDeleteTask);
 
 export default router;

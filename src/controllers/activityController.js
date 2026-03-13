@@ -1,4 +1,5 @@
 import { prisma } from "../libs/prisma.js";
+import { ACTIVITY_STATUS } from "../utils/constant.js";
 
 // ==========CHƯA ĐẾN SPRINT -> CHƯA TRIỂN KHAI CHÍNH XÁC -> CHƯA TEST==========
 
@@ -214,7 +215,30 @@ export const updateActivity = async (req, res) => {
   }
 };
 
-export const deleteActivity = async (req, res) => {
+export const softDeleteActivity = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedActivity = await prisma.activity.update({
+      where: { id: Number(id) },
+      data: { status: ACTIVITY_STATUS.CANCELLED },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Activity soft deleted successfully",
+      data: deletedActivity,
+    });
+  } catch (err) {
+    console.log("Error soft delete activity function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Soft delete activity error: ${err.message}`,
+    });
+  }
+};
+
+export const hardDeleteActivity = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -228,10 +252,10 @@ export const deleteActivity = async (req, res) => {
       data: deletedActivity,
     });
   } catch (err) {
-    console.log("Error delete activity function: ", err.message);
+    console.log("Error hard delete activity function: ", err.message);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete activity error: ${err.message}`,
+      message: `Internal server error / Hard delete activity error: ${err.message}`,
     });
   }
 };

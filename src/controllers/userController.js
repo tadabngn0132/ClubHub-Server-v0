@@ -196,29 +196,95 @@ export const updateUser = async (req, res) => {
       })
     }
 
-    const updatedUser = await prisma.user.update({
+    const position = await prisma.position.findUnique({
       where: {
-        id: Number(id),
-      },
-      data: {
-        email: payload.email,
-        fullname: payload.fullname,
-        phoneNumber: payload.phoneNumber,
-        dateOfBirth: new Date(payload.dateOfBirth),
-        gender: payload.gender,
-        major: payload.major,
-        generation: Number(payload.generation),
-        department: payload.department,
-        position: payload.position,
-        role: payload.role,
-        joinedAt: payload.joinedAt,
-        status: payload.status,
-        updatedAt: new Date(),
-        studentId: payload.studentId,
-        avatarUrl: payload.avatarUrl,
-        bio: payload.bio,
+        id: payload.positionId,
       },
     })
+
+    if (!position) {
+      return res.status(400).json({
+        success: false,
+        message: "Position not found",
+      })
+    }
+
+    if (payload.rootDepartmentId !== null) {
+      const department = await prisma.department.findUnique({
+        where: { id: payload.rootDepartmentId },
+        select: { id: true },
+      });
+
+      if (!department) {
+        return res.status(400).json({
+          success: false,
+          message: "Root department not found",
+        });
+      }
+    }
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          email: payload.email,
+          hashedPassword: hashedPassword,
+          fullname: payload.fullname,
+          phoneNumber: payload.phoneNumber,
+          dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
+          gender: payload.gender,
+          major: payload.major,
+          generation: Number(payload.generation),
+          joinedAt: payload.joinedAt,
+          status: payload.status.trim().toLowerCase() === 'active' ? USER_STATUS.ACTIVE : USER_STATUS.INACTIVE,
+          studentId: payload.studentId,
+          avatarUrl: payload.avatarUrl,
+          bio: payload.bio,
+        },
+      });
+
+      await tx.userPosition.update({
+        where: {
+          userId: user.id,
+          isPrimary: true,
+        },
+        data: {
+          positionId: Number(payload.positionId),
+        },
+      });
+
+      return tx.user.findUnique({
+        where: { id: user.id },
+        include: {
+          rootDepartment: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          userPosition: {
+            include: {
+              position: {
+                select: {
+                  id: true,
+                  title: true,
+                  level: true,
+                  systemRole: true,
+                  department: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    });
 
     const necessaryUserData = removeSensitiveUserData(updatedUser)
 

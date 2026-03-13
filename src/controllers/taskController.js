@@ -1,4 +1,5 @@
 import { prisma } from "../libs/prisma.js"
+import { TASK_STATUS } from "../utils/constant.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -102,7 +103,32 @@ export const updateTask = async (req, res) => {
   }
 };
 
-export const deleteTask = async (req, res) => {
+export const softDeleteTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const task = await prisma.task.update({
+      where: { id: Number(taskId) },
+      data: { status: TASK_STATUS.CANCELLED },
+    });
+    if (!task) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Task not found' 
+      });
+    }
+    res.status(200).json({ 
+      success: true,
+      message: 'Task deleted successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Delete task error: ${error.message}`
+    });
+  }
+};
+
+export const hardDeleteTask = async (req, res) => {
   try {
     const { taskId } = req.params;
     const task = await prisma.task.delete({
