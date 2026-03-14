@@ -100,7 +100,6 @@ export const updatePosition = async (req, res) => {
         departmentId: positionData.departmentId,
         level: positionData.level,
         systemRole: positionData.systemRole,
-        updatedAt: new Date(),
       },
     });
 

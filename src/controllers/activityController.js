@@ -6,8 +6,23 @@ import { ACTIVITY_STATUS } from "../utils/constant.js";
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
-    const validTypes = ["MEETING", "WORKSHOP", "TRAINING", "PERFORMANCE", "COMPETITION", "SOCIAL", "VOLUNTEER"];
-    const validStatuses = ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED", "CANCELLED", "POSTPONED"];
+    const validTypes = [
+      "MEETING",
+      "WORKSHOP",
+      "TRAINING",
+      "PERFORMANCE",
+      "COMPETITION",
+      "SOCIAL",
+      "VOLUNTEER",
+    ];
+    const validStatuses = [
+      "DRAFT",
+      "PUBLISHED",
+      "ONGOING",
+      "COMPLETED",
+      "CANCELLED",
+      "POSTPONED",
+    ];
 
     // Kiểm tra loại hoạt động hợp lệ
     if (!validTypes.includes(payload.type)) {
@@ -265,7 +280,7 @@ export const getActivitiesByUserId = async (req, res) => {
     const { userId } = req.params;
 
     const activities = await prisma.activity.findMany({
-      where: { userId: Number(userId) },
+      where: { organizerId: Number(userId) },
     });
 
     res.status(200).json({

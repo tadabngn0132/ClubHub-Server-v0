@@ -1,461 +1,476 @@
-import { prisma } from '../libs/prisma.js'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
+import { prisma } from "../libs/prisma.js";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import {
-    createRefreshToken,
-    verifyRefreshToken,
-    revokeRefreshToken,
-    createAccessToken,
-    createResetPasswordToken,
-    verifyResetPasswordToken
-} from '../utils/jwtUtil.js'
+  createRefreshToken,
+  verifyRefreshToken,
+  revokeRefreshToken,
+  createAccessToken,
+  createResetPasswordToken,
+  verifyResetPasswordToken,
+} from "../utils/jwtUtil.js";
 import {
-    sendResetPasswordEmail,
-    sendChangePasswordConfirmationEmail
-} from '../utils/emailUtil.js'
-import { oauth2Client, roleBasedScopes } from '../libs/google.js'
-import crypto from 'crypto'
-import { google } from 'googleapis'
-import { removeSensitiveUserData } from '../utils/userUtil.js'
-
+  sendResetPasswordEmail,
+  sendChangePasswordConfirmationEmail,
+} from "../utils/emailUtil.js";
+import { oauth2Client, roleBasedScopes } from "../libs/google.js";
+import crypto, { hash } from "crypto";
+import { google } from "googleapis";
+import {
+  removeSensitiveUserData,
+  hashedDefaultPassword,
+} from "../utils/userUtil.js";
+import { PROVIDER } from "../utils/constant.js";
 
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
 export const refreshAccessToken = async (req, res) => {
-    const { refreshToken } = req.cookies
+  const { refreshToken } = req.cookies;
 
-    if (!refreshToken) {
-        return res.status(401).json({ 
-            success: false, 
-            message: "No refresh token provided" 
-        })
-    }
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "No refresh token provided",
+    });
+  }
 
-    try {
-        const userId = await verifyRefreshToken(refreshToken)
+  try {
+    const userId = await verifyRefreshToken(refreshToken);
 
-        const newAccessToken = await createAccessToken(userId)
+    const newAccessToken = await createAccessToken(userId);
 
-        res.status(200).json({
-            success: true,
-            message: "Access token refreshed successfully",
-            data: {
-                newAccessToken
-            }
-        })
-    } catch (error) {
-        console.log("Error in refreshAccessToken function", error)
-        res.status(500).json({
-            success: false,
-            message: `Internal server error / Refresh token error: ${error.message}`
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      message: "Access token refreshed successfully",
+      data: {
+        newAccessToken,
+      },
+    });
+  } catch (error) {
+    console.log("Error in refreshAccessToken function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Refresh token error: ${error.message}`,
+    });
+  }
+};
 
 // Xử lý logic đăng nhập kiểm tra, xác thực email, mật khẩu, trả về thông tin và token
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body
-    
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email cannot be empty'
-            })
-        } else if (!/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email must be Example123456@fpt.edu.vn'
-            })
-        }
-    
-        if (!password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Password cannot be empty'
-            })
-        }
-        const storedUser = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
+  try {
+    const { email, password } = req.body;
 
-        if (!storedUser) {
-            return res.status(401).json({ 
-                success: false,
-                message: "User with this email does not exist"
-            })
-        }
-
-        const correctPassword = await bcrypt.compare(password, storedUser.hashedPassword)
-
-        if (!correctPassword) {
-            return res.status(401).json({ 
-                success: false,
-                message: "Incorrect password"
-            })
-        }
-        
-        
-        const updatedUser = await prisma.user.update({
-            where: {
-                id: storedUser.id
-            },
-            data: {
-                lastLogin: new Date()
-            }
-        })
-
-        const accessToken = await createAccessToken(updatedUser.id)
-        const refreshToken = await createRefreshToken(updatedUser.id)
-        
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 15 * 24 * 60 * 60 * 1000
-        })
-
-        const necessaryUserData = removeSensitiveUserData(updatedUser)
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Login successful",
-            data: {
-                accessToken,
-                necessaryUserData
-            }
-        })
-    } catch (error) {
-        console.log("Error in login function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Login error: ${error.message}` 
-        })
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email cannot be empty",
+      });
+    } else if (!/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email must be Example123456@fpt.edu.vn",
+      });
     }
-}
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password cannot be empty",
+      });
+    }
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!storedUser) {
+      return res.status(401).json({
+        success: false,
+        message: "User with this email does not exist",
+      });
+    }
+
+    const correctPassword = await bcrypt.compare(
+      password,
+      storedUser.hashedPassword,
+    );
+
+    if (!correctPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect password",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: storedUser.id,
+      },
+      data: {
+        lastLogin: new Date(),
+      },
+    });
+
+    const accessToken = await createAccessToken(updatedUser.id);
+    const refreshToken = await createRefreshToken(updatedUser.id);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+    });
+
+    const necessaryUserData = removeSensitiveUserData(updatedUser);
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: {
+        accessToken,
+        necessaryUserData,
+      },
+    });
+  } catch (error) {
+    console.log("Error in login function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Login error: ${error.message}`,
+    });
+  }
+};
 
 // Tạm thời giữ lại trong quá trình dev để test authController
 // Khi nào test xong hoạt triển khai được phần CRUD cho user thì loại bỏ
 export const register = async (req, res) => {
-    try {
-        const userData = req.body
+  try {
+    const userData = req.body;
 
-        // Check if user already exists
-        const hashedPassword = await bcrypt.hash(userData.password, 12)
+    // Check if user already exists
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
 
-        const createdUser = await prisma.user.create({
-            data: {
-                fullname: userData.fullname,
-                email: userData.email,
-                hashedPassword: hashedPassword,
-                phoneNumber: userData.phoneNumber,
-                role: userData.role,
-                position: userData.position,
-                department: userData.department,
-                dateOfBirth: userData.dateOfBirth,
-                gender: userData.gender,
-                major: userData.major,
-                studentId: userData.studentId,
-                generation: userData.generation,
-                joinedAt: userData.joinedAt,
-                bio: userData.bio
-            }
-        })
+    const createdUser = await prisma.user.create({
+      data: {
+        fullname: userData.fullname,
+        email: userData.email,
+        hashedPassword: hashedPassword,
+        phoneNumber: userData.phoneNumber,
+        dateOfBirth: userData.dateOfBirth,
+        gender: userData.gender,
+        major: userData.major,
+        studentId: userData.studentId,
+        generation: userData.generation,
+        joinedAt: userData.joinedAt,
+        bio: userData.bio,
+      },
+    });
 
-        res.status(201).json({ 
-            success: true, 
-            message: "Registration successful",
-            data: {
-                createdUser
-            }
-        })
-    } catch (error) {
-        console.log("Error in register function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Register error: ${error.message}` 
-        })
-    }
-}
+    res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      data: {
+        createdUser,
+      },
+    });
+  } catch (error) {
+    console.log("Error in register function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Register error: ${error.message}`,
+    });
+  }
+};
 
 export const logout = async (req, res) => {
-    try {
-        // TODO: Add logout logic here
-        const { refreshToken } = req.cookies
+  try {
+    // TODO: Add logout logic here
+    const { refreshToken } = req.cookies;
 
-        const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+    const decodedToken = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
 
-        await revokeRefreshToken(decodedToken.jti)
+    await revokeRefreshToken(decodedToken.jti);
 
-        res.clearCookie('refreshToken')
+    res.clearCookie("refreshToken");
 
-        res.status(200).json({ 
-            success: true, 
-            message: "Logout successful" 
-        })
-    } catch (error) {
-        console.log("Error in logout function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Logout error: ${error.message}` 
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.log("Error in logout function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Logout error: ${error.message}`,
+    });
+  }
+};
 
 export const forgotPassword = async (req, res) => {
-    try {
-        const { email } = req.body
+  try {
+    const { email } = req.body;
 
-        const storedUser = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
 
-        // Generate a password reset token and send it via email
-        const resetToken = await createResetPasswordToken(storedUser.id)
+    // Generate a password reset token and send it via email
+    const resetToken = await createResetPasswordToken(storedUser.id);
 
-        // Send reset password email with reset token url
-        await sendResetPasswordEmail(resetToken, email)
-        
-        res.status(200).json({ 
-            success: true, 
-            message: "Password reset link sent. Please check your email to reset password" 
-        })
+    // Send reset password email with reset token url
+    await sendResetPasswordEmail(resetToken, email);
 
-    } catch (error) {
-        console.log("Error in forgotPassword function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Reset password error: ${error.message}` 
-        })
-    }
-}
+    res.status(200).json({
+      success: true,
+      message:
+        "Password reset link sent. Please check your email to reset password",
+    });
+  } catch (error) {
+    console.log("Error in forgotPassword function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Reset password error: ${error.message}`,
+    });
+  }
+};
 
 export const resetPassword = async (req, res) => {
-    try {
-        const { newPassword } = req.body
-        const { token, email } = req.query
+  try {
+    const { newPassword } = req.body;
+    const { token, email } = req.query;
 
-        // TODO: Create validation middleware
+    // TODO: Create validation middleware
 
-        const storedUser = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
-    
-        verifyResetPasswordToken(token, storedUser.id)
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
 
-        const hashedNewPassword = await bcrypt.hash(newPassword, 12)
+    verifyResetPasswordToken(token, storedUser.id);
 
-        await prisma.user.update({
-            where: {
-                id: storedUser.id
-            },
-            data: {
-                hashedPassword: hashedNewPassword
-            }
-        })
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-        return res.status(200).json({
-            success: true,
-            message: 'Reset password successfully'
-        })
-    } catch (error) {
-        console.log("Error in resetPassword function", error)
+    await prisma.user.update({
+      where: {
+        id: storedUser.id,
+      },
+      data: {
+        hashedPassword: hashedNewPassword,
+      },
+    });
 
-        if (error.message === "Reset token is used or has expired") {
-            return res.status(400).json({
-                success: false,
-                message: error.message
-            })
-        }
-        
-        return res.status(500).json({
-            success: false,
-            message: `Internal server error / Reset password error: ${error.message}`
-        })
+    return res.status(200).json({
+      success: true,
+      message: "Reset password successfully",
+    });
+  } catch (error) {
+    console.log("Error in resetPassword function", error);
+
+    if (error.message === "Reset token is used or has expired") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
     }
-}
+
+    return res.status(500).json({
+      success: false,
+      message: `Internal server error / Reset password error: ${error.message}`,
+    });
+  }
+};
 
 export const changePassword = async (req, res) => {
-    try {
-        const { email, currentPassword, newPassword } = req.body
+  try {
+    const { email, currentPassword, newPassword } = req.body;
 
-        // Verify current password
-        const storedUser = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
-        
-        // Hash new password and update in database
-        const correctPassword = await bcrypt.compare(currentPassword, storedUser.hashedPassword)
+    // Verify current password
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
 
-        if (!correctPassword) {
-            return res.status(401).json({
-                success: false,
-                message: "Current password is wrong"
-            })
-        }
+    // Hash new password and update in database
+    const correctPassword = await bcrypt.compare(
+      currentPassword,
+      storedUser.hashedPassword,
+    );
 
-        const hashedNewPassword = await bcrypt.hash(newPassword, 12)
-
-        await prisma.user.update({
-            where: {
-                id: storedUser.id
-            },
-            data: {
-                hashedPassword: hashedNewPassword
-            }
-        })
-
-        await sendChangePasswordConfirmationEmail(storedUser.email)
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Password changed successfully",
-        })
-    } catch (error) {
-        console.log("Error in changePassword function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Change password error: ${error.message}` 
-        })
+    if (!correctPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is wrong",
+      });
     }
-}
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: {
+        id: storedUser.id,
+      },
+      data: {
+        hashedPassword: hashedNewPassword,
+      },
+    });
+
+    await sendChangePasswordConfirmationEmail(storedUser.email);
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.log("Error in changePassword function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Change password error: ${error.message}`,
+    });
+  }
+};
 
 export const googleAuth = async (req, res) => {
-    try {
-        // TODO: Implement Google authentication logic
-        const state = crypto.randomBytes(32).toString('hex')
+  try {
+    // TODO: Implement Google authentication logic
+    const state = crypto.randomBytes(32).toString("hex");
 
-        req.session.state = state
+    req.session.state = state;
 
-        const authorizationUrl = oauth2Client.generateAuthUrl({
-            access_type: 'offline',
-            scope: roleBasedScopes.member,
-            include_granted_scopes: true,
-            state: state
-        })
+    const authorizationUrl = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: roleBasedScopes.member,
+      include_granted_scopes: true,
+      state: state,
+    });
 
-        res.redirect(authorizationUrl)
-    } catch (error) {
-        console.log("Error in googleAuth function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Google auth error: ${error.message}` 
-        })
-    }
-}
+    res.redirect(authorizationUrl);
+  } catch (error) {
+    console.log("Error in googleAuth function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Google auth error: ${error.message}`,
+    });
+  }
+};
 
 export const googleAuthCallback = async (req, res) => {
-    const { code, state, error } = req.query
+  const { code, state, error } = req.query;
 
-    try {
-        // TODO: Implement Google authentication callback logic
-        // Handle the OAuth 2.0 server response
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: 'Access denied'
-            })
-        }
-        
-        if (state !== req.session.state) {
-            return res.status(400).json({
-                success: false,
-                message: 'State mismatch'
-            })
-        }
-
-        const { tokens } = await oauth2Client.getToken(code)
-        oauth2Client.setCredentials(tokens)
-        
-        const oauth2 = google.oauth2({
-            version: "v2",
-            auth: oauth2Client
-        })
-
-        const { data: userInfo } = await oauth2.userinfo.get()
-
-        if (!userInfo.email.endsWith('@fpt.edu.vn')) {
-            return res.status(403).json({
-                success: false,
-                message: 'Only FPT email addresses are allowed'
-            })
-        } 
-
-        const storedUser = await prisma.user.findFirst({
-            where: {
-                email: userInfo.email
-            }
-        })
-
-        let user
-
-        if (!storedUser) {
-            user = await prisma.user.create({
-                data: {
-                    fullname: userInfo.name,
-                    googleId: userInfo.id,
-                    email: userInfo.email,
-                    locate: userInfo.locale,
-                    firstName: userInfo.given_name,
-                    lastName: userInfo.family_name,
-                    isEmailVerified: userInfo.verified_email,
-                    lastLogin: new Date()
-                }
-            })
-        } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
-            user = await prisma.user.update({
-                where: {
-                    id: storedUser.id
-                },
-                data: {
-                    fullname: userInfo.name,
-                    googleId: userInfo.id,
-                    locate: userInfo.locale,
-                    firstName: userInfo.given_name,
-                    lastName: userInfo.family_name,
-                    isEmailVerified: userInfo.verified_email,
-                    lastLogin: new Date()
-                }
-            })
-        } else {
-            user = await prisma.user.update({
-                where: {
-                    id: storedUser.id
-                },
-                data: {
-                    lastLogin: new Date()
-                }
-            })
-        }
-
-        const accessToken = await createAccessToken(user.id)
-        const refreshToken = await createRefreshToken(user.id)
-
-        const necessaryUserData = removeSensitiveUserData(user)
-
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 15 * 24 * 60 * 60 * 1000
-        })
-
-        delete req.session.state
-
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
-        res.redirect(`${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData ))}&accessToken=${accessToken}`)
-    } catch (error) {
-        console.log("Error in googleAuthCallback function", error)
-        res.status(500).json({ 
-            success: false, 
-            message: `Internal server error / Google auth callback error: ${error.message}` 
-        })
+  try {
+    // TODO: Implement Google authentication callback logic
+    // Handle the OAuth 2.0 server response
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Access denied",
+      });
     }
-}
+
+    if (state !== req.session.state) {
+      return res.status(400).json({
+        success: false,
+        message: "State mismatch",
+      });
+    }
+
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({
+      version: "v2",
+      auth: oauth2Client,
+    });
+
+    const { data: userInfo } = await oauth2.userinfo.get();
+
+    if (!userInfo.email.endsWith("@fpt.edu.vn")) {
+      return res.status(403).json({
+        success: false,
+        message: "Only FPT email addresses are allowed",
+      });
+    }
+
+    const storedUser = await prisma.user.findFirst({
+      where: {
+        email: userInfo.email,
+      },
+    });
+
+    let user;
+
+    if (!storedUser) {
+      user = await prisma.user.create({
+        data: {
+          fullname: userInfo.name,
+          hashedPassword: await hashedDefaultPassword(),
+          googleId: userInfo.id,
+          email: userInfo.email,
+          locale: userInfo.locale,
+          provider: PROVIDER.GOOGLE,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name,
+          isEmailVerified: userInfo.verified_email,
+          lastLogin: new Date(),
+        },
+      });
+    } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
+      user = await prisma.user.update({
+        where: {
+          id: storedUser.id,
+        },
+        data: {
+          fullname: userInfo.name,
+          hashedPassword: await hashedDefaultPassword(),
+          googleId: userInfo.id,
+          locale: userInfo.locale,
+          provider: PROVIDER.BOTH,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name,
+          isEmailVerified: userInfo.verified_email,
+          lastLogin: new Date(),
+        },
+      });
+    } else {
+      user = await prisma.user.update({
+        where: {
+          id: storedUser.id,
+        },
+        data: {
+          lastLogin: new Date(),
+          provider: PROVIDER.BOTH,
+        },
+      });
+    }
+
+    const accessToken = await createAccessToken(user.id);
+    const refreshToken = await createRefreshToken(user.id);
+
+    const necessaryUserData = removeSensitiveUserData(user);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+    });
+
+    delete req.session.state;
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    res.redirect(
+      `${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}&accessToken=${accessToken}`,
+    );
+  } catch (error) {
+    console.log("Error in googleAuthCallback function", error);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Google auth callback error: ${error.message}`,
+    });
+  }
+};

@@ -1,34 +1,10 @@
 import { prisma } from "../libs/prisma.js";
-import bcrypt from "bcryptjs";
 import { removeSensitiveUserData } from "../utils/userUtil.js";
 import { USER_STATUS } from "../utils/constant.js";
-
-const userInclude = {
-  rootDepartment: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
-  userPosition: {
-    include: {
-      position: {
-        select: {
-          id: true,
-          title: true,
-          level: true,
-          systemRole: true,
-          department: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  },
-};
+import {
+  hashedDefaultPassword,
+  userIncludeOptions,
+} from "../utils/userUtil.js";
 
 export const createUser = async (req, res) => {
   try {
@@ -74,13 +50,11 @@ export const createUser = async (req, res) => {
       }
     }
 
-    const hashedPassword = await bcrypt.hash("WelcometoGDC22%^&", 12);
-
     const createdUser = await prisma.$transaction(async (prisma) => {
       const user = await prisma.user.create({
         data: {
           email: payload.email,
-          hashedPassword: hashedPassword,
+          hashedPassword: await hashedDefaultPassword(),
           fullname: payload.fullname,
           phoneNumber: payload.phoneNumber,
           dateOfBirth: payload.dateOfBirth
@@ -97,6 +71,7 @@ export const createUser = async (req, res) => {
           studentId: payload.studentId,
           avatarUrl: payload.avatarUrl,
           bio: payload.bio,
+          rootDepartmentId: Number(payload.rootDepartmentId),
         },
       });
 
@@ -110,7 +85,7 @@ export const createUser = async (req, res) => {
 
       return prisma.user.findUnique({
         where: { id: user.id },
-        include: userInclude,
+        include: userIncludeOptions,
       });
     });
 
@@ -138,7 +113,7 @@ export const getUser = async (req, res) => {
       where: {
         id: Number(id),
       },
-      include: userInclude,
+      include: userIncludeOptions,
     });
 
     if (!storedUser) {
@@ -215,8 +190,6 @@ export const updateUser = async (req, res) => {
     const { id } = req.params;
     const payload = req.body;
 
-    // TODO: Create validation middleware
-
     const storedUser = await prisma.user.findUnique({
       where: {
         id: Number(id),
@@ -232,7 +205,7 @@ export const updateUser = async (req, res) => {
 
     const position = await prisma.position.findUnique({
       where: {
-        id: payload.positionId,
+        id: Number(payload.positionId),
       },
     });
 
@@ -245,7 +218,7 @@ export const updateUser = async (req, res) => {
 
     if (payload.rootDepartmentId !== null) {
       const department = await prisma.department.findUnique({
-        where: { id: payload.rootDepartmentId },
+        where: { id: Number(payload.rootDepartmentId) },
         select: { id: true },
       });
 
@@ -264,7 +237,7 @@ export const updateUser = async (req, res) => {
         },
         data: {
           email: payload.email,
-          hashedPassword: hashedPassword,
+          hashedPassword: await hashedDefaultPassword(),
           fullname: payload.fullname,
           phoneNumber: payload.phoneNumber,
           dateOfBirth: payload.dateOfBirth
@@ -281,13 +254,26 @@ export const updateUser = async (req, res) => {
           studentId: payload.studentId,
           avatarUrl: payload.avatarUrl,
           bio: payload.bio,
+          rootDepartmentId: Number(payload.rootDepartmentId),
+        },
+        include: {
+          userPosition: {
+            where: { isPrimary: true },
+            include: {
+              position: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
         },
       });
 
       await prisma.userPosition.update({
         where: {
           userId: user.id,
-          isPrimary: true,
+          positionId: user.userPosition[0].position.id,
         },
         data: {
           positionId: Number(payload.positionId),
@@ -296,7 +282,7 @@ export const updateUser = async (req, res) => {
 
       return prisma.user.findUnique({
         where: { id: user.id },
-        include: userInclude,
+        include: userIncludeOptions,
       });
     });
 
@@ -338,7 +324,7 @@ export const softDeleteUser = async (req, res) => {
         id: Number(id),
       },
       data: {
-        status: "inactive",
+        status: USER_STATUS.INACTIVE,
       },
     });
 
