@@ -218,6 +218,13 @@ export const forgotPassword = async (req, res) => {
       },
     });
 
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User with this email does not exist",
+      });
+    }
+
     // Generate a password reset token and send it via email
     const resetToken = await createResetPasswordToken(storedUser.id);
 
@@ -250,6 +257,13 @@ export const resetPassword = async (req, res) => {
         email: email,
       },
     });
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User with this email does not exist",
+      });
+    }
 
     verifyResetPasswordToken(token, storedUser.id);
 
@@ -296,6 +310,13 @@ export const changePassword = async (req, res) => {
       },
     });
 
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User with this email does not exist",
+      });
+    }
+    
     // Hash new password and update in database
     const correctPassword = await bcrypt.compare(
       currentPassword,

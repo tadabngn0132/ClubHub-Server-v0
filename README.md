@@ -1,6 +1,6 @@
 # ClubHub Server
 
-REST API backend for ClubHub - Student club management system.
+REST API backend for GDC - Greenwich Dance Crew management system.
 
 ## Tech Stack
 
@@ -18,11 +18,12 @@ REST API backend for ClubHub - Student club management system.
 
 - Node.js (v18 or higher)
 - PostgreSQL database
-- npm or yarn
+- npm
 
 ## Getting Started
 
 ### Installation
+
 ```bash
 npm install
 ```
@@ -30,47 +31,61 @@ npm install
 ### Environment Variables
 
 Create a `.env` file in the root directory:
+
 ```env
 # Server
-PORT=3000
 NODE_ENV=development
+PORT=3000
 
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/clubhub"
 
 # JWT
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+ACCESS_TOKEN_SECRET='your_access_token_secret'
+REFRESH_TOKEN_SECRET='your_refresh_token_secret'
+
+# Google App Config (optional)
+GMAIL_ADDRESS='your_gmail_address'
+GOOGLE_APP_PASSWORD='your_google_app_password'
 
 # Google OAuth (optional)
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_client_secret
-
-# Email (optional)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email
-EMAIL_PASSWORD=your_password
+GOOGLE_CLIENT_ID='your_google_client_id'
+GOOGLE_CLIENT_SECRET ='your_google_client_secret'
+GOOGLE_REDIRECT_URL='http://localhost:3000/api/auth/google/callback'
+GOOGLE_REFRESH_TOKEN='your_google_access_token_secret'
+GOOGLE_ACCESS_TOKEN='your_google_refresh_token_secret'
 
 # Frontend URL
 CLIENT_URL=http://localhost:5173
+
+# Cloudinary (optional)
+CLOUDINARY_CLOUD_NAME='your_cloudinary_cloud_name'
+CLOUDINARY_API_KEY='your_cloudinary_api_key'
+CLOUDINARY_API_SECRET='your_cloudinary_api_secret'
+
+# Session
+SESSION_SECRET='your_random_session_secret'
+
+# Gen AI (optional)
+GEMINI_API_KEY='your_gemnini_api_key'
+BACKUP_GEMINI_API_KEY='your_backup_gemnini_api_key'
 ```
 
 ### Database Setup
+
 ```bash
 # Generate Prisma client
 npx prisma generate
 
 # Run migrations
-npx prisma migrate dev
+npx prisma migrate dev --name="test your first migration"
 
 # Seed database (optional)
 npx prisma db seed
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
@@ -78,6 +93,7 @@ npm run dev
 Server runs at `http://localhost:3000`
 
 ### Production
+
 ```bash
 npm start
 ```
@@ -87,10 +103,15 @@ npm start
 - `/api/auth` - Authentication (login, register, refresh token)
 - `/api/users` - User management
 - `/api/activities` - Activity/event management
+- `/api/tasks` - Task management
+- `/api/positions` - Position management
+- `/api/departments` - Department management
+- `/api/notifications` - Notification management
 
 ## Database Schema
 
 View and manage database schema:
+
 ```bash
 # Open Prisma Studio
 npx prisma studio

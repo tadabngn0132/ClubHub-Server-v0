@@ -65,6 +65,6 @@ const ROLE_PERMISSIONS = {
   }
 }
 
-export const HandlePermission = (req, res, next) => {
-  // Implement the permission handling
+export const handlePermission = (req, res, next) => {
+  // TODO: Implement the permission handling
 }

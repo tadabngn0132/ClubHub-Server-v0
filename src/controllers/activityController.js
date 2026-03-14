@@ -1,44 +1,52 @@
 import { prisma } from "../libs/prisma.js";
-import { ACTIVITY_STATUS } from "../utils/constant.js";
+import {
+  ACTIVITY_STATUS,
+  ACTIVITY_TYPE
+} from "../utils/constant.js";
 
-// ==========CHƯA ĐẾN SPRINT -> CHƯA TRIỂN KHAI CHÍNH XÁC -> CHƯA TEST==========
+const getActivityStatus = (status) => {
+  switch (status) {
+    case "draft":
+      return ACTIVITY_STATUS.DRAFT;
+    case "published":
+      return ACTIVITY_STATUS.PUBLISHED;
+    case "ongoing":
+      return ACTIVITY_STATUS.ONGOING;
+    case "completed":
+      return ACTIVITY_STATUS.COMPLETED;
+    case "cancelled":
+      return ACTIVITY_STATUS.CANCELLED;
+    case "postponed":
+      return ACTIVITY_STATUS.POSTPONED;
+    default:
+      return ACTIVITY_STATUS.DRAFT;
+  }
+};
+
+const getActivityType = (type) => {
+  switch (type) {
+    case "meeting":
+      return ACTIVITY_TYPE.MEETING;
+    case "workshop":
+      return ACTIVITY_TYPE.WORKSHOP;
+    case "training":
+      return ACTIVITY_TYPE.TRAINING;
+    case "performance":
+      return ACTIVITY_TYPE.PERFORMANCE;
+    case "competition":
+      return ACTIVITY_TYPE.COMPETITION;
+    case "social":
+      return ACTIVITY_TYPE.SOCIAL;
+    case "volunteer":
+      return ACTIVITY_TYPE.VOLUNTEER;
+    default:
+      return ACTIVITY_TYPE.MEETING;
+  }
+};
 
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
-    const validTypes = [
-      "MEETING",
-      "WORKSHOP",
-      "TRAINING",
-      "PERFORMANCE",
-      "COMPETITION",
-      "SOCIAL",
-      "VOLUNTEER",
-    ];
-    const validStatuses = [
-      "DRAFT",
-      "PUBLISHED",
-      "ONGOING",
-      "COMPLETED",
-      "CANCELLED",
-      "POSTPONED",
-    ];
-
-    // Kiểm tra loại hoạt động hợp lệ
-    if (!validTypes.includes(payload.type)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid activity type",
-      });
-    }
-
-    // Kiểm tra trạng thái hoạt động hợp lệ
-    if (!validStatuses.includes(payload.status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid activity status",
-      });
-    }
 
     // Tạo slug từ tiêu đề hoạt động
     const activitySlug = payload.title
@@ -73,8 +81,8 @@ export const createActivity = async (req, res) => {
         venueName: payload.venueName || null,
         venueAddress: payload.venueAddress || null,
         roomNumber: payload.roomNumber || null,
-        type: payload.type || null,
-        status: payload.status || "DRAFT",
+        type: getActivityType(payload.type.trim().toLowerCase()),
+        status: getActivityStatus(payload.status.trim().toLowerCase()),
         organizerId: Number(payload.organizerId),
         slug: finalSlug,
         startDate: new Date(payload.startDate),
@@ -210,8 +218,8 @@ export const updateActivity = async (req, res) => {
         venueName: payload.venueName,
         venueAddress: payload.venueAddress,
         roomNumber: payload.roomNumber,
-        type: payload.type,
-        status: payload.status,
+        type: getActivityType(payload.type.trim().toLowerCase()),
+        status: getActivityStatus(payload.status.trim().toLowerCase()),
         organizerId: payload.organizerId,
       },
     });

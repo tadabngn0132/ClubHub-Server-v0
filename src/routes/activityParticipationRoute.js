@@ -3,6 +3,7 @@ import {
   createActivityParticipation,
   getParticipations,
   getParticipationById,
+  getParticipationsByActivityId,
   getParticipationsByUserId,
   updateParticipationById,
   deleteParticipation,
@@ -11,10 +12,15 @@ import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", verifyAccessToken, createActivityParticipation);
+router.post("/", verifyAccessToken, createActivityParticipation);
 router.get("/", verifyAccessToken, getParticipations);
-router.get("/:participationId", verifyAccessToken, getParticipationById);
+router.get(
+  "/activity/:activityId",
+  verifyAccessToken,
+  getParticipationsByActivityId,
+);
 router.get("/user/:userId", verifyAccessToken, getParticipationsByUserId);
+router.get("/:participationId", verifyAccessToken, getParticipationById);
 router.put("/:participationId", verifyAccessToken, updateParticipationById);
 router.delete("/:participationId", verifyAccessToken, deleteParticipation);
 

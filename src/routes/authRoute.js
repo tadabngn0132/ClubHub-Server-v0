@@ -10,15 +10,19 @@ import {
     googleAuth,
     googleAuthCallback
 } from "../controllers/authController.js"
+import {
+    loginLimiter,
+    resetPasswordLimiter
+} from "../middlewares/rateLimiting.js"
 
 const router = express.Router()
 
 router.post("/refresh-access-token", refreshAccessToken)
-router.post("/login", login)
+router.post("/login", loginLimiter, login)
 router.post("/register", register)
 router.post("/logout", logout)
 router.post("/forgot-password", forgotPassword)
-router.put("/reset-password", resetPassword)
+router.put("/reset-password", resetPasswordLimiter, resetPassword)
 router.put("/change-password", changePassword)
 router.get("/google-auth", googleAuth)
 router.get("/google-auth/callback", googleAuthCallback)

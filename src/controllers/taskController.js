@@ -164,6 +164,7 @@ export const updateTask = async (req, res) => {
       await prisma.assigneeTask.update({
         where: {
           taskId: task.id,
+          assigneeId: task.assignedId,
         },
         data: {
           taskId: task.id,
@@ -243,8 +244,11 @@ export const hardDeleteTask = async (req, res) => {
 export const getTasksByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const tasks = await prisma.task.findMany({
-      where: { assignedTo: userId },
+    const tasks = await prisma.assigneeTask.findMany({
+      where: { assigneeId: userId },
+      include: {
+        task: true,
+      },
     });
     res.status(200).json({
       success: true,

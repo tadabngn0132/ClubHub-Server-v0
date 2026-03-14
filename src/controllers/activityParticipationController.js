@@ -22,11 +22,13 @@ export const createActivityParticipation = async (req, res) => {
   try {
     const participationData = req.body;
     const participation = await prisma.activityParticipation.create({
-      userId: Number(participationData.userId),
-      activityId: Number(participationData.activityId),
-      status: getParticipationStatus(
-        participationData.status.trim().toLowerCase(),
-      ),
+      data: {
+        userId: Number(participationData.userId),
+        activityId: Number(participationData.activityId),
+        status: getParticipationStatus(
+          participationData.status.trim().toLowerCase(),
+        ),
+      },
     });
     res.status(201).json({
       success: true,

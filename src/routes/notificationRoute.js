@@ -13,9 +13,9 @@ const router = express.Router();
 
 router.post('/', verifyAccessToken, createNotification);
 router.get('/', verifyAccessToken, getNotifications);
-router.get('/:id', verifyAccessToken, getNotificationById);
 router.get('/user/:userId', verifyAccessToken, getNotificationsByUserId);
 router.delete('/user/:userId', verifyAccessToken, deleteNotificationByUserId);
+router.get('/:id', verifyAccessToken, getNotificationById);
 router.put('/:id', verifyAccessToken, updateNotification);
 
 export default router;

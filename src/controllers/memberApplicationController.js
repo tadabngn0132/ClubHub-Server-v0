@@ -24,7 +24,6 @@ export const createMemberApplication = async (req, res) => {
         studentId: applicationData.studentId,
         avatarUrl: applicationData.avatarUrl,
         bio: applicationData.bio,
-        rootDepartmentId: applicationData.rootDepartmentId,
         appliedAt: new Date(),
         cvStatus: CV_STATUS.PENDING,
         finalStatus: FINAL_STATUS.PENDING,
@@ -162,7 +161,7 @@ export const createMemberApplicationCVReviewDetail = async (req, res) => {
           cvReviewData.status.trim().toLowerCase() === "passed"
             ? CV_STATUS.PASSED
             : CV_STATUS.FAILED,
-        cvReviewAt: new Date(),
+        cvReviewedAt: new Date(),
         cvReviewComment: cvReviewData.cvReviewComment || "",
         cvReviewerId: cvReviewData.cvReviewerId,
       },
@@ -199,7 +198,7 @@ export const createMemberApplicationInterviewDetail = async (req, res) => {
           interviewReviewData.status.trim().toLowerCase() === "passed"
             ? INTERVIEW_STATUS.PASSED
             : INTERVIEW_STATUS.FAILED,
-        interviewAt: new Date(),
+        interviewedAt: new Date(),
         interviewComment: interviewReviewData.interviewComment || "",
         interviewerId: interviewReviewData.interviewerId,
       },
@@ -255,7 +254,7 @@ export const createMemberApplicationFinalReviewDetail = async (req, res) => {
             finalReviewData.status.trim().toLowerCase() === "passed"
               ? FINAL_STATUS.PASSED
               : FINAL_STATUS.FAILED,
-          finalReviewAt: new Date(),
+          finalReviewedAt: new Date(),
           finalReviewComment: finalReviewData.finalReviewComment || "",
           finalReviewerId: finalReviewData.finalReviewerId,
         },

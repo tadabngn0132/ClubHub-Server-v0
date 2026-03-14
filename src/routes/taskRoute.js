@@ -14,8 +14,8 @@ const router = express.Router();
 
 router.post('/', verifyAccessToken, createTask);
 router.get('/', verifyAccessToken, getTasks);
-router.get('/:taskId', verifyAccessToken, getTaskById);
 router.get('/user/:userId', verifyAccessToken, getTasksByUserId);
+router.get('/:taskId', verifyAccessToken, getTaskById);
 router.put('/:taskId', verifyAccessToken, updateTask);
 router.delete('/:taskId/soft', verifyAccessToken, softDeleteTask);
 router.delete('/:taskId/hard', verifyAccessToken, hardDeleteTask);

@@ -57,6 +57,7 @@ export const validateUserCreation = (req, res, next) => {
 };
 
 export const validateUserUpdate = (req, res, next) => {
+  const { id } = req.params;
   const payload = req.body;
 
   if (!payload.email) {
@@ -80,7 +81,7 @@ export const validateUserUpdate = (req, res, next) => {
     });
   }
 
-  if (!payload.userId) {
+  if (!id) {
     return res.status(400).json({
       success: false,
       message: "User ID is required",
