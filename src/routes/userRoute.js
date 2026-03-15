@@ -12,14 +12,41 @@ import {
   validateUserCreation,
   validateUserUpdate,
 } from "../middlewares/validationMiddleware.js";
+import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", verifyAccessToken, validateUserCreation, createUser);
-router.get("/:id", verifyAccessToken, getUser);
-router.get("/", verifyAccessToken, getUsers);
-router.put("/:id", verifyAccessToken, validateUserUpdate, updateUser);
-router.delete("/:id/soft", verifyAccessToken, softDeleteUser);
-router.delete("/:id/hard", verifyAccessToken, hardDeleteUser);
+router.get(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("users", "read"),
+  getUser,
+);
+router.get(
+  "/",
+  verifyAccessToken,
+  requirePermission("users", "read"),
+  getUsers,
+);
+router.put(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("users", "update", { allowOwner: true }),
+  validateUserUpdate,
+  updateUser,
+);
+router.delete(
+  "/:id/soft",
+  verifyAccessToken,
+  requirePermission("users", "delete"),
+  softDeleteUser,
+);
+router.delete(
+  "/:id/hard",
+  verifyAccessToken,
+  requirePermission("users", "delete"),
+  hardDeleteUser,
+);
 
 export default router;

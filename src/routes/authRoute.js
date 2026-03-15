@@ -14,11 +14,12 @@ import {
     loginLimiter,
     resetPasswordLimiter
 } from "../middlewares/rateLimiting.js"
+import { validateAuthentication } from "../middlewares/validationMiddleware.js"
 
 const router = express.Router()
 
 router.post("/refresh-access-token", refreshAccessToken)
-router.post("/login", loginLimiter, login)
+router.post("/login", loginLimiter, validateAuthentication, login)
 router.post("/register", register)
 router.post("/logout", logout)
 router.post("/forgot-password", forgotPassword)

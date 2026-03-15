@@ -1,4 +1,4 @@
-import express from 'express'
+import express from "express";
 import {
   createActivity,
   getActivities,
@@ -7,19 +7,60 @@ import {
   updateActivity,
   softDeleteActivity,
   hardDeleteActivity,
-  getActivitiesByUserId
-} from '../controllers/activityController.js'
-import { verifyAccessToken } from '../middlewares/authMiddleware.js'
+  getActivitiesByUserId,
+} from "../controllers/activityController.js";
+import { verifyAccessToken } from "../middlewares/authMiddleware.js";
+import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/', verifyAccessToken, createActivity)
-router.get('/', verifyAccessToken, getActivities)
-router.get('/user/:userId', verifyAccessToken, getActivitiesByUserId)
-router.get('/slug/:slug', verifyAccessToken, getActivitiesBySlug)
-router.get('/:id', verifyAccessToken, getActivityById)
-router.put('/:id', verifyAccessToken, updateActivity)
-router.delete('/:id/soft', verifyAccessToken, softDeleteActivity)
-router.delete('/:id/hard', verifyAccessToken, hardDeleteActivity)
+router.post(
+  "/",
+  verifyAccessToken,
+  requirePermission("activities", "create"),
+  createActivity,
+);
+router.get(
+  "/",
+  verifyAccessToken,
+  requirePermission("activities", "read"),
+  getActivities,
+);
+router.get(
+  "/user/:userId",
+  verifyAccessToken,
+  requirePermission("activities", "read", { allowOwner: true }),
+  getActivitiesByUserId,
+);
+router.get(
+  "/slug/:slug",
+  verifyAccessToken,
+  requirePermission("activities", "read"),
+  getActivitiesBySlug,
+);
+router.get(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("activities", "read"),
+  getActivityById,
+);
+router.put(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("activities", "update"),
+  updateActivity,
+);
+router.delete(
+  "/:id/soft",
+  verifyAccessToken,
+  requirePermission("activities", "delete"),
+  softDeleteActivity,
+);
+router.delete(
+  "/:id/hard",
+  verifyAccessToken,
+  requirePermission("activities", "delete"),
+  hardDeleteActivity,
+);
 
-export default router
+export default router;

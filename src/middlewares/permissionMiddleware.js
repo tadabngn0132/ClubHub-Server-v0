@@ -1,70 +1,51 @@
-const ROLE_PERMISSIONS = {
-  admin: {
-    users: {
-      create: true,
-      read: true,
-      update: true,
-      softDelete: true,
-      hardDelete: true
-    },
-    activities: {
-      create: true,
-      read: true,
-      update: true,
-      softDelete: true,
-      hardDelete: true
-    }
-  },
-  moderator: {
-    users: {
-      create: false,
-      read: true,
-      update: true,
-      softDelete: false,
-      hardDelete: false
-    },
-    activities: {
-      create: true,
-      read: true,
-      update: true,
-      softDelete: false,
-      hardDelete: false
-    }
-  },
-  member: {
-    users: {
-      create: false,
-      read: true,
-      update: false,
-      softDelete: false,
-      hardDelete: false
-    },
-    activities: {
-      create: false,
-      read: true,
-      update: false,
-      softDelete: false,
-      hardDelete: false
-    }
-  },
-  guest: {
-    users: {
-      create: false,
-      read: false,
-      update: false,
-      softDelete: false,
-      hardDelete: false
-    },
-    activities: {
-      create: false,
-      read: true,
-      update: false,
-      softDelete: false,
-      hardDelete: false
-    }
-  }
-}
+import { ROLE_PERMISSIONS } from "../utils/constant.js";
 
-export const handlePermission = (req, res, next) => {
-  // TODO: Implement the permission handling
-}
+export const requirePermission = (resource, action, options = {}) => {
+  return (req, res, next) => {
+    const userRole = req.userRole;
+
+    if (!userRole) {
+      userRole = "GUEST";
+    }
+
+    const permissions = ROLE_PERMISSIONS[userRole]?.[resource]?.[action];
+
+    if (!permissions) {
+      if (options.allowOwner) {
+        if (resource !== "users") {
+          const isOwner = Number(req.params.userId) === Number(req.userId);
+
+          if (isOwner && (action === "read" || action === "update")) {
+            return next();
+          } else {
+            return res.status(403).json({
+              success: false,
+              message:
+                "Forbidden: You do not have permission to perform this action",
+            });
+          }
+        } else {
+          const isOwner = Number(req.params.id) === Number(req.userId);
+
+          if (isOwner && (action === "read" || action === "update")) {
+            return next();
+          } else {
+            return res.status(403).json({
+              success: false,
+              message:
+                "Forbidden: You do not have permission to perform this action",
+            });
+          }
+        }
+      } else {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Forbidden: You do not have permission to perform this action",
+        });
+      }
+    }
+
+    next();
+  };
+};

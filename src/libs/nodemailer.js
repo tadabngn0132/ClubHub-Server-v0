@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 
 // App Password
 
@@ -6,9 +6,9 @@ export const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.GMAIL_ADDRESS,
-    pass: process.env.GOOGLE_APP_PASSWORD
-  }
-})
+    pass: process.env.GOOGLE_APP_PASSWORD,
+  },
+});
 
 // OAuth 2.0 (Implement later)
 
@@ -45,9 +45,9 @@ export let messageTemplate = {
     </html>`,
   attachments: [
     {
-      filename: 'logo.png',
-      path: '.assets/logo.png',
-      cid: 'logo@nodemailer'
-    }
-  ]
-}
+      filename: "logo.png",
+      path: ".assets/logo.png",
+      cid: "logo@nodemailer",
+    },
+  ],
+};

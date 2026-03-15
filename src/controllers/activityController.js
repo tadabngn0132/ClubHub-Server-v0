@@ -1,8 +1,5 @@
 import { prisma } from "../libs/prisma.js";
-import {
-  ACTIVITY_STATUS,
-  ACTIVITY_TYPE
-} from "../utils/constant.js";
+import { ACTIVITY_STATUS, ACTIVITY_TYPE } from "../utils/constant.js";
 
 const getActivityStatus = (status) => {
   switch (status) {

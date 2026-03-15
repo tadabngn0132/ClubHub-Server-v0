@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   createTask,
   getTasks,
@@ -7,17 +7,53 @@ import {
   updateTask,
   softDeleteTask,
   hardDeleteTask,
-} from '../controllers/taskController.js';
-import { verifyAccessToken } from '../middlewares/authMiddleware.js';
+} from "../controllers/taskController.js";
+import { verifyAccessToken } from "../middlewares/authMiddleware.js";
+import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
 const router = express.Router();
 
-router.post('/', verifyAccessToken, createTask);
-router.get('/', verifyAccessToken, getTasks);
-router.get('/user/:userId', verifyAccessToken, getTasksByUserId);
-router.get('/:taskId', verifyAccessToken, getTaskById);
-router.put('/:taskId', verifyAccessToken, updateTask);
-router.delete('/:taskId/soft', verifyAccessToken, softDeleteTask);
-router.delete('/:taskId/hard', verifyAccessToken, hardDeleteTask);
+router.post(
+  "/",
+  verifyAccessToken,
+  requirePermission("tasks", "create"),
+  createTask,
+);
+router.get(
+  "/",
+  verifyAccessToken,
+  requirePermission("tasks", "read"),
+  getTasks,
+);
+router.get(
+  "/user/:userId",
+  verifyAccessToken,
+  requirePermission("tasks", "read"),
+  getTasksByUserId,
+);
+router.get(
+  "/:taskId",
+  verifyAccessToken,
+  requirePermission("tasks", "read"),
+  getTaskById,
+);
+router.put(
+  "/:taskId",
+  verifyAccessToken,
+  requirePermission("tasks", "update"),
+  updateTask,
+);
+router.delete(
+  "/:taskId/soft",
+  verifyAccessToken,
+  requirePermission("tasks", "delete"),
+  softDeleteTask,
+);
+router.delete(
+  "/:taskId/hard",
+  verifyAccessToken,
+  requirePermission("tasks", "delete"),
+  hardDeleteTask,
+);
 
 export default router;

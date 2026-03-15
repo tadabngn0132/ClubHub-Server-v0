@@ -44,3 +44,15 @@ export const userIncludeOptions = {
     },
   },
 };
+
+export const userIncludeSystemRoleOptions = {
+  userPosition: {
+    include: {
+      position: {
+        select: {
+          systemRole: true,
+        },
+      },
+    },
+  },
+};

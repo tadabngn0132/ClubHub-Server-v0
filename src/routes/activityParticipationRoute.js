@@ -9,19 +9,51 @@ import {
   deleteParticipation,
 } from "../controllers/activityParticipationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
+import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyAccessToken, createActivityParticipation);
-router.get("/", verifyAccessToken, getParticipations);
+router.post(
+  "/",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "create"),
+  createActivityParticipation,
+);
+router.get(
+  "/",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "read"),
+  getParticipations,
+);
 router.get(
   "/activity/:activityId",
   verifyAccessToken,
+  requirePermission("activityParticipations", "read"),
   getParticipationsByActivityId,
 );
-router.get("/user/:userId", verifyAccessToken, getParticipationsByUserId);
-router.get("/:participationId", verifyAccessToken, getParticipationById);
-router.put("/:participationId", verifyAccessToken, updateParticipationById);
-router.delete("/:participationId", verifyAccessToken, deleteParticipation);
+router.get(
+  "/user/:userId",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "read", { allowOwner: true }),
+  getParticipationsByUserId,
+);
+router.get(
+  "/:participationId",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "read"),
+  getParticipationById,
+);
+router.put(
+  "/:participationId",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "update"),
+  updateParticipationById,
+);
+router.delete(
+  "/:participationId",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "delete"),
+  deleteParticipation,
+);
 
 export default router;

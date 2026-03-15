@@ -7,13 +7,39 @@ import {
   deletePosition,
 } from "../controllers/positionController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
+import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyAccessToken, createPosition);
-router.get("/", verifyAccessToken, getAllPositions);
-router.get("/:id", verifyAccessToken, getPositionById);
-router.put("/:id", verifyAccessToken, updatePosition);
-router.delete("/:id", verifyAccessToken, deletePosition);
+router.post(
+  "/",
+  verifyAccessToken,
+  requirePermission("positions", "create"),
+  createPosition,
+);
+router.get(
+  "/",
+  verifyAccessToken,
+  requirePermission("positions", "read"),
+  getAllPositions,
+);
+router.get(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("positions", "read"),
+  getPositionById,
+);
+router.put(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("positions", "update"),
+  updatePosition,
+);
+router.delete(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("positions", "delete"),
+  deletePosition,
+);
 
 export default router;

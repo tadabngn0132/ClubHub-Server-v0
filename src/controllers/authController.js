@@ -14,11 +14,12 @@ import {
   sendChangePasswordConfirmationEmail,
 } from "../utils/emailUtil.js";
 import { oauth2Client, roleBasedScopes } from "../libs/google.js";
-import crypto, { hash } from "crypto";
+import crypto from "crypto";
 import { google } from "googleapis";
 import {
   removeSensitiveUserData,
   hashedDefaultPassword,
+  userIncludeSystemRoleOptions,
 } from "../utils/userUtil.js";
 import { PROVIDER } from "../utils/constant.js";
 
@@ -59,24 +60,6 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email cannot be empty",
-      });
-    } else if (!/^[A-Za-z0-9]+@fpt\.edu\.vn$/.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: "Email must be Example123456@fpt.edu.vn",
-      });
-    }
-
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        message: "Password cannot be empty",
-      });
-    }
     const storedUser = await prisma.user.findUnique({
       where: {
         email: email,
@@ -109,10 +92,17 @@ export const login = async (req, res) => {
       data: {
         lastLogin: new Date(),
       },
+      include: userIncludeSystemRoleOptions,
     });
 
-    const accessToken = await createAccessToken(updatedUser.id);
-    const refreshToken = await createRefreshToken(updatedUser.id);
+    const accessToken = await createAccessToken(
+      updatedUser.id,
+      updatedUser.userPosition.position.systemRole,
+    );
+    const refreshToken = await createRefreshToken(
+      updatedUser.id,
+      updatedUser.userPosition.position.systemRole,
+    );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -316,7 +306,7 @@ export const changePassword = async (req, res) => {
         message: "User with this email does not exist",
       });
     }
-    
+
     // Hash new password and update in database
     const correctPassword = await bcrypt.compare(
       currentPassword,
@@ -439,6 +429,7 @@ export const googleAuthCallback = async (req, res) => {
           isEmailVerified: userInfo.verified_email,
           lastLogin: new Date(),
         },
+        include: userIncludeSystemRoleOptions,
       });
     } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
       user = await prisma.user.update({
@@ -456,6 +447,7 @@ export const googleAuthCallback = async (req, res) => {
           isEmailVerified: userInfo.verified_email,
           lastLogin: new Date(),
         },
+        include: userIncludeSystemRoleOptions,
       });
     } else {
       user = await prisma.user.update({
@@ -466,11 +458,18 @@ export const googleAuthCallback = async (req, res) => {
           lastLogin: new Date(),
           provider: PROVIDER.BOTH,
         },
+        include: userIncludeSystemRoleOptions,
       });
     }
 
-    const accessToken = await createAccessToken(user.id);
-    const refreshToken = await createRefreshToken(user.id);
+    const accessToken = await createAccessToken(
+      user.id,
+      user.userPosition.position.systemRole,
+    );
+    const refreshToken = await createRefreshToken(
+      user.id,
+      user.userPosition.position.systemRole,
+    );
 
     const necessaryUserData = removeSensitiveUserData(user);
 
