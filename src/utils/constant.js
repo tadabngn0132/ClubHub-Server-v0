@@ -120,6 +120,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: true,
     },
+    departmentApplications: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: true,
+    },
     notifications: {
       create: true,
       read: true,
@@ -176,6 +183,13 @@ export const ROLE_PERMISSIONS = {
       read: true,
       update: true,
       softDelete: false,
+      hardDelete: false,
+    },
+    departmentApplications: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
       hardDelete: false,
     },
     notifications: {
@@ -236,6 +250,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
+    departmentApplications: {
+      create: false,
+      read: false,
+      update: false,
+      softDelete: false,
+      hardDelete: false,
+    },
     notifications: {
       create: true,
       read: true,
@@ -290,6 +311,13 @@ export const ROLE_PERMISSIONS = {
     memberApplications: {
       create: true,
       read: true,
+      update: false,
+      softDelete: false,
+      hardDelete: false,
+    },
+    departmentApplications: {
+      create: false,
+      read: false,
       update: false,
       softDelete: false,
       hardDelete: false,
