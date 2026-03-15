@@ -34,10 +34,11 @@ export const createMemberApplication = async (req, res) => {
       message: "Member application created successfully",
       data: application,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in createMemberApplication function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create member application error: ${error.message}`,
+      message: `Internal server error / Create member application error: ${err.message}`,
     });
   }
 };
@@ -50,10 +51,11 @@ export const getMemberApplications = async (req, res) => {
       message: "Get all member applications successfully",
       data: applications,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getMemberApplications function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get member applications error: ${error.message}`,
+      message: `Internal server error / Get member applications error: ${err.message}`,
     });
   }
 };
@@ -75,10 +77,11 @@ export const getMemberApplicationById = async (req, res) => {
       message: "Get member application by ID successfully",
       data: application,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getMemberApplicationById function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get member application by ID error: ${error.message}`,
+      message: `Internal server error / Get member application by ID error: ${err.message}`,
     });
   }
 };
@@ -106,10 +109,11 @@ export const softDeleteMemberApplication = async (req, res) => {
       success: true,
       message: "Member application deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in softDeleteMemberApplication function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete member application error: ${error.message}`,
+      message: `Internal server error / Delete member application error: ${err.message}`,
     });
   }
 };
@@ -133,10 +137,11 @@ export const hardDeleteMemberApplication = async (req, res) => {
       success: true,
       message: "Member application deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in hardDeleteMemberApplication function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete member application error: ${error.message}`,
+      message: `Internal server error / Delete member application error: ${err.message}`,
     });
   }
 };
@@ -170,47 +175,14 @@ export const createMemberApplicationCVReviewDetail = async (req, res) => {
       success: true,
       message: "Member application CV review detail created successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error(
+      "Error in createMemberApplicationCVReviewDetail function:",
+      err,
+    );
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create member application CV review detail error: ${error.message}`,
-    });
-  }
-};
-
-export const createMemberApplicationInterviewDetail = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const interviewReviewData = req.body;
-    const application = await prisma.memberApplication.findUnique({
-      where: { id: Number(id) },
-    });
-    if (!application) {
-      return res.status(404).json({
-        success: false,
-        message: "Member application not found",
-      });
-    }
-    await prisma.departmentMemberApplication.updateMany({
-      where: { memberApplicationId: Number(id) },
-      data: {
-        interviewStatus:
-          interviewReviewData.status.trim().toLowerCase() === "passed"
-            ? INTERVIEW_STATUS.PASSED
-            : INTERVIEW_STATUS.FAILED,
-        interviewedAt: new Date(),
-        interviewComment: interviewReviewData.interviewComment || "",
-        interviewerId: interviewReviewData.interviewerId,
-      },
-    });
-    res.status(200).json({
-      success: true,
-      message: "Member application interview detail created successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create member application interview detail error: ${error.message}`,
+      message: `Internal server error / Create member application CV review detail error: ${err.message}`,
     });
   }
 };
@@ -277,10 +249,14 @@ export const createMemberApplicationFinalReviewDetail = async (req, res) => {
       message: "Member application final review detail created successfully",
       data: createdUser,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error(
+      "Error in createMemberApplicationFinalReviewDetail function:",
+      err,
+    );
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create member application final review detail error: ${error.message}`,
+      message: `Internal server error / Create member application final review detail error: ${err.message}`,
     });
   }
 };

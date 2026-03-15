@@ -17,11 +17,11 @@ export const createPosition = async (req, res) => {
       success: true,
       data: newPosition,
     });
-  } catch (error) {
-    console.error("Error in createPosition function:", error);
+  } catch (err) {
+    console.error("Error in createPosition function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create position error: ${error.message}`,
+      message: `Internal server error / Create position error: ${err.message}`,
     });
   }
 };
@@ -34,11 +34,11 @@ export const getAllPositions = async (req, res) => {
       success: true,
       data: positions,
     });
-  } catch (error) {
-    console.error("Error in getAllPositions function:", error);
+  } catch (err) {
+    console.error("Error in getAllPositions function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get all positions error: ${error.message}`,
+      message: `Internal server error / Get all positions error: ${err.message}`,
     });
   }
 };
@@ -64,11 +64,11 @@ export const getPositionById = async (req, res) => {
       success: true,
       data: position,
     });
-  } catch (error) {
-    console.error("Error in getPositionById function:", error);
+  } catch (err) {
+    console.error("Error in getPositionById function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get position by ID error: ${error.message}`,
+      message: `Internal server error / Get position by ID error: ${err.message}`,
     });
   }
 };
@@ -107,11 +107,11 @@ export const updatePosition = async (req, res) => {
       success: true,
       data: updatedPosition,
     });
-  } catch (error) {
-    console.error("Error in updatePosition function:", error);
+  } catch (err) {
+    console.error("Error in updatePosition function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Update position error: ${error.message}`,
+      message: `Internal server error / Update position error: ${err.message}`,
     });
   }
 };
@@ -143,11 +143,11 @@ export const deletePosition = async (req, res) => {
       success: true,
       message: "Position deleted successfully",
     });
-  } catch (error) {
-    console.error("Error in deletePosition function:", error);
+  } catch (err) {
+    console.error("Error in deletePosition function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete position error: ${error.message}`,
+      message: `Internal server error / Delete position error: ${err.message}`,
     });
   }
 };

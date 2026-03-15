@@ -16,11 +16,11 @@ export const createDepartment = async (req, res) => {
       success: true,
       data: newDepartment,
     });
-  } catch (error) {
-    console.error("Error in createDepartment function:", error);
+  } catch (err) {
+    console.error("Error in createDepartment function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create department error: ${error.message}`,
+      message: `Internal server error / Create department error: ${err.message}`,
     });
   }
 };
@@ -33,11 +33,11 @@ export const getAllDepartments = async (req, res) => {
       success: true,
       data: departments,
     });
-  } catch (error) {
-    console.error("Error in getAllDepartments function:", error);
+  } catch (err) {
+    console.error("Error in getAllDepartments function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get all departments error: ${error.message}`,
+      message: `Internal server error / Get all departments error: ${err.message}`,
     });
   }
 };
@@ -63,11 +63,11 @@ export const getDepartmentById = async (req, res) => {
       success: true,
       data: department,
     });
-  } catch (error) {
-    console.error("Error in getDepartmentById function:", error);
+  } catch (err) {
+    console.error("Error in getDepartmentById function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get department by ID error: ${error.message}`,
+      message: `Internal server error / Get department by ID error: ${err.message}`,
     });
   }
 };
@@ -106,11 +106,11 @@ export const updateDepartment = async (req, res) => {
       success: true,
       data: updatedDepartment,
     });
-  } catch (error) {
-    console.error("Error in updateDepartment function:", error);
+  } catch (err) {
+    console.error("Error in updateDepartment function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Update department error: ${error.message}`,
+      message: `Internal server error / Update department error: ${err.message}`,
     });
   }
 };
@@ -142,11 +142,11 @@ export const deleteDepartment = async (req, res) => {
       success: true,
       message: "Department deleted successfully",
     });
-  } catch (error) {
-    console.error("Error in deleteDepartment function:", error);
+  } catch (err) {
+    console.error("Error in deleteDepartment function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete department error: ${error.message}`,
+      message: `Internal server error / Delete department error: ${err.message}`,
     });
   }
 };

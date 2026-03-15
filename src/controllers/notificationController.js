@@ -14,10 +14,11 @@ export const createNotification = async (req, res) => {
       message: "Notification created successfully",
       data: notification,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in createNotification function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create notification error: ${error.message}`,
+      message: `Internal server error / Create notification error: ${err.message}`,
     });
   }
 };
@@ -30,10 +31,11 @@ export const getNotifications = async (req, res) => {
       message: "Get all notifications successfully",
       data: notifications,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getNotifications function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get notifications error: ${error.message}`,
+      message: `Internal server error / Get notifications error: ${err.message}`,
     });
   }
 };
@@ -55,10 +57,11 @@ export const getNotificationById = async (req, res) => {
       message: "Get notification by ID successfully",
       data: notification,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getNotificationById function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get notification by ID error: ${error.message}`,
+      message: `Internal server error / Get notification by ID error: ${err.message}`,
     });
   }
 };
@@ -82,10 +85,11 @@ export const deleteNotification = async (req, res) => {
       success: true,
       message: "Notification deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in deleteNotification function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete notification error: ${error.message}`,
+      message: `Internal server error / Delete notification error: ${err.message}`,
     });
   }
 };
@@ -101,10 +105,11 @@ export const getNotificationsByUserId = async (req, res) => {
       message: "Get notifications by user ID successfully",
       data: notifications,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getNotificationsByUserId function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get notifications by user ID error: ${error.message}`,
+      message: `Internal server error / Get notifications by user ID error: ${err.message}`,
     });
   }
 };
@@ -133,10 +138,11 @@ export const updateNotification = async (req, res) => {
       message: "Notification updated successfully",
       data: updatedNotification,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in updateNotification function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Update notification error: ${error.message}`,
+      message: `Internal server error / Update notification error: ${err.message}`,
     });
   }
 };
@@ -160,10 +166,11 @@ export const deleteNotificationByUserId = async (req, res) => {
       success: true,
       message: "All notifications for the user deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in deleteNotificationByUserId function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete notifications by user ID error: ${error.message}`,
+      message: `Internal server error / Delete notifications by user ID error: ${err.message}`,
     });
   }
 };

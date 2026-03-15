@@ -141,6 +141,7 @@ export const getDepartmentApplicationById = async (req, res) => {
       data: deptApplication,
     });
   } catch (err) {
+    console.error("Error retrieving department application by ID:", err);
     res.status(500).json({
       success: false,
       message: `Internal server error / Get department application by ID error: ${err.message}`,

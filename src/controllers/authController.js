@@ -121,11 +121,11 @@ export const login = async (req, res) => {
         necessaryUserData,
       },
     });
-  } catch (error) {
-    console.log("Error in login function", error);
+  } catch (err) {
+    console.log("Error in login function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Login error: ${error.message}`,
+      message: `Internal server error / Login error: ${err.message}`,
     });
   }
 };
@@ -162,11 +162,11 @@ export const register = async (req, res) => {
         createdUser,
       },
     });
-  } catch (error) {
-    console.log("Error in register function", error);
+  } catch (err) {
+    console.log("Error in register function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Register error: ${error.message}`,
+      message: `Internal server error / Register error: ${err.message}`,
     });
   }
 };
@@ -189,11 +189,11 @@ export const logout = async (req, res) => {
       success: true,
       message: "Logout successful",
     });
-  } catch (error) {
-    console.log("Error in logout function", error);
+  } catch (err) {
+    console.log("Error in logout function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Logout error: ${error.message}`,
+      message: `Internal server error / Logout error: ${err.message}`,
     });
   }
 };
@@ -226,11 +226,11 @@ export const forgotPassword = async (req, res) => {
       message:
         "Password reset link sent. Please check your email to reset password",
     });
-  } catch (error) {
-    console.log("Error in forgotPassword function", error);
+  } catch (err) {
+    console.log("Error in forgotPassword function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Reset password error: ${error.message}`,
+      message: `Internal server error / Reset password error: ${err.message}`,
     });
   }
 };
@@ -272,19 +272,19 @@ export const resetPassword = async (req, res) => {
       success: true,
       message: "Reset password successfully",
     });
-  } catch (error) {
-    console.log("Error in resetPassword function", error);
+  } catch (err) {
+    console.log("Error in resetPassword function", err);
 
-    if (error.message === "Reset token is used or has expired") {
+    if (err.message === "Reset token is used or has expired") {
       return res.status(400).json({
         success: false,
-        message: error.message,
+        message: err.message,
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: `Internal server error / Reset password error: ${error.message}`,
+      message: `Internal server error / Reset password error: ${err.message}`,
     });
   }
 };
@@ -337,11 +337,11 @@ export const changePassword = async (req, res) => {
       success: true,
       message: "Password changed successfully",
     });
-  } catch (error) {
-    console.log("Error in changePassword function", error);
+  } catch (err) {
+    console.log("Error in changePassword function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Change password error: ${error.message}`,
+      message: `Internal server error / Change password error: ${err.message}`,
     });
   }
 };
@@ -361,11 +361,11 @@ export const googleAuth = async (req, res) => {
     });
 
     res.redirect(authorizationUrl);
-  } catch (error) {
-    console.log("Error in googleAuth function", error);
+  } catch (err) {
+    console.log("Error in googleAuth function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Google auth error: ${error.message}`,
+      message: `Internal server error / Google auth error: ${err.message}`,
     });
   }
 };
@@ -486,11 +486,11 @@ export const googleAuthCallback = async (req, res) => {
     res.redirect(
       `${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}&accessToken=${accessToken}`,
     );
-  } catch (error) {
-    console.log("Error in googleAuthCallback function", error);
+  } catch (err) {
+    console.log("Error in googleAuthCallback function", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Google auth callback error: ${error.message}`,
+      message: `Internal server error / Google auth callback error: ${err.message}`,
     });
   }
 };

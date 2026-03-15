@@ -35,10 +35,10 @@ export const createActivityParticipation = async (req, res) => {
       message: "Activity participation created successfully",
       data: participation,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create activity participation error: ${error.message}`,
+      message: `Internal server error / Create activity participation error: ${err.message}`,
     });
   }
 };
@@ -51,10 +51,10 @@ export const getParticipations = async (req, res) => {
       message: "Get all participations successfully",
       data: participations,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get participations error: ${error.message}`,
+      message: `Internal server error / Get participations error: ${err.message}`,
     });
   }
 };
@@ -76,10 +76,10 @@ export const getParticipationById = async (req, res) => {
       message: "Get participation by ID successfully",
       data: participation,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get participation by ID error: ${error.message}`,
+      message: `Internal server error / Get participation by ID error: ${err.message}`,
     });
   }
 };
@@ -95,10 +95,10 @@ export const getParticipationsByActivityId = async (req, res) => {
       message: "Get participations by activity ID successfully",
       data: participations,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get participations by activity ID error: ${error.message}`,
+      message: `Internal server error / Get participations by activity ID error: ${err.message}`,
     });
   }
 };
@@ -114,10 +114,10 @@ export const getParticipationsByUserId = async (req, res) => {
       message: "Get participations by user ID successfully",
       data: participations,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get participations by user ID error: ${error.message}`,
+      message: `Internal server error / Get participations by user ID error: ${err.message}`,
     });
   }
 };
@@ -148,10 +148,10 @@ export const updateParticipationById = async (req, res) => {
       message: "Update participation status successfully",
       data: updatedparticipation,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Update participation status error: ${error.message}`,
+      message: `Internal server error / Update participation status error: ${err.message}`,
     });
   }
 };
@@ -175,10 +175,10 @@ export const deleteParticipation = async (req, res) => {
       success: true,
       message: "participation deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete participation error: ${error.message}`,
+      message: `Internal server error / Delete participation error: ${err.message}`,
     });
   }
 };

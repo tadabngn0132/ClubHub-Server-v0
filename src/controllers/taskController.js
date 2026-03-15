@@ -81,10 +81,11 @@ export const createTask = async (req, res) => {
       message: "Task created successfully",
       data: createdTask,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in createTask function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create task error: ${error.message}`,
+      message: `Internal server error / Create task error: ${err.message}`,
     });
   }
 };
@@ -100,10 +101,11 @@ export const getTasks = async (req, res) => {
       message: "Get all tasks successfully",
       data: tasks,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getTasks function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get tasks error: ${error.message}`,
+      message: `Internal server error / Get tasks error: ${err.message}`,
     });
   }
 };
@@ -126,10 +128,11 @@ export const getTaskById = async (req, res) => {
       message: "Get task by ID successfully",
       data: task,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getTaskById function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get task by ID error: ${error.message}`,
+      message: `Internal server error / Get task by ID error: ${err.message}`,
     });
   }
 };
@@ -184,10 +187,11 @@ export const updateTask = async (req, res) => {
       message: "Task updated successfully",
       data: updatedTask,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in updateTask function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Update task error: ${error.message}`,
+      message: `Internal server error / Update task error: ${err.message}`,
     });
   }
 };
@@ -209,10 +213,11 @@ export const softDeleteTask = async (req, res) => {
       success: true,
       message: "Task deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in softDeleteTask function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete task error: ${error.message}`,
+      message: `Internal server error / Delete task error: ${err.message}`,
     });
   }
 };
@@ -233,10 +238,11 @@ export const hardDeleteTask = async (req, res) => {
       success: true,
       message: "Task deleted successfully",
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in hardDeleteTask function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Delete task error: ${error.message}`,
+      message: `Internal server error / Delete task error: ${err.message}`,
     });
   }
 };
@@ -255,10 +261,11 @@ export const getTasksByUserId = async (req, res) => {
       message: "Get tasks by user ID successfully",
       data: tasks,
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error in getTasksByUserId function:", err);
     res.status(500).json({
       success: false,
-      message: `Internal server error / Get tasks by user ID error: ${error.message}`,
+      message: `Internal server error / Get tasks by user ID error: ${err.message}`,
     });
   }
 };
