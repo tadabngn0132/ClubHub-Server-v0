@@ -1,22 +1,5 @@
 import { prisma } from "../libs/prisma.js";
-import { PARTICIPATION_STATUS } from "../utils/constant.js";
-
-const getParticipationStatus = (status) => {
-  switch (status) {
-    case "registered":
-      return PARTICIPATION_STATUS.REGISTERED;
-    case "confirmed":
-      return PARTICIPATION_STATUS.CONFIRMED;
-    case "attended":
-      return PARTICIPATION_STATUS.ATTENDED;
-    case "absent":
-      return PARTICIPATION_STATUS.ABSENT;
-    case "cancelled":
-      return PARTICIPATION_STATUS.CANCELLED;
-    default:
-      return PARTICIPATION_STATUS.REGISTERED;
-  }
-};
+import { getParticipationStatus } from "../utils/activityUtil.js";
 
 export const createActivityParticipation = async (req, res) => {
   try {

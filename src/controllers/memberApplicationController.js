@@ -6,7 +6,6 @@ import {
 import {
   CV_STATUS,
   FINAL_STATUS,
-  INTERVIEW_STATUS,
   PROVIDER,
 } from "../utils/constant.js";
 

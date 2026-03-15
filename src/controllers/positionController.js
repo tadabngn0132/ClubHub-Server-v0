@@ -1,4 +1,5 @@
 import { prisma } from "../libs/prisma.js";
+import { getPositionLevel } from "../utils/positionUtil.js";
 
 export const createPosition = async (req, res) => {
   try {
@@ -8,7 +9,7 @@ export const createPosition = async (req, res) => {
       data: {
         title: positionData.title,
         departmentId: positionData.departmentId,
-        level: positionData.level,
+        level: getPositionLevel(positionData.level.trim().toLowerCase()),
         systemRole: positionData.systemRole,
       },
     });
@@ -98,7 +99,7 @@ export const updatePosition = async (req, res) => {
       data: {
         title: positionData.title,
         departmentId: positionData.departmentId,
-        level: positionData.level,
+        level: getPositionLevel(positionData.level.trim().toLowerCase()),
         systemRole: positionData.systemRole,
       },
     });
