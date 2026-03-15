@@ -211,7 +211,7 @@ export const ROLE_PERMISSIONS = {
     tasks: {
       create: false,
       read: true,
-      update: false,
+      update: true,
       softDelete: false,
       hardDelete: false,
     },
@@ -288,7 +288,7 @@ export const ROLE_PERMISSIONS = {
       hardDelete: false,
     },
     memberApplications: {
-      create: false,
+      create: true,
       read: true,
       update: false,
       softDelete: false,
