@@ -10,6 +10,10 @@ import {
 } from "../controllers/taskController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validateTaskCreation,
+  validateTaskUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -17,6 +21,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("tasks", "create"),
+  validateTaskCreation,
   createTask,
 );
 router.get(
@@ -41,6 +46,7 @@ router.put(
   "/:taskId",
   verifyAccessToken,
   requirePermission("tasks", "update"),
+  validateTaskUpdate,
   updateTask,
 );
 router.delete(

@@ -10,6 +10,10 @@ import {
 } from "../controllers/activityParticipationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validateActivityParticipationCreation,
+  validateActivityParticipationUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -17,6 +21,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("activityParticipations", "create"),
+  validateActivityParticipationCreation,
   createActivityParticipation,
 );
 router.get(
@@ -47,6 +52,7 @@ router.put(
   "/:participationId",
   verifyAccessToken,
   requirePermission("activityParticipations", "update"),
+  validateActivityParticipationUpdate,
   updateParticipationById,
 );
 router.delete(

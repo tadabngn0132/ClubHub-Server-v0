@@ -8,6 +8,10 @@ import {
 } from "../controllers/positionController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validatePositionCreation,
+  validatePositionUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -15,6 +19,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("positions", "create"),
+  validatePositionCreation,
   createPosition,
 );
 router.get(
@@ -33,6 +38,7 @@ router.put(
   "/:id",
   verifyAccessToken,
   requirePermission("positions", "update"),
+  validatePositionUpdate,
   updatePosition,
 );
 router.delete(

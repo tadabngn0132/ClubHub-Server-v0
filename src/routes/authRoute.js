@@ -1,31 +1,41 @@
-import express from "express"
+import express from "express";
 import {
-    refreshAccessToken,
-    login,
-    register,
-    logout,
-    forgotPassword,
-    resetPassword,
-    changePassword,
-    googleAuth,
-    googleAuthCallback
-} from "../controllers/authController.js"
+  refreshAccessToken,
+  login,
+  register,
+  logout,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  googleAuth,
+  googleAuthCallback,
+} from "../controllers/authController.js";
 import {
-    loginLimiter,
-    resetPasswordLimiter
-} from "../middlewares/rateLimiting.js"
-import { validateAuthentication } from "../middlewares/validationMiddleware.js"
+  loginLimiter,
+  resetPasswordLimiter,
+} from "../middlewares/rateLimiting.js";
+import {
+  validateLogin,
+  validateForgotPassword,
+  validateResetPassword,
+  validateChangePassword,
+} from "../middlewares/validationMiddleware.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/refresh-access-token", refreshAccessToken)
-router.post("/login", loginLimiter, validateAuthentication, login)
-router.post("/register", register)
-router.post("/logout", logout)
-router.post("/forgot-password", forgotPassword)
-router.put("/reset-password", resetPasswordLimiter, resetPassword)
-router.put("/change-password", changePassword)
-router.get("/google-auth", googleAuth)
-router.get("/google-auth/callback", googleAuthCallback)
+router.post("/refresh-access-token", refreshAccessToken);
+router.post("/login", loginLimiter, validateLogin, login);
+router.post("/register", register);
+router.post("/logout", logout);
+router.post("/forgot-password", validateForgotPassword, forgotPassword);
+router.put(
+  "/reset-password",
+  resetPasswordLimiter,
+  validateResetPassword,
+  resetPassword,
+);
+router.put("/change-password", validateChangePassword, changePassword);
+router.get("/google-auth", googleAuth);
+router.get("/google-auth/callback", googleAuthCallback);
 
-export default router
+export default router;

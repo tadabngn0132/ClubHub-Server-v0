@@ -10,6 +10,10 @@ import {
 } from "../controllers/departmentApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validateDepartmentApplicationCreation,
+  validateDepartmentApplicationUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -17,6 +21,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("departmentApplication", "create"),
+  validateDepartmentApplicationCreation,
   createDepartmentApplication,
 );
 router.get(
@@ -41,6 +46,7 @@ router.put(
   "/:id",
   verifyAccessToken,
   requirePermission("departmentApplication", "update"),
+  validateDepartmentApplicationUpdate,
   updateDepartmentApplication,
 );
 router.put(

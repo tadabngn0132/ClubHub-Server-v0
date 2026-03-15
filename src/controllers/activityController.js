@@ -1,5 +1,6 @@
 import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
+import { ACTIVITY_STATUS } from "../utils/constant.js";
 
 export const createActivity = async (req, res) => {
   try {

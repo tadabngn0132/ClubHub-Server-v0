@@ -10,6 +10,11 @@ import {
 } from "../controllers/memberApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validateMemberApplicationCreation,
+  validateMemberApplicationCVReviewUpdate,
+  validateMemberApplicationFinalReviewUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -17,6 +22,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("memberApplications", "create"),
+  validateMemberApplicationCreation,
   createMemberApplication,
 );
 router.get(
@@ -47,12 +53,14 @@ router.put(
   "/:id/cv-review",
   verifyAccessToken,
   requirePermission("memberApplications", "update"),
+  validateMemberApplicationCVReviewUpdate,
   updateMemberApplicationCVReviewDetail,
 );
 router.put(
   "/:id/final-review",
   verifyAccessToken,
   requirePermission("memberApplications", "update"),
+  validateMemberApplicationFinalReviewUpdate,
   updateMemberApplicationFinalReviewDetail,
 );
 

@@ -9,6 +9,10 @@ import {
 } from "../controllers/notificationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import {
+  validateNotificationCreation,
+  validateNotificationUpdate,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -16,6 +20,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("notifications", "create"),
+  validateNotificationCreation,
   createNotification,
 );
 router.get(
@@ -46,6 +51,7 @@ router.put(
   "/:id",
   verifyAccessToken,
   requirePermission("notifications", "update"),
+  validateNotificationUpdate,
   updateNotification,
 );
 

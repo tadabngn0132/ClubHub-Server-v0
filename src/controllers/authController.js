@@ -240,8 +240,6 @@ export const resetPassword = async (req, res) => {
     const { newPassword } = req.body;
     const { token, email } = req.query;
 
-    // TODO: Create validation middleware
-
     const storedUser = await prisma.user.findUnique({
       where: {
         email: email,
