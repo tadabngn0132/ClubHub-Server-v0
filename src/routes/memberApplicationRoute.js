@@ -5,9 +5,8 @@ import {
   getMemberApplicationById,
   softDeleteMemberApplication,
   hardDeleteMemberApplication,
-  createMemberApplicationCVReviewDetail,
-  createMemberApplicationInterviewDetail,
-  createMemberApplicationFinalReviewDetail,
+  updateMemberApplicationCVReviewDetail,
+  updateMemberApplicationFinalReviewDetail,
 } from "../controllers/memberApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -44,22 +43,17 @@ router.delete(
   requirePermission("memberApplications", "delete"),
   hardDeleteMemberApplication,
 );
-router.post(
+router.put(
   "/:id/cv-review",
   verifyAccessToken,
-  requirePermission("memberApplications", "create"),
-  createMemberApplicationCVReviewDetail,
+  requirePermission("memberApplications", "update"),
+  updateMemberApplicationCVReviewDetail,
 );
-router.post(
-  "/:id/interview",
-  verifyAccessToken,
-  requirePermission("memberApplications", "create"),
-  createMemberApplicationInterviewDetail,
-);
-router.post(
+router.put(
   "/:id/final-review",
   verifyAccessToken,
-  requirePermission("memberApplications", "create"),
-  createMemberApplicationFinalReviewDetail,
+  requirePermission("memberApplications", "update"),
+  updateMemberApplicationFinalReviewDetail,
 );
+
 export default router;

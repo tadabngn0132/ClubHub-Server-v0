@@ -146,7 +146,7 @@ export const hardDeleteMemberApplication = async (req, res) => {
   }
 };
 
-export const createMemberApplicationCVReviewDetail = async (req, res) => {
+export const updateMemberApplicationCVReviewDetail = async (req, res) => {
   try {
     const { id } = req.params;
     const cvReviewData = req.body;
@@ -173,21 +173,21 @@ export const createMemberApplicationCVReviewDetail = async (req, res) => {
     });
     res.status(200).json({
       success: true,
-      message: "Member application CV review detail created successfully",
+      message: "Member application CV review detail updated successfully",
     });
   } catch (err) {
     console.error(
-      "Error in createMemberApplicationCVReviewDetail function:",
+      "Error in updateMemberApplicationCVReviewDetail function:",
       err,
     );
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create member application CV review detail error: ${err.message}`,
+      message: `Internal server error / Update member application CV review detail error: ${err.message}`,
     });
   }
 };
 
-export const createMemberApplicationFinalReviewDetail = async (req, res) => {
+export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
   try {
     const { id } = req.params;
     const finalReviewData = req.body;
@@ -246,17 +246,17 @@ export const createMemberApplicationFinalReviewDetail = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Member application final review detail created successfully",
+      message: "Member application final review detail updated successfully",
       data: createdUser,
     });
   } catch (err) {
     console.error(
-      "Error in createMemberApplicationFinalReviewDetail function:",
+      "Error in updateMemberApplicationFinalReviewDetail function:",
       err,
     );
     res.status(500).json({
       success: false,
-      message: `Internal server error / Create member application final review detail error: ${err.message}`,
+      message: `Internal server error / Update member application final review detail error: ${err.message}`,
     });
   }
 };
