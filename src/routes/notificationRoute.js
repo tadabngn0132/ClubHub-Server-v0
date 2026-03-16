@@ -6,6 +6,7 @@ import {
   deleteNotificationByUserId,
   getNotificationsByUserId,
   updateNotification,
+  deleteNotificationById,
 } from "../controllers/notificationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -41,7 +42,7 @@ router.delete(
   requirePermission("notifications", "delete"),
   deleteNotificationByUserId,
 );
-router.get(
+router.delete(
   "/:id",
   verifyAccessToken,
   requirePermission("notifications", "read"),
@@ -53,6 +54,12 @@ router.put(
   requirePermission("notifications", "update"),
   validateNotificationUpdate,
   updateNotification,
+);
+router.delete(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("notifications", "delete"),
+  deleteNotificationById,
 );
 
 export default router;

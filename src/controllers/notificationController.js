@@ -174,3 +174,35 @@ export const deleteNotificationByUserId = async (req, res) => {
     });
   }
 };
+
+export const deleteNotificationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification = await prisma.notification.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    await prisma.notification.delete({
+      where: { id: Number(id) },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Notification deleted successfully",
+    });
+  } catch (err) {
+    console.error("Error in deleteNotificationById function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Delete notification by ID error: ${err.message}`,
+    });
+  }
+};
