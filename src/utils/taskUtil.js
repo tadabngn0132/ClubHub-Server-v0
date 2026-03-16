@@ -1,4 +1,4 @@
-import { TASK_STATUS } from "../utils/constant.js";
+import { TASK_STATUS, ASSIGNEE_SCOPE } from "../utils/constant.js";
 
 export const getTaskStatus = (status) => {
   switch (status) {
@@ -30,4 +30,25 @@ export const taskInclude = {
       },
     },
   },
+};
+
+export const getAssigneeScopeValue = (scope) => {
+  switch (scope) {
+    case "all":
+      return ASSIGNEE_SCOPE.ALL;
+    case "committee-dept":
+      return ASSIGNEE_SCOPE.EXPERT_COMMITTEE_DEPT;
+    case "communication-dept":
+      return ASSIGNEE_SCOPE.COMMUNICATION_DEPT;
+    case "design-dept":
+      return ASSIGNEE_SCOPE.DESIGN_DEPT;
+    case "hr-dept":
+      return ASSIGNEE_SCOPE.HUMAN_RESOURCES_DEPT;
+    case "logistics-dept":
+      return ASSIGNEE_SCOPE.LOGISTICS_DEPT;
+    case "content-dept":
+      return ASSIGNEE_SCOPE.CONTENT_DEPT;
+    case "media-dept":
+      return ASSIGNEE_SCOPE.MEDIA_DEPT;
+  }
 };

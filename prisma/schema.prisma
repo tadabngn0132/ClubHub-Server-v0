@@ -42,6 +42,7 @@ model User {
   notifications             Notification[]
   assigneeTasks             AssigneeTask[]
   interviewedApplications   DepartmentMemberApplication[] @relation("Interviewer")
+  assignedTasks             Task[]                       @relation("TaskAssigner")
 
   @@map("users")
   @@index([email])
@@ -181,9 +182,13 @@ model Task {
   description String?     @map("description")
   status      TaskStatus  @default(NEW) @map("status")
   dueDate     DateTime?   @map("due_date")
+  assigneeScope TaskAssigneeScope @default(ALL) @map("assignee_scope")
+  isCheckCf Boolean     @default(false) @map("is_check_cf_task")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
   assignees   AssigneeTask[]
+  assignorId  Int?        @map("assignor_id")
+  assignedBy   User?       @relation("TaskAssigner", fields: [assignorId], references: [id], onDelete: SetNull)
 }
 
 model AssigneeTask {
@@ -343,4 +348,15 @@ enum PositionLevel {
   MIDDLE_HEAD
   TOP_VICE_HEAD
   TOP_HEAD
+}
+
+enum TaskAssigneeScope {
+  ALL
+  COMMUNICATION_DEPT
+  DESIGN_DEPT
+  CONTENT_DEPT
+  LOGISTICS_DEPT
+  HUMAN_RESOURCES_DEPT
+  EXPERT_COMMITTEE_DEPT
+  MEDIA_DEPT
 }

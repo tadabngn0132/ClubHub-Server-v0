@@ -1,6 +1,6 @@
 import { prisma } from "../libs/prisma.js";
-import { getTaskStatus, taskInclude } from "../utils/taskUtil.js";
-import { TASK_STATUS } from "../utils/constant.js";
+import { getTaskStatus, taskInclude, getAssigneeScopeValue } from "../utils/taskUtil.js";
+import { TASK_STATUS, ASSIGNEE_SCOPE } from "../utils/constant.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -27,6 +27,9 @@ export const createTask = async (req, res) => {
           description: taskData.description,
           dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
           status: getTaskStatus(taskData.status.trim().toLowerCase()),
+          assigneeScope: getAssigneeScopeValue(taskData.assigneeScope.trim().toLowerCase()),
+          assignorId: taskData.assignorId,
+          isCheckCf: taskData.isCheckCf || false,
         },
       });
 
@@ -130,6 +133,9 @@ export const updateTask = async (req, res) => {
           description: taskData.description,
           dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
           status: getTaskStatus(taskData.status.trim().toLowerCase()),
+          assigneeScope: getAssigneeScopeValue(taskData.assigneeScope.trim().toLowerCase()),
+          assignorId: taskData.assignorId,
+          isCheckCf: taskData.isCheckCf || false,
         },
       });
 

@@ -320,6 +320,27 @@ export const validateTaskCreation = (req, res, next) => {
     });
   }
 
+  if (!payload.assignorId) {
+    return res.status(400).json({
+      success: false,
+      message: "Assignor user ID is required",
+    });
+  }
+
+  if (!payload.assigneeScope) {
+    return res.status(400).json({
+      success: false,
+      message: "Assignee scope is required",
+    });
+  }
+
+  if (!payload.isCheckCf) {
+    return res.status(400).json({
+      success: false,
+      message: "isCheckCf field is required",
+    });
+  }
+
   next();
 };
 
@@ -331,6 +352,27 @@ export const validateTaskUpdate = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Task title is required",
+    });
+  }
+
+  if (!payload.assignorId) {
+    return res.status(400).json({
+      success: false,
+      message: "Assignor user ID is required",
+    });
+  }
+
+  if (!payload.assigneeScope) {
+    return res.status(400).json({
+      success: false,
+      message: "Assignee scope is required",
+    });
+  }
+
+  if (!payload.isCheckCf) {
+    return res.status(400).json({
+      success: false,
+      message: "isCheckCf field is required",
     });
   }
 
