@@ -20,6 +20,7 @@ import {
   removeSensitiveUserData,
   hashedDefaultPassword,
   userIncludeSystemRoleOptions,
+  userIncludeOptions,
 } from "../utils/userUtil.js";
 import { PROVIDER, USER_STATUS } from "../utils/constant.js";
 
@@ -97,11 +98,11 @@ export const login = async (req, res) => {
 
     const accessToken = await createAccessToken(
       updatedUser.id,
-      updatedUser.userPosition.position.systemRole,
+      updatedUser.userPosition[0].position.systemRole,
     );
     const refreshToken = await createRefreshToken(
       updatedUser.id,
-      updatedUser.userPosition.position.systemRole,
+      updatedUser.userPosition[0].position.systemRole,
     );
 
     res.cookie("refreshToken", refreshToken, {

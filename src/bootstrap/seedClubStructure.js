@@ -39,7 +39,7 @@ const DEPARTMENT_SEEDS = [
   },
 ];
 
-const DEFAULT_POSITION_TEMPLATES = [
+const TOP_POSITION_TEMPLATES = [
   {
     title: "President",
     level: POSITION_LEVEL.TOP_HEAD,
@@ -50,119 +50,35 @@ const DEFAULT_POSITION_TEMPLATES = [
     level: POSITION_LEVEL.TOP_VICE_HEAD,
     systemRole: ROLE.MODERATOR,
   },
+];
+
+const buildDepartmentPositionTemplates = (departmentName) => [
   {
-    title: "Head of Committee Department",
+    title: `Head of ${departmentName}`,
     level: POSITION_LEVEL.MIDDLE_HEAD,
     systemRole: ROLE.MODERATOR,
   },
   {
-    title: "Vice Head of Committee Department",
+    title: `Vice Head of ${departmentName}`,
     level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
     systemRole: ROLE.MODERATOR,
   },
   {
-    title: "Member of Committee Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Communication Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Communication Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Communication Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Design Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Design Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Design Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Human Resources Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Human Resources Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Human Resources Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Logistics Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Logistics Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Logistics Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Content Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Content Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Content Department",
-    level: POSITION_LEVEL.MEMBER,
-    systemRole: ROLE.MEMBER,
-  },
-  {
-    title: "Head of Media Department",
-    level: POSITION_LEVEL.MIDDLE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Vice Head of Media Department",
-    level: POSITION_LEVEL.MIDDLE_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
-  },
-  {
-    title: "Member of Media Department",
+    title: `Member of ${departmentName}`,
     level: POSITION_LEVEL.MEMBER,
     systemRole: ROLE.MEMBER,
   },
 ];
 
 const getPositionTemplates = (departmentName) => {
+  const departmentPositionTemplates =
+    buildDepartmentPositionTemplates(departmentName);
+
   if (departmentName === "Committee Department") {
-    return COMMITTEE_POSITION_TEMPLATES;
+    return [...TOP_POSITION_TEMPLATES, ...departmentPositionTemplates];
   }
 
-  return DEFAULT_POSITION_TEMPLATES;
+  return departmentPositionTemplates;
 };
 
 const findDepartmentByName = async (tx, name) => {
