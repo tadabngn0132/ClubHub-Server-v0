@@ -19,6 +19,7 @@ import notificationRouter from "./src/routes/notificationRoute.js";
 import departmentRouter from "./src/routes/departmentRoute.js";
 import positionRouter from "./src/routes/positionRoute.js";
 import departmentApplicationRouter from "./src/routes/departmentApplicationRoute.js";
+import { ensureClubStructure } from "./src/bootstrap/seedClubStructure.js";
 
 import { corsOptions } from "./src/configs/corsConfig.js";
 import session from "express-session";
@@ -59,17 +60,23 @@ app.use("/api/positions", positionRouter);
 app.use("/api/department-applications", departmentApplicationRouter);
 
 async function testDatabaseConnection() {
+  await prisma.$queryRaw`SELECT 1`;
+  console.log("Database connection successful");
+}
+
+async function startServer() {
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    console.log("Database connection successful");
+    await testDatabaseConnection();
+    await ensureClubStructure();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Go to http://localhost:${PORT}`);
+    });
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Server startup failed:", error);
+    process.exit(1);
   }
 }
 
-testDatabaseConnection().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Go to http://localhost:${PORT}`);
-  });
-});
+startServer();

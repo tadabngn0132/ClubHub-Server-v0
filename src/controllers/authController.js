@@ -21,7 +21,7 @@ import {
   hashedDefaultPassword,
   userIncludeSystemRoleOptions,
 } from "../utils/userUtil.js";
-import { PROVIDER } from "../utils/constant.js";
+import { PROVIDER, USER_STATUS } from "../utils/constant.js";
 
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
 export const refreshAccessToken = async (req, res) => {
@@ -139,20 +139,43 @@ export const register = async (req, res) => {
     // Check if user already exists
     const hashedPassword = await bcrypt.hash(userData.password, 12);
 
-    const createdUser = await prisma.user.create({
-      data: {
-        fullname: userData.fullname,
-        email: userData.email,
-        hashedPassword: hashedPassword,
-        phoneNumber: userData.phoneNumber,
-        dateOfBirth: userData.dateOfBirth,
-        gender: userData.gender,
-        major: userData.major,
-        studentId: userData.studentId,
-        generation: userData.generation,
-        joinedAt: userData.joinedAt,
-        bio: userData.bio,
-      },
+    const createdUser = await prisma.$transaction(async (prisma) => {
+      const user = await prisma.user.create({
+        data: {
+          email: userData.email,
+          hashedPassword: hashedPassword,
+          fullname: userData.fullname,
+          phoneNumber: userData.phoneNumber,
+          dateOfBirth: userData.dateOfBirth
+            ? new Date(userData.dateOfBirth)
+            : null,
+          gender: userData.gender,
+          major: userData.major,
+          generation: Number(userData.generation),
+          joinedAt: userData.joinedAt,
+          status:
+            userData.status.trim().toLowerCase() === "active"
+              ? USER_STATUS.ACTIVE
+              : USER_STATUS.INACTIVE,
+          studentId: userData.studentId,
+          avatarUrl: userData.avatarUrl,
+          bio: userData.bio,
+          rootDepartmentId: Number(userData.rootDepartmentId),
+        },
+      });
+
+      await prisma.userPosition.create({
+        data: {
+          userId: user.id,
+          positionId: Number(userData.positionId),
+          isPrimary: true,
+        },
+      });
+
+      return prisma.user.findUnique({
+        where: { id: user.id },
+        include: userIncludeOptions,
+      });
     });
 
     res.status(201).json({
