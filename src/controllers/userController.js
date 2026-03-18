@@ -246,7 +246,7 @@ export const updateUser = async (req, res) => {
           gender: payload.gender,
           major: payload.major,
           generation: Number(payload.generation),
-          joinedAt: payload.joinedAt,
+          joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
           status:
             payload.status.trim().toLowerCase() === "active"
               ? USER_STATUS.ACTIVE
@@ -272,8 +272,10 @@ export const updateUser = async (req, res) => {
 
       await prisma.userPosition.update({
         where: {
-          userId: user.id,
-          positionId: user.userPosition[0].position.id,
+          userId_positionId: {
+            userId: user.id,
+            positionId: user.userPosition[0].position.id,
+          }
         },
         data: {
           positionId: Number(payload.positionId),

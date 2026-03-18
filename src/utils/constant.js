@@ -99,14 +99,14 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: true,
     },
-    position: {
+    positions: {
       create: true,
       read: true,
       update: true,
       softDelete: true,
       hardDelete: true,
     },
-    department: {
+    departments: {
       create: true,
       read: true,
       update: true,
@@ -164,14 +164,14 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: false,
     },
-    position: {
+    positions: {
       create: false,
       read: true,
       update: false,
       softDelete: false,
       hardDelete: false,
     },
-    department: {
+    departments: {
       create: false,
       read: true,
       update: false,
@@ -229,14 +229,14 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
-    position: {
+    positions: {
       create: false,
       read: true,
       update: false,
       softDelete: false,
       hardDelete: false,
     },
-    department: {
+    departments: {
       create: false,
       read: true,
       update: false,
@@ -294,14 +294,14 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
-    position: {
+    positions: {
       create: false,
       read: true,
       update: false,
       softDelete: false,
       hardDelete: false,
     },
-    department: {
+    departments: {
       create: false,
       read: true,
       update: false,

@@ -2,13 +2,14 @@ import { ROLE_PERMISSIONS } from "../utils/constant.js";
 
 export const requirePermission = (resource, action, options = {}) => {
   return (req, res, next) => {
-    const userRole = req.userRole;
+    const userRole = req.userRole || "GUEST";
 
-    if (!userRole) {
-      userRole = "GUEST";
-    }
+    console.log("User Role:", userRole, "| Resource:", resource, "| Action:", action);
+    
 
     const permissions = ROLE_PERMISSIONS[userRole]?.[resource]?.[action];
+    console.log("Permission :", permissions);
+    
 
     if (!permissions) {
       if (options.allowOwner) {
@@ -23,6 +24,7 @@ export const requirePermission = (resource, action, options = {}) => {
               message:
                 "Forbidden: You do not have permission to perform this action",
             });
+            console.log("User is not the owner of the resource 1");
           }
         } else {
           const isOwner = Number(req.params.id) === Number(req.userId);
@@ -35,6 +37,7 @@ export const requirePermission = (resource, action, options = {}) => {
               message:
                 "Forbidden: You do not have permission to perform this action",
             });
+            console.log("User is not the owner of the resource 2");
           }
         }
       } else {
@@ -43,6 +46,7 @@ export const requirePermission = (resource, action, options = {}) => {
           message:
             "Forbidden: You do not have permission to perform this action",
         });
+        console.log("User does not have the required permission and allowOwner is false");
       }
     }
 

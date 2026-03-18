@@ -18,7 +18,7 @@ export const getTaskStatus = (status) => {
 };
 
 export const taskInclude = {
-  assigneeTasks: {
+  assignees: {
     include: {
       user: {
         select: {

@@ -200,12 +200,30 @@ export const logout = async (req, res) => {
     // TODO: Add logout logic here
     const { refreshToken } = req.cookies;
 
-    const decodedToken = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-    );
+    if (!refreshToken) {
+      res.clearCookie("refreshToken");
+      return res.status(200).json({
+        success: true,
+        message: "Logout successful",
+      });
+    }
 
-    await revokeRefreshToken(decodedToken.jti);
+    try {
+      const decodedToken = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+      );
+
+      await revokeRefreshToken(decodedToken.jti);
+    } catch (tokenError) {
+      // Token hỏng/hết hạn thì vẫn coi như logout thành công phía client
+      if (
+        tokenError.name !== "JsonWebTokenError" &&
+        tokenError.name !== "TokenExpiredError"
+      ) {
+        throw tokenError;
+      }
+    }
 
     res.clearCookie("refreshToken");
 
