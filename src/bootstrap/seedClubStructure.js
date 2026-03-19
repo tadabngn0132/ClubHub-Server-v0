@@ -39,16 +39,21 @@ const DEPARTMENT_SEEDS = [
   },
 ];
 
+const SEED_TRANSACTION_OPTIONS = {
+  maxWait: 10000,
+  timeout: 20000,
+};
+
 const TOP_POSITION_TEMPLATES = [
   {
     title: "President",
     level: POSITION_LEVEL.TOP_HEAD,
-    systemRole: ROLE.MODERATOR,
+    systemRole: ROLE.ADMIN,
   },
   {
     title: "Vice President",
     level: POSITION_LEVEL.TOP_VICE_HEAD,
-    systemRole: ROLE.MODERATOR,
+    systemRole: ROLE.ADMIN,
   },
 ];
 
@@ -189,7 +194,7 @@ export const ensureClubStructure = async () => {
         }
       }
     }
-  });
+  }, SEED_TRANSACTION_OPTIONS);
 
   console.log(
     `Club structure ready: ${summary.createdDepartments} departments created, ${summary.updatedDepartments} departments updated, ${summary.createdPositions} positions created, ${summary.updatedPositions} positions updated`,
