@@ -456,21 +456,13 @@ export const googleAuthCallback = async (req, res) => {
     let user;
 
     if (!storedUser) {
-      user = await prisma.user.create({
-        data: {
-          fullname: userInfo.name,
-          hashedPassword: await hashedDefaultPassword(),
-          googleId: userInfo.id,
-          email: userInfo.email,
-          locale: userInfo.locale,
-          provider: PROVIDER.GOOGLE,
-          firstName: userInfo.given_name,
-          lastName: userInfo.family_name,
-          isEmailVerified: userInfo.verified_email,
-          lastLogin: new Date(),
-        },
-        include: userIncludeSystemRoleOptions,
-      });
+      res.redirect(
+        `${process.env.FRONTEND_URL}/auth/callback?success=false&message=${encodeURIComponent(
+          "No account associated with this email. Please contact admin to create an account for you.",
+        )}`,
+      );
+      
+      return;
     } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
       user = await prisma.user.update({
         where: {
@@ -504,11 +496,11 @@ export const googleAuthCallback = async (req, res) => {
 
     const accessToken = await createAccessToken(
       user.id,
-      user.userPosition.position.systemRole,
+      user.userPosition[0].position.systemRole,
     );
     const refreshToken = await createRefreshToken(
       user.id,
-      user.userPosition.position.systemRole,
+      user.userPosition[0].position.systemRole,
     );
 
     const necessaryUserData = removeSensitiveUserData(user);
