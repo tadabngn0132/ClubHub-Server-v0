@@ -310,6 +310,14 @@ export const validateActivityUpdate = (req, res, next) => {
   next();
 };
 
+const hasAtLeastOneTarget = (target) => {
+  if (!target || typeof target !== "object") return false;
+  const hasAllClub = target.allClub === true;
+  const hasDepartments = Array.isArray(target.departmentIds) && target.departmentIds.length > 0;
+  const hasUsers = Array.isArray(target.userIds) && target.userIds.length > 0;
+  return hasAllClub || hasDepartments || hasUsers;
+};
+
 export const validateTaskCreation = (req, res, next) => {
   const payload = req.body;
 
@@ -338,6 +346,13 @@ export const validateTaskCreation = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "isCheckCf field is required",
+    });
+  }
+
+  if (!hasAtLeastOneTarget(payload.target)) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one target (allClub, departmentIds, or userIds) must be specified",
     });
   }
 
@@ -380,6 +395,13 @@ export const validateTaskUpdate = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Task ID is required",
+    });
+  }
+
+  if (!hasAtLeastOneTarget(payload.target)) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one target (allClub, departmentIds, or userIds) must be specified",
     });
   }
 
