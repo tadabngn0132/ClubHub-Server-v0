@@ -25,7 +25,7 @@ export const createUser = async (req, res) => {
 
     const position = await prisma.position.findUnique({
       where: {
-        id: payload.positionId,
+        id: Number(payload.positionId),
       },
     });
 
@@ -38,7 +38,7 @@ export const createUser = async (req, res) => {
 
     if (payload.rootDepartmentId !== null) {
       const department = await prisma.department.findUnique({
-        where: { id: payload.rootDepartmentId },
+        where: { id: Number(payload.rootDepartmentId) },
         select: { id: true },
       });
 
@@ -63,7 +63,7 @@ export const createUser = async (req, res) => {
           gender: payload.gender,
           major: payload.major,
           generation: Number(payload.generation),
-          joinedAt: payload.joinedAt,
+          joinedAt: payload.joinedAt? new Date(payload.joinedAt) : null,
           status:
             payload.status.trim().toLowerCase() === "active"
               ? USER_STATUS.ACTIVE

@@ -38,7 +38,28 @@ export const refreshAccessToken = async (req, res) => {
   try {
     const userId = await verifyRefreshToken(refreshToken);
 
-    const newAccessToken = await createAccessToken(userId);
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: userIncludeSystemRoleOptions,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.userPosition || user.userPosition.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: "User does not have an assigned position",
+      });
+    }
+
+    const newAccessToken = await createAccessToken(userId, user.userPosition[0].position.systemRole);
 
     res.status(200).json({
       success: true,

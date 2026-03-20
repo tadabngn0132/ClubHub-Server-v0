@@ -6,22 +6,8 @@ export const createTask = async (req, res) => {
   try {
     const taskData = req.body;
 
-    if (!taskData.title) {
-      return res.status(400).json({
-        success: false,
-        message: "Task title is required",
-      });
-    }
-
-    if (!taskData.assignedId) {
-      return res.status(400).json({
-        success: false,
-        message: "Assigned user ID is required",
-      });
-    }
-
     const createdTask = await prisma.$transaction(async (prisma) => {
-      assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
+      const assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
 
       if (assigneeIds.length === 0) {
         return res.status(400).json({

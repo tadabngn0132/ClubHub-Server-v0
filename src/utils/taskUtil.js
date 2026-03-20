@@ -30,6 +30,12 @@ export const taskInclude = {
       },
     },
   },
+  assignedBy: {
+    select: {
+      email: true,
+      fullname: true,
+    },
+  },
 };
 
 export const getAssigneeScopeValue = (scope) => {
