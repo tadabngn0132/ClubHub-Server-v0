@@ -59,7 +59,10 @@ export const refreshAccessToken = async (req, res) => {
       });
     }
 
-    const newAccessToken = await createAccessToken(userId, user.userPosition[0].position.systemRole);
+    const newAccessToken = await createAccessToken(
+      userId,
+      user.userPosition[0].position.systemRole,
+    );
 
     res.status(200).json({
       success: true,
@@ -468,6 +471,8 @@ export const googleAuthCallback = async (req, res) => {
       });
     }
 
+    console.log("Google user info:", userInfo);
+
     const storedUser = await prisma.user.findFirst({
       where: {
         email: userInfo.email,
@@ -478,11 +483,11 @@ export const googleAuthCallback = async (req, res) => {
 
     if (!storedUser) {
       res.redirect(
-        `${process.env.FRONTEND_URL}/auth/callback?success=false&message=${encodeURIComponent(
+        `${process.env.CLIENT_URL}/auth/callback?success=false&message=${encodeURIComponent(
           "No account associated with this email. Please contact admin to create an account for you.",
         )}`,
       );
-      
+
       return;
     } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
       user = await prisma.user.update({
@@ -535,7 +540,7 @@ export const googleAuthCallback = async (req, res) => {
 
     delete req.session.state;
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
     res.redirect(
       `${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}&accessToken=${accessToken}`,
     );
