@@ -1,7 +1,7 @@
 import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
 import { ACTIVITY_STATUS } from "../utils/constant.js";
-import cloudinary from "./src/libs/cloudinary.js";
+import cloudinary from "../libs/cloudinary.js";
 
 export const createActivity = async (req, res) => {
   try {
