@@ -1,6 +1,11 @@
 import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
 import { ACTIVITY_STATUS } from "../utils/constant.js";
+import multer from "multer";
+import cloudinary from "./src/libs/cloudinary.js";
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 export const createActivity = async (req, res) => {
   try {
@@ -24,6 +29,36 @@ export const createActivity = async (req, res) => {
       finalSlug = `${activitySlug}-${randomSuffix}`;
     }
 
+    if (payload.thumbnail) {
+      if (!payload.thumbnail.startsWith("data:image/")) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid thumbnail format. Expected a base64-encoded image string.",
+        });
+      }
+
+      if (payload.thumbnail.length > 10 * 1024 * 1024) { // Giới hạn kích thước ảnh tối đa 10MB
+        return res.status(400).json({
+          success: false,
+          message: "Thumbnail size exceeds the 10MB limit.",
+        });
+      }
+
+      const uploadResult = await cloudinary.uploader
+        .upload(payload.thumbnail, {
+          folder: "clubhub/activities/thumbnails",
+        })
+        .catch((error) => {
+          console.log("Cloudinary upload error:", error);
+          return res.status(500).json({
+            success: false,
+            message: `Cloudinary upload error: ${error.message}`,
+          });
+        });
+      payload.thumbnailUrl = uploadResult.secure_url;
+      payload.thumbnailPublicId = uploadResult.public_id;
+    }
+
     const newActivity = await prisma.activity.create({
       data: {
         title: payload.title,
@@ -45,6 +80,8 @@ export const createActivity = async (req, res) => {
         slug: finalSlug,
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
+        thumbnailUrl: payload.thumbnailUrl || null,
+        thumbnailPublicId: payload.thumbnailPublicId || null,
       },
       include: {
         organizer: {
@@ -161,6 +198,36 @@ export const updateActivity = async (req, res) => {
     const { id } = req.params;
     const payload = req.body;
 
+    if (payload.thumbnail) {
+      if (!payload.thumbnail.startsWith("data:image/")) {
+        return res.status(400).json({
+          success: false,          message: "Invalid thumbnail format. Expected a base64-encoded image string.",
+        });
+      }
+
+      if (payload.thumbnail.length > 10 * 1024 * 1024) { // Giới hạn kích thước ảnh tối đa 10MB
+        return res.status(400).json({
+          success: false,
+          message: "Thumbnail size exceeds the 10MB limit.",
+        });
+      }
+
+      const uploadResult = await cloudinary.uploader
+        .upload(payload.thumbnail, {
+          folder: "clubhub/activities/thumbnails",
+        })
+        .catch((error) => {
+          console.log("Cloudinary upload error:", error);
+          return res.status(500).json({
+            success: false,
+            message: `Cloudinary upload error: ${error.message}`,
+          });
+        }
+      );
+      payload.thumbnailUrl = uploadResult.secure_url;
+      payload.thumbnailPublicId = uploadResult.public_id;
+    }
+
     const updatedActivity = await prisma.activity.update({
       where: { id: Number(id) },
       data: {
@@ -179,6 +246,8 @@ export const updateActivity = async (req, res) => {
         type: getActivityType(payload.type.trim().toLowerCase()),
         status: getActivityStatus(payload.status.trim().toLowerCase()),
         organizerId: payload.organizerId,
+        thumbnailUrl: payload.thumbnailUrl,
+        thumbnailPublicId: payload.thumbnailPublicId,
       },
     });
 
@@ -222,6 +291,27 @@ export const softDeleteActivity = async (req, res) => {
 export const hardDeleteActivity = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!storedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+    
+    if (storedActivity.thumbnailPublicId) {
+      cloudinary.uploader.destroy(storedActivity.thumbnailPublicId, (error, result) => {
+        if (error) {
+          console.log("Cloudinary deletion error:", error);
+        } else {
+          console.log("Cloudinary deletion result:", result);
+        }
+      });
+    }
 
     const deletedActivity = await prisma.activity.delete({
       where: { id: Number(id) },

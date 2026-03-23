@@ -15,6 +15,8 @@ model User {
   firstName                 String?                    // given_name từ Google
   lastName                  String?                    // family name từ Google
   avatarUrl                 String?                    // picture URL từ Google hoặc avt tùy chọn
+  avatarPublicId            String?                    @map("avatar_public_id") // Cloudinary public ID
+  avatarProvider            AvatarProvider?            @map("avatar_provider")
   isEmailVerified           Boolean                    @default(false)
   provider                  Provider                   @default(LOCAL)
   locale                    String?               
@@ -139,6 +141,7 @@ model Activity {
   type                    ActivityType              @map("type")
   status                  ActivityStatus            @default(DRAFT)
   thumbnailUrl            String?                   @map("thumbnail_url")
+  thumbnailPublicId       String?                   @map("thumbnail_public_id")
   images                  String[]                  @default([]) @map("images")
   videos                  String[]                  @default([]) @map("videos")
   maxParticipants         Int?                      @map("max_participants")
@@ -359,4 +362,9 @@ enum TaskAssigneeScope {
   HUMAN_RESOURCES_DEPT
   EXPERT_COMMITTEE_DEPT
   MEDIA_DEPT
+}
+
+enum AvatarProvider {
+  GOOGLE
+  CLOUDINARY
 }
