@@ -7,6 +7,7 @@ import {
   updateTask,
   softDeleteTask,
   hardDeleteTask,
+  confirmTaskCompletion,
 } from "../controllers/taskController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -14,6 +15,7 @@ import {
   validateTaskCreation,
   validateTaskUpdate,
 } from "../middlewares/validationMiddleware.js";
+import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -60,6 +62,13 @@ router.delete(
   verifyAccessToken,
   requirePermission("tasks", "delete"),
   hardDeleteTask,
+);
+router.put(
+  "/:taskId/confirm-completion",
+  verifyAccessToken,
+  requirePermission("tasks", "update"),
+  uploadImage.single("evidence"),
+  confirmTaskCompletion,
 );
 
 export default router;

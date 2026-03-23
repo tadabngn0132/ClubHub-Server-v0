@@ -5,16 +5,12 @@ import {
   hashedDefaultPassword,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import multer from "multer";
-import cloudinary from "./src/libs/cloudinary.js";
-import { file } from "googleapis/build/src/apis/file/index.js";
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+import cloudinary from "../libs/cloudinary.js";
 
 export const createUser = async (req, res) => {
   try {
     const payload = req.body;
+    const file = req.file;
 
     const storedUser = await prisma.user.findUnique({
       where: {
@@ -42,7 +38,7 @@ export const createUser = async (req, res) => {
       });
     }
 
-    if (payload.rootDepartmentId !== null) {
+    if (payload.rootDepartmentId !== null && payload.rootDepartmentId !== "") {
       const department = await prisma.department.findUnique({
         where: { id: Number(payload.rootDepartmentId) },
         select: { id: true },
@@ -56,38 +52,26 @@ export const createUser = async (req, res) => {
       }
     }
 
-    if (payload.avatar) {
-      if (!file.minetype.startsWith("image/")) {
-        return res.status(400).json({
-          success: false,
-          message: "Uploaded file is not an image",
-        });
-      }
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-      if (payload.avatar.size > 5 * 1024 * 1024) { // 5MB limit
-        return res.status(400).json({
-          success: false,
-          message: "Avatar image size exceeds 5MB limit",
-        });
-      }
-
-      const uploadResult = await cloudinary.uploader
-        .upload(payload.avatar, {
-          folder: "clubhub/users/avatars",
-          public_id: `${payload.email}_avatar_${Date.now()}`,
-          resource_type: "image",
-        })
-        .catch((error) => {
-          console.log("Cloudinary upload error:", error);
-          res.status(500).json({
-            success: false,
-            message: `Failed to upload avatar image: ${error.message}`,
+      try {
+        const uploadResult = await cloudinary.uploader
+          .upload(base64, {
+            folder: "clubhub/users/avatars",
+            public_id: `${payload.email}_avatar_${Date.now()}`,
+            resource_type: "image",
           });
-          return;
+          payload.avatarUrl = uploadResult.secure_url;
+          payload.avatarPublicId = uploadResult.public_id;
+          payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+      } catch (err) {
+        console.error("Error uploading image to Cloudinary:", err);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to upload avatar image: ${err.message}`,
         });
-      payload.avatarUrl = uploadResult.secure_url;
-      payload.avatarPublicId = uploadResult.public_id;
-      payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+      }
     }
 
     const createdUser = await prisma.$transaction(async (prisma) => {
@@ -113,14 +97,14 @@ export const createUser = async (req, res) => {
           avatarPublicId: payload.avatarPublicId,
           avatarProvider: payload.avatarProvider,
           bio: payload.bio,
-          rootDepartmentId: Number(payload.rootDepartmentId),
+          rootDepartmentId: payload.rootDepartmentId !== "" ? Number(payload.rootDepartmentId) : null,
         },
       });
 
       await prisma.userPosition.create({
         data: {
           userId: user.id,
-          positionId: Number(payload.positionId),
+          positionId: payload.positionId !== "" ? Number(payload.positionId) : null,
           isPrimary: true,
         },
       });
@@ -231,6 +215,7 @@ export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const payload = req.body;
+    const file = req.file;
 
     const storedUser = await prisma.user.findUnique({
       where: {
@@ -258,7 +243,7 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    if (payload.rootDepartmentId !== null) {
+    if (payload.rootDepartmentId !== null && payload.rootDepartmentId !== "") {
       const department = await prisma.department.findUnique({
         where: { id: Number(payload.rootDepartmentId) },
         select: { id: true },
@@ -272,39 +257,36 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    if (payload.avatar) {
-      if (!file.minetype.startsWith("image/")) {
-        return res.status(400).json({
-          success: false,
-          message: "Uploaded file is not an image",
-        });
-      }
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-      if (payload.avatar.size > 5 * 1024 * 1024) { // 5MB limit
-        return res.status(400).json({
-          success: false,
-          message: "Avatar image size exceeds 5MB limit",
-        });
-      }
-
-      const uploadResult = await cloudinary.uploader
-        .upload(payload.avatar, {
-          folder: "clubhub/users/avatars",
-          public_id: `${payload.email}_avatar_${Date.now()}`,
-          resource_type: "image",
-        })
-        .catch((error) => {
-          console.log("Cloudinary upload error:", error);
-          res.status(500).json({
-            success: false,
-            message: `Failed to upload avatar image: ${error.message}`,
+      try {
+        const uploadResult = await cloudinary.uploader
+          .upload(base64, {
+            folder: "clubhub/users/avatars",
+            public_id: `${payload.email}_avatar_${Date.now()}`,
+            resource_type: "image",
           });
-          return;
+        payload.avatarUrl = uploadResult.secure_url;
+        payload.avatarPublicId = uploadResult.public_id;
+        payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+
+        if (storedUser.avatarPublicId) {
+          cloudinary.uploader.destroy(storedUser.avatarPublicId, (error, result) => {
+            if (error) {
+              console.log("Cloudinary deletion error:", error);
+            } else {
+              console.log("Cloudinary deletion result:", result);
+            }
+          });
         }
-      );
-      payload.avatarUrl = uploadResult.secure_url;
-      payload.avatarPublicId = uploadResult.public_id;
-      payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+      } catch (err) {
+        console.error("Error uploading image to Cloudinary:", err);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to upload avatar image: ${err.message}`,
+        });
+      }
     }
 
     const updatedUser = await prisma.$transaction(async (prisma) => {
@@ -314,7 +296,6 @@ export const updateUser = async (req, res) => {
         },
         data: {
           email: payload.email,
-          hashedPassword: await hashedDefaultPassword(),
           fullname: payload.fullname,
           phoneNumber: payload.phoneNumber,
           dateOfBirth: payload.dateOfBirth
@@ -333,7 +314,7 @@ export const updateUser = async (req, res) => {
           avatarPublicId: payload.avatarPublicId,
           avatarProvider: payload.avatarProvider,
           bio: payload.bio,
-          rootDepartmentId: Number(payload.rootDepartmentId),
+          rootDepartmentId: payload.rootDepartmentId !== "" ? Number(payload.rootDepartmentId) : null,
         },
         include: {
           userPosition: {
@@ -357,7 +338,7 @@ export const updateUser = async (req, res) => {
           }
         },
         data: {
-          positionId: Number(payload.positionId),
+          positionId: payload.positionId !== "" ? Number(payload.positionId) : null,
         },
       });
 

@@ -155,8 +155,6 @@ export const updateTask = async (req, res) => {
         data: assigneeIds.map((assigneeId) => ({
           taskId: task.id,
           assigneeId,
-          evidenceUrl: taskData.evidenceUrl || "",
-          additionalComments: taskData.additionalComments || "",
         })),
         skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
       });
@@ -251,6 +249,71 @@ export const getTasksByUserId = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Internal server error / Get tasks by user ID error: ${err.message}`,
+    });
+  }
+};
+
+export const confirmTaskCompletion = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const taskCfData = req.body;
+    const file = req.file;
+
+    const assigneeTask = await prisma.assigneeTask.findFirst({
+      where: {
+        taskId: Number(taskId),
+        assigneeId: Number(taskCfData.assigneeId),
+      },
+    });
+
+    if (!assigneeTask) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignee task not found",
+      });
+    }
+
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+      try {
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: "task_evidence",
+          public_id: `task_${taskId}_assignee_${taskCfData.assigneeId}_${Date.now()}`,
+          resource_type: "image",
+        });
+
+        taskCfData.evidenceUrl = uploadResult.secure_url;
+        taskCfData.evidencePublicId = uploadResult.public_id;
+      } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload evidence image",
+        });
+      }
+    }
+
+    const updatedAssigneeTask = await prisma.assigneeTask.update({
+      where: { id: assigneeTask.id },
+      data: {
+        confirmedAt: new Date(),
+        evidenceUrl: taskCfData.evidenceUrl,
+        evidencePublicId: taskCfData.evidencePublicId,
+        additionalComments: taskCfData.additionalComments,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task completion confirmed successfully",
+      data: updatedAssigneeTask,
+    });
+  } catch (err) {
+    console.error("Error in confirmTaskCompletion function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Confirm task completion error: ${err.message}`,
     });
   }
 };

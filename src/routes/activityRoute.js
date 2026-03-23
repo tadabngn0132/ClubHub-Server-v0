@@ -8,6 +8,7 @@ import {
   softDeleteActivity,
   hardDeleteActivity,
   getActivitiesByUserId,
+  createActivityImages,
 } from "../controllers/activityController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -15,6 +16,7 @@ import {
   validateActivityCreation,
   validateActivityUpdate,
 } from "../middlewares/validationMiddleware.js";
+import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -22,6 +24,7 @@ router.post(
   "/",
   verifyAccessToken,
   requirePermission("activities", "create"),
+  uploadImage.single("thumbnail"),
   validateActivityCreation,
   createActivity,
 );
@@ -43,6 +46,12 @@ router.get(
   requirePermission("activities", "read"),
   getActivitiesBySlug,
 );
+router.put(
+  "/images/:activityId",
+  verifyAccessToken,
+  uploadImage.array("images", 10),
+  createActivityImages
+);
 router.get(
   "/:id",
   verifyAccessToken,
@@ -53,6 +62,7 @@ router.put(
   "/:id",
   verifyAccessToken,
   requirePermission("activities", "update"),
+  uploadImage.single("thumbnail"),
   validateActivityUpdate,
   updateActivity,
 );

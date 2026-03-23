@@ -13,10 +13,11 @@ import {
   validateUserUpdate,
 } from "../middlewares/validationMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
+import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyAccessToken, validateUserCreation, createUser);
+router.post("/", verifyAccessToken, requirePermission("users", "create"), uploadImage.single("avatar"), validateUserCreation, createUser);
 router.get(
   "/:id",
   verifyAccessToken,
@@ -33,6 +34,7 @@ router.put(
   "/:id",
   verifyAccessToken,
   requirePermission("users", "update", { allowOwner: true }),
+  uploadImage.single("avatar"),
   validateUserUpdate,
   updateUser,
 );

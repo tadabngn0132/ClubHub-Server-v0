@@ -10,6 +10,7 @@ import {
 } from "../utils/constant.js";
 
 export const createMemberApplication = async (req, res) => {
+  // TODO: Implement file upload handling for CV and avatar, and save the file URLs in the database
   try {
     const applicationData = req.body;
     const application = await prisma.memberApplication.create({

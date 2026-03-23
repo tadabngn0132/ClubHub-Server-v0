@@ -1,15 +1,12 @@
 import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
 import { ACTIVITY_STATUS } from "../utils/constant.js";
-import multer from "multer";
 import cloudinary from "./src/libs/cloudinary.js";
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
+    const file = req.file;
 
     // Tạo slug từ tiêu đề hoạt động
     const activitySlug = payload.title
@@ -29,34 +26,24 @@ export const createActivity = async (req, res) => {
       finalSlug = `${activitySlug}-${randomSuffix}`;
     }
 
-    if (payload.thumbnail) {
-      if (!payload.thumbnail.startsWith("data:image/")) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid thumbnail format. Expected a base64-encoded image string.",
-        });
-      }
+    if (file) {
+      base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-      if (payload.thumbnail.length > 10 * 1024 * 1024) { // Giới hạn kích thước ảnh tối đa 10MB
-        return res.status(400).json({
-          success: false,
-          message: "Thumbnail size exceeds the 10MB limit.",
-        });
-      }
-
-      const uploadResult = await cloudinary.uploader
-        .upload(payload.thumbnail, {
+      try {
+        const uploadResult = await cloudinary.uploader.upload(base64, {
           folder: "clubhub/activities/thumbnails",
-        })
-        .catch((error) => {
-          console.log("Cloudinary upload error:", error);
-          return res.status(500).json({
-            success: false,
-            message: `Cloudinary upload error: ${error.message}`,
-          });
+          public_id: `activity_${finalSlug}_thumbnail_${Date.now()}`,
+          resource_type: "image",
         });
-      payload.thumbnailUrl = uploadResult.secure_url;
-      payload.thumbnailPublicId = uploadResult.public_id;
+        payload.thumbnailUrl = uploadResult.secure_url;
+        payload.thumbnailPublicId = uploadResult.public_id;
+      } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({
+          success: false,
+          message: `Cloudinary upload error: ${error.message}`,
+        });
+      }
     }
 
     const newActivity = await prisma.activity.create({
@@ -197,35 +184,47 @@ export const updateActivity = async (req, res) => {
   try {
     const { id } = req.params;
     const payload = req.body;
+    const file = req.file;
 
-    if (payload.thumbnail) {
-      if (!payload.thumbnail.startsWith("data:image/")) {
-        return res.status(400).json({
-          success: false,          message: "Invalid thumbnail format. Expected a base64-encoded image string.",
-        });
-      }
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: Number(id) },
+    });
 
-      if (payload.thumbnail.length > 10 * 1024 * 1024) { // Giới hạn kích thước ảnh tối đa 10MB
-        return res.status(400).json({
-          success: false,
-          message: "Thumbnail size exceeds the 10MB limit.",
-        });
-      }
+    if (!storedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
 
-      const uploadResult = await cloudinary.uploader
-        .upload(payload.thumbnail, {
+    if (file) {
+      base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+      try {
+        const uploadResult = await cloudinary.uploader.upload(base64, {
           folder: "clubhub/activities/thumbnails",
-        })
-        .catch((error) => {
-          console.log("Cloudinary upload error:", error);
-          return res.status(500).json({
-            success: false,
-            message: `Cloudinary upload error: ${error.message}`,
+          public_id: `activity_${finalSlug}_thumbnail_${Date.now()}`,
+          resource_type: "image",
+        });
+        payload.thumbnailUrl = uploadResult.secure_url;
+        payload.thumbnailPublicId = uploadResult.public_id;
+
+        if (storedActivity.thumbnailPublicId) {
+          cloudinary.uploader.destroy(storedActivity.thumbnailPublicId, (error, result) => {
+            if (error) {
+              console.log("Cloudinary deletion error:", error);
+            } else {
+              console.log("Cloudinary deletion result:", result);
+            }
           });
         }
-      );
-      payload.thumbnailUrl = uploadResult.secure_url;
-      payload.thumbnailPublicId = uploadResult.public_id;
+      } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({
+          success: false,
+          message: `Cloudinary upload error: ${error.message}`,
+        });
+      }
     }
 
     const updatedActivity = await prisma.activity.update({
@@ -349,6 +348,66 @@ export const getActivitiesByUserId = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Internal server error / Get activities by user ID error: ${err.message}`,
+    });
+  }
+};
+
+export const createActivityImages = async (req, res) => {
+  try {
+    const { activityId } = req.params;
+    const files = req.files;
+
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: Number(activityId) },
+    });
+
+    if (!storedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
+    if (files && files.length > 0) {
+      try {
+        const uploadResults = await Promise.all(
+          files.map((file) => {
+            const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+            return cloudinary.uploader.upload(base64, {
+              folder: "clubhub/activities/images",
+              public_id: `activity_${activityId}_image_${Date.now()}`,
+              resource_type: "image",
+            });
+          })
+        );
+
+        const createdImages = await prisma.activityImage.createMany({
+          data: uploadResults.map((uploadResult) => ({
+            imageUrl: uploadResult.secure_url,
+            imagePublicId: uploadResult.public_id,
+            activityId: Number(activityId),
+          })),
+        });
+
+        res.status(201).json({
+          success: true,
+          message: "Activity images uploaded and created successfully",
+          data: createdImages,
+        });
+      } catch (err) {
+        console.error("Error uploading images:", err);
+        return res.status(500).json({
+          success: false,
+          message: `Error uploading images to Cloudinary: ${err.message}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.log("Error create activity image function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Create activity image error: ${err.message}`,
     });
   }
 };
