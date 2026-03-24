@@ -26,6 +26,7 @@ import session from "express-session";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initializeSocketServer } from "./src/socket/socketServer.js";
+import messageRoute from "./src/routes/messageRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +72,7 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/departments", departmentRouter);
 app.use("/api/positions", positionRouter);
 app.use("/api/department-applications", departmentApplicationRouter);
+app.use("/api/messages", messageRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;

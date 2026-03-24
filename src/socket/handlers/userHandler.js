@@ -1,4 +1,4 @@
-import { SOCKET_EVENTS } from "../../utils/constant";
+import { SOCKET_EVENTS } from '../../utils/constant.js';
 
 const onlineUsers = new Map();
 
