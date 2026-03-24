@@ -354,3 +354,26 @@ export const AVATAR_PROVIDERS = {
   GOOGLE: "GOOGLE",
   CLOUDINARY: "CLOUDINARY",
 };
+
+export const SOCKET_EVENTS = {
+  // User events
+  USER_ONLINE: 'user:online',
+  USER_OFFLINE: 'user:offline',
+  USERS_ONLINE_STATUS: 'users:online-status',
+
+  // Message events
+  MESSAGE_SEND: 'message:send',
+  MESSAGE_RECEIVE: 'message:receive',
+  MESSAGE_DELETE: 'message:delete',
+  MESSAGE_SENT: 'message:sent',
+  MESSAGE_DELETED: 'message:deleted',
+  MESSAGE_ERROR: 'message:error',
+
+  // Typing events
+  USER_TYPING: 'user:typing',
+  USER_STOP_TYPING: 'user:stop-typing',
+
+  // Notification events
+  NOTIFICATION_SEND: 'notification:send',
+  NOTIFICATION_RECEIVE: 'notification:receive',
+};

@@ -45,6 +45,9 @@ model User {
   assigneeTasks             AssigneeTask[]
   interviewedApplications   DepartmentMemberApplication[] @relation("Interviewer")
   assignedTasks             Task[]                       @relation("TaskAssigner")
+  senderMessages            Message[]                    @relation("MessageSender")
+  receiverMessages          Message[]                    @relation("MessageReceiver")
+  chatRoomMembers           ChatRoomMember[]
 
   @@map("users")
   @@index([email])
@@ -298,6 +301,48 @@ model ActivityVideo {
   activity         Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([activityId])
+}
+
+model Message {
+  id          Int         @id @default(autoincrement())
+  senderId    Int         @map("sender_id")
+  receiverId  Int?        @map("receiver_id")
+  roomId      String      @map("room_id")
+  content     String      @map("content")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt
+  sender      User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User?       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  chatRoom    ChatRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([senderId])
+  @@index([roomId])
+
+}
+
+model ChatRoom {
+  id          String      @id @default(uuid())
+  name        String?     @map("name")
+  isGroup     Boolean     @default(false) @map("is_group")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt
+  members     ChatRoomMember[]
+  messages    Message[]
+}
+
+model ChatRoomMember {
+  id          Int         @id @default(autoincrement())
+  roomId      String      @map("room_id")
+  userId      Int         @map("user_id")
+  joinedAt    DateTime    @default(now()) @map("joined_at")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatRoom    ChatRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("chatRoomMembers")
+  @@index([roomId])
+  @@index([userId])
 }
 
 enum Role {

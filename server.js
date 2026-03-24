@@ -23,9 +23,22 @@ import { ensureClubStructure } from "./src/bootstrap/seedClubStructure.js";
 
 import { corsOptions } from "./src/configs/corsConfig.js";
 import session from "express-session";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { initializeSocketServer } from "./src/socket/socketServer.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+initializeSocketServer(io);
 
 app.use(cors(corsOptions));
 app.use(limiter);
@@ -69,7 +82,7 @@ async function startServer() {
     await testDatabaseConnection();
     await ensureClubStructure();
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Go to http://localhost:${PORT}`);
     });
