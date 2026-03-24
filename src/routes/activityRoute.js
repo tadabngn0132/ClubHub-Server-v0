@@ -8,7 +8,10 @@ import {
   softDeleteActivity,
   hardDeleteActivity,
   getActivitiesByUserId,
-  createActivityImages,
+  createActivityImage,
+  createActivityVideo,
+  deleteActivityImage,
+  deleteActivityVideo,
 } from "../controllers/activityController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -46,12 +49,27 @@ router.get(
   requirePermission("activities", "read"),
   getActivitiesBySlug,
 );
-router.put(
-  "/images/:activityId",
+router.post(
+  "/images/create/:activityId",
   verifyAccessToken,
-  uploadImage.array("images", 10),
-  createActivityImages
+  createActivityImage
 );
+router.post(
+  "/videos/create/:activityId",
+  verifyAccessToken,
+  createActivityVideo
+);
+router.delete(
+  "/images/delete/:videoId",
+  verifyAccessToken,
+  deleteActivityImage
+);
+router.delete(
+  "/videos/delete/:videoId",
+  verifyAccessToken,
+  deleteActivityVideo
+);
+
 router.get(
   "/:id",
   verifyAccessToken,

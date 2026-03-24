@@ -67,3 +67,10 @@ export const roleBasedScopes = {
     scopes.calendarReadonly,
   ],
 };
+
+export const googleDrive = google.drive({ version: "v3", auth: oauth2Client });
+export const googleDocs = google.docs({ version: "v1", auth: oauth2Client });
+export const googleSheets = google.sheets({ version: "v4", auth: oauth2Client });
+export const googleForms = google.forms({ version: "v1", auth: oauth2Client });
+export const googleCalendar = google.calendar({ version: "v3", auth: oauth2Client });
+export const googleMail = google.gmail({ version: "v1", auth: oauth2Client });

@@ -352,10 +352,10 @@ export const getActivitiesByUserId = async (req, res) => {
   }
 };
 
-export const createActivityImages = async (req, res) => {
+export const createActivityImage = async (req, res) => {
   try {
     const { activityId } = req.params;
-    const files = req.files;
+    const payload = req.body;
 
     const storedActivity = await prisma.activity.findUnique({
       where: { id: Number(activityId) },
@@ -368,46 +368,146 @@ export const createActivityImages = async (req, res) => {
       });
     }
 
-    if (files && files.length > 0) {
-      try {
-        const uploadResults = await Promise.all(
-          files.map((file) => {
-            const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+    const createdImage = await prisma.activityImage.create({
+      data: {
+        imageUrl: payload.secure_url,
+        imagePublicId: payload.public_id,
+        activityId: Number(activityId),
+      },
+    });
 
-            return cloudinary.uploader.upload(base64, {
-              folder: "clubhub/activities/images",
-              public_id: `activity_${activityId}_image_${Date.now()}`,
-              resource_type: "image",
-            });
-          })
-        );
-
-        const createdImages = await prisma.activityImage.createMany({
-          data: uploadResults.map((uploadResult) => ({
-            imageUrl: uploadResult.secure_url,
-            imagePublicId: uploadResult.public_id,
-            activityId: Number(activityId),
-          })),
-        });
-
-        res.status(201).json({
-          success: true,
-          message: "Activity images uploaded and created successfully",
-          data: createdImages,
-        });
-      } catch (err) {
-        console.error("Error uploading images:", err);
-        return res.status(500).json({
-          success: false,
-          message: `Error uploading images to Cloudinary: ${err.message}`,
-        });
-      }
-    }
+    res.status(201).json({
+      success: true,
+      message: "Activity images uploaded and created successfully",
+      data: createdImage,
+    });
   } catch (err) {
     console.log("Error create activity image function: ", err.message);
     res.status(500).json({
       success: false,
       message: `Internal server error / Create activity image error: ${err.message}`,
+    });
+  }
+};
+
+export const deleteActivityImage = async (req, res) => {
+  try {
+    const { imageId } = req.params;
+    const storedImage = await prisma.activityImage.findUnique({
+      where: { id: Number(imageId) },
+    });
+
+    if (!storedImage) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity image not found",
+      });
+    }
+
+    if (storedImage.imagePublicId) {
+      cloudinary.uploader.destroy(storedImage.imagePublicId, (error, result) => {
+        if (error) {
+          console.log("Cloudinary deletion error:", error);
+        } else {
+          console.log("Cloudinary deletion result:", result);
+        }
+      });
+    }
+
+    const deletedImage = await prisma.activityImage.delete({
+      where: { id: Number(imageId) },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Activity image deleted successfully",
+      data: deletedImage,
+    });
+  } catch (err) {
+    console.log("Error delete activity image function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Delete activity image error: ${err.message}`,
+    });
+  }
+};
+
+export const createActivityVideo = async (req, res) => {
+  try {
+    const { activityId } = req.params;
+    const payload = req.body;
+
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: Number(activityId) },
+    });
+
+    if (!storedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
+    const createdVideo = await prisma.activityVideo.create({
+      data: {
+        videoUrl: payload.secure_url,
+        videoPublicId: payload.public_id,
+        activityId: Number(activityId),
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Activity video created successfully",
+      data: createdVideo,
+    });
+  } catch (err) {
+    console.log("Error create activity video function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Create activity video error: ${err.message}`,
+    });
+  }
+};
+
+export const deleteActivityVideo = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const storedVideo = await prisma.activityVideo.findUnique({
+      where: { id: Number(videoId) },
+    });
+
+    if (!storedVideo) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity video not found",
+      });
+    }
+
+    if (storedVideo.videoPublicId) {
+      cloudinary.uploader.destroy(storedVideo.videoPublicId, { resource_type: "video" }, (error, result) => {
+        if (error) {
+          console.log("Cloudinary deletion error:", error);
+        } else {
+          console.log("Cloudinary deletion result:", result);
+        }
+      });
+    }
+
+    const deletedVideo = await prisma.activityVideo.delete({
+      where: { id: Number(videoId) },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Activity video deleted successfully",
+      data: deletedVideo,
+    });
+  } catch (err) {
+    console.log("Error delete activity video function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Delete activity video error: ${err.message}`,
     });
   }
 };
