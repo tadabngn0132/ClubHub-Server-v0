@@ -311,6 +311,7 @@ model Message {
   content     String      @map("content")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
+  isDeleted   Boolean     @default(false) @map("is_deleted")
   sender      User        @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver    User?       @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   chatRoom    ChatRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -318,6 +319,7 @@ model Message {
   @@map("messages")
   @@index([senderId])
   @@index([roomId])
+  @@index([isDeleted])
 
 }
 

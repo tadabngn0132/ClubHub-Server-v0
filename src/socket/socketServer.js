@@ -8,10 +8,10 @@ export const initializeSocketServer = (io) => {
         console.log(`New client connected: ${socket.id}`);
 
         // Set up all event handlers for this socket connection
-        setupUserHandler(socket);
-        setupMessageHandler(socket);
-        setupNotificationHandler(socket);
-        setupTypingHandler(socket);
+        setupUserHandler(io, socket);
+        setupMessageHandler(io, socket);
+        setupNotificationHandler(io, socket);
+        setupTypingHandler(io, socket);
 
         // Global error handler
         socket.on("error", (err) => {

@@ -74,7 +74,36 @@ export const getAllMessagesByRoomId = async (req, res) => {
     }
 };
 
-export const deleteMessage = async (req, res) => {
+export const softDeleteMessage = async (req, res) => {
+    const { messageId } = req.params;
+    const userId = req.user.id;
+
+    try {
+        const message = await prisma.message.findUnique({
+            where: { id: messageId }
+        });
+
+        if (!message) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        if (message.senderId !== userId) {
+            return res.status(403).json({ success: false, message: 'Unauthorized to delete this message' });
+        }
+
+        const deletedMessage = await prisma.message.update({
+            where: { id: messageId },
+            data: { isDeleted: true }
+        });
+
+        res.status(200).json({ success: true, message: 'Message soft deleted successfully', data: deletedMessage });
+    } catch (error) {
+        console.error('Error soft deleting message:', error);
+        res.status(500).json({ success: false, message: 'Failed to soft delete message' });
+    }
+};
+
+export const hardDeleteMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user.id;
 
@@ -125,7 +154,7 @@ export const getAllRoomsForUser = async (req, res) => {
             const otherUserId = lastMessage.senderId === userId ? lastMessage.receiverId : lastMessage.senderId;
             const otherUser = await prisma.user.findUnique({
                 where: { id: otherUserId },
-                select: { id: true, name: true, email: true }
+                select: { id: true, fullname: true, email: true, avatarUrl: true }
             });
 
             return {

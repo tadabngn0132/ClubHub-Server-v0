@@ -141,6 +141,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: true,
     },
+    messages: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: true,
+    },
   },
   MODERATOR: {
     users: {
@@ -206,6 +213,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
+    messages: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: true,
+    },
   },
   MEMBER: {
     users: {
@@ -269,6 +283,13 @@ export const ROLE_PERMISSIONS = {
       read: true,
       update: true,
       softDelete: false,
+      hardDelete: false,
+    },
+    messages: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
       hardDelete: false,
     },
   },
@@ -336,6 +357,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
+    messages: {
+      create: false,
+      read: true,
+      update: false,
+      softDelete: false,
+      hardDelete: false,
+    },
   },
 };
 
@@ -376,4 +404,6 @@ export const SOCKET_EVENTS = {
   // Notification events
   NOTIFICATION_SEND: 'notification:send',
   NOTIFICATION_RECEIVE: 'notification:receive',
+  NOTIFICATION_READ: 'notification:read',
+  NOTIFICATION_DELETE: 'notification:delete',
 };
