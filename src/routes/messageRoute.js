@@ -3,7 +3,8 @@ import {
   createNewMessage,
   updateMessage,
   getAllMessagesByRoomId,
-  deleteMessage,
+  softDeleteMessage,
+  hardDeleteMessage,
   getAllRoomsForUser
 } from '../controllers/messageController.js';
 import { verifyAccessToken } from '../middlewares/authMiddleware.js';
@@ -15,6 +16,7 @@ router.post('/', verifyAccessToken, requirePermission('message', 'create'), crea
 router.get('/rooms', verifyAccessToken, requirePermission('message', 'read'), getAllRoomsForUser);
 router.get('/rooms/:roomId', verifyAccessToken, requirePermission('message', 'read'), getAllMessagesByRoomId);
 router.put('/:messageId', verifyAccessToken, requirePermission('message', 'update'), updateMessage);
-router.delete('/:messageId', verifyAccessToken, requirePermission('message', 'delete'), deleteMessage);
+router.put('/:messageId/soft', verifyAccessToken, requirePermission('message', 'delete'), softDeleteMessage);
+router.delete('/:messageId/hard', verifyAccessToken, requirePermission('message', 'delete'), hardDeleteMessage);
 
 export default router;

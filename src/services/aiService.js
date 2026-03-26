@@ -1,35 +1,8 @@
-import { GoogleGenAI } from "@google/genai";
+import { ai } from "../libs/googleGenAI.js";
 import dotenv from "dotenv";
+import { THINKING_LEVELS, SYSTEM_INSTRUCTIONS } from '../services/aiService';
 
 dotenv.config();
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || process.env.BACKUP_GEMINI_API_KEY,
-});
-
-// Define different system instructions for different use cases
-const SYSTEM_INSTRUCTIONS = {
-  activity_recommender: `You are an activity recommendation assistant for a dance crew management system. 
-    Help suggest activities, training sessions, and performance opportunities based on member profiles and preferences.
-    Keep responses concise and actionable.`,
-
-  content_generator: `You are a content generation assistant for a dance crew.
-    Help create event descriptions, announcements, training plans, and motivational messages.
-    Match the tone to be professional yet engaging for a dance community.`,
-
-  communication_helper: `You are a communication assistant that helps draft messages for members.
-    Help with clarity, tone, and professionalism. Keep responses brief and direct.`,
-
-  task_planner: `You are a project planning assistant for event management.
-    Help break down complex tasks into actionable steps with timelines.
-    Consider resource constraints typical for a volunteer-run dance crew.`,
-};
-
-const THINKING_LEVELS = {
-  LOW: "low",
-  MEDIUM: "medium",
-  HIGH: "high",
-};
 
 /**
  * Generate content with specified system instruction
@@ -37,10 +10,10 @@ const THINKING_LEVELS = {
  * @param {string} instructionType - Type of instruction (activity_recommender, content_generator, etc.)
  * @returns {Promise<Object>} Response with success status and content
  */
-export async function generateContent(
+export const generateContent = async (
   prompt,
   instructionType = "content_generator",
-) {
+) => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -77,10 +50,10 @@ export async function generateContent(
  * @param {string} instructionType - Type of instruction
  * @returns {Promise<Object[]>} Array of results
  */
-export async function generateContentBatch(
+export const generateContentBatch = async (
   prompts,
   instructionType = "content_generator",
-) {
+) => {
   try {
     const results = await Promise.all(
       prompts.map((prompt) => generateContent(prompt, instructionType)),
@@ -98,7 +71,7 @@ export async function generateContentBatch(
  * @param {Object} options - Configuration options
  * @returns {Promise<Object>} Response with content and usage stats
  */
-export async function generateWithOptions(prompt, options = {}) {
+export const generateWithOptions = async (prompt, options = {}) => {
   const {
     instructionType = "content_generator",
     temperature = 0.7,
@@ -154,11 +127,11 @@ export async function generateWithOptions(prompt, options = {}) {
  * @param {number} maxRetries - Maximum number of retries
  * @returns {Promise<Object>} Response with content
  */
-export async function safeAICall(
+export const safeAICall = async (
   prompt,
   instructionType = "content_generator",
   maxRetries = 3,
-) {
+) => {
   let lastError;
 
   for (let i = 0; i < maxRetries; i++) {

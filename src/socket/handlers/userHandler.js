@@ -62,4 +62,8 @@ export const setupUserHandler = (io, socket) => {
 
 // Helper function to get socket ID by user ID
 export const getOnlineUsers = () => Array.from(onlineUsers.keys());
+export const getUserSocket = (userId) => {
+    const sockets = onlineUsers.get(Number(userId));
+    return sockets ? Array.from(sockets) : null;
+}
 export const isUserOnline = (userId) => onlineUsers.has(Number(userId));
