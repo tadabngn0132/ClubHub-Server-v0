@@ -11,7 +11,6 @@ model User {
   fullname                  String                     // lấy name từ Google
   email                     String                     @unique
   hashedPassword            String                     @map("hashed_password")
-  googleId                  String?                    // for Google OAuth
   firstName                 String?                    // given_name từ Google
   lastName                  String?                    // family name từ Google
   avatarUrl                 String?                    // picture URL từ Google hoặc avt tùy chọn
@@ -48,11 +47,31 @@ model User {
   senderMessages            Message[]                    @relation("MessageSender")
   receiverMessages          Message[]                    @relation("MessageReceiver")
   chatRoomMembers           ChatRoomMember[]
+  googleCredentials         UserGoogleCredential?       
 
   @@map("users")
   @@index([email])
-  @@index([googleId])
   @@index([rootDepartmentId])
+}
+
+model UserGoogleCredential {
+  id          Int         @id @default(autoincrement())
+  userId      Int         @map("user_id")
+  googleId    String      @map("google_id")
+  encryptedRefreshToken String?      @map("encrypted_refresh_token")
+  encryptedAccessToken  String?      @map("encrypted_access_token")
+  tokenType    String?      @map("token_type")
+  scope        String?      @map("scope")
+  expiryDate    DateTime?    @map("expiry_date")
+  revokedAt    DateTime?   @map("revoked_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([googleId])
+  @@unique([userId])
+  @@map("userGoogleCredentials")
+  @@index([userId])
 }
 
 model RefreshToken {

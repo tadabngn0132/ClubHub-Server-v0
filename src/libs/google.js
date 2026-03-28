@@ -5,7 +5,7 @@ import { google } from "googleapis";
  * from the client_secret.json file. To get these credentials for your application, visit
  * https://console.cloud.google.com/apis/credentials.
  */
-export const oauth2Client = new google.auth.OAuth2(
+const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.GOOGLE_REDIRECT_URL,
@@ -68,9 +68,15 @@ export const roleBasedScopes = {
   ],
 };
 
-export const googleDrive = google.drive({ version: "v3", auth: oauth2Client });
-export const googleDocs = google.docs({ version: "v1", auth: oauth2Client });
-export const googleSheets = google.sheets({ version: "v4", auth: oauth2Client });
-export const googleForms = google.forms({ version: "v1", auth: oauth2Client });
-export const googleCalendar = google.calendar({ version: "v3", auth: oauth2Client });
-export const googleMail = google.gmail({ version: "v1", auth: oauth2Client });
+const googleDrive = google.drive({ version: "v3", auth: oauth2Client });
+const googleDocs = google.docs({ version: "v1", auth: oauth2Client });
+const googleSheets = google.sheets({
+  version: "v4",
+  auth: oauth2Client,
+});
+const googleForms = google.forms({ version: "v1", auth: oauth2Client });
+const googleCalendar = google.calendar({
+  version: "v3",
+  auth: oauth2Client,
+});
+const googleMail = google.gmail({ version: "v1", auth: oauth2Client });

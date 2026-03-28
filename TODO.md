@@ -1,10 +1,10 @@
 # Google OAuth Refactor Checklist
 
 ## 1) Data model and migration
-- [ ] Create model `UserGoogleCredential` (1-1 with `User`, `userId` unique).
-- [ ] Add fields: `googleSub`, `encryptedRefreshToken`, `encryptedAccessToken`, `tokenType`, `scope`, `expiryDate`, `revokedAt`, `createdAt`, `updatedAt`.
-- [ ] Add reverse relation from `User` to `UserGoogleCredential`.
-- [ ] Create Prisma migration and apply to dev database.
+- [x] Create model `UserGoogleCredential` (1-1 with `User`, `userId` unique).
+- [x] Add fields: `googleSub`, `encryptedRefreshToken`, `encryptedAccessToken`, `tokenType`, `scope`, `expiryDate`, `revokedAt`, `createdAt`, `updatedAt`.
+- [x] Add reverse relation from `User` to `UserGoogleCredential`.
+- [x] Create Prisma migration and apply to dev database.
 
 ## 2) Refactor Google auth library
 - [ ] Keep scopes/config in `src/libs/google.js`.
