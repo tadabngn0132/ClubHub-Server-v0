@@ -1,17 +1,20 @@
 import { google } from "googleapis";
 
-/**
- * To use OAuth2 authentication, we need access to a CLIENT_ID, CLIENT_SECRET, AND REDIRECT_URI
- * from the client_secret.json file. To get these credentials for your application, visit
- * https://console.cloud.google.com/apis/credentials.
- */
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URL,
-);
+export const createOAuthClient = () => {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URL,
+  );
+};
 
-const scopes = {
+export const createOAuthClientWithCredentials = (credentials = {}) => {
+  const oauthClient = createOAuthClient();
+  oauthClient.setCredentials(credentials);
+  return oauthClient;
+};
+
+export const scopes = {
   // Google OAuth 2.0
   userInfoProfile: "https://www.googleapis.com/auth/userinfo.profile",
   userInfoEmail: "https://www.googleapis.com/auth/userinfo.email",
@@ -68,15 +71,19 @@ export const roleBasedScopes = {
   ],
 };
 
-const googleDrive = google.drive({ version: "v3", auth: oauth2Client });
-const googleDocs = google.docs({ version: "v1", auth: oauth2Client });
-const googleSheets = google.sheets({
-  version: "v4",
-  auth: oauth2Client,
-});
-const googleForms = google.forms({ version: "v1", auth: oauth2Client });
-const googleCalendar = google.calendar({
-  version: "v3",
-  auth: oauth2Client,
-});
-const googleMail = google.gmail({ version: "v1", auth: oauth2Client });
+export const createGoogleApis = (auth) => {
+  return {
+    googleDrive: google.drive({ version: "v3", auth }),
+    googleDocs: google.docs({ version: "v1", auth }),
+    googleSheets: google.sheets({
+      version: "v4",
+      auth,
+    }),
+    googleForms: google.forms({ version: "v1", auth }),
+    googleCalendar: google.calendar({
+      version: "v3",
+      auth,
+    }),
+    googleMail: google.gmail({ version: "v1", auth }),
+  };
+};

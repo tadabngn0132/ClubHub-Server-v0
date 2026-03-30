@@ -2,11 +2,84 @@ import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
 import { ACTIVITY_STATUS } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
+import {
+  createUserCalendarEvent,
+  updateUserCalendarEvent,
+  deleteUserCalendarEvent,
+  findUserCalendarEventByActivityId,
+} from "../services/googleCalendarService.js";
+
+const buildActivityCalendarEventData = (activity) => {
+  return {
+    summary: activity.title,
+    description: activity.description,
+    location: activity.venueAddress || activity.venueName || activity.meetingLink || "",
+    startDateTime: new Date(activity.startDate).toISOString(),
+    endDateTime: new Date(activity.endDate).toISOString(),
+    extendedProperties: {
+      private: {
+        activityId: String(activity.id),
+        activitySlug: activity.slug,
+      },
+    },
+  };
+};
+
+const applyGoogleMeetDetailsToActivity = async (activityId, calendarEvent) => {
+  const meetLink =
+    calendarEvent?.hangoutLink ||
+    calendarEvent?.conferenceData?.entryPoints?.find(
+      (entry) => entry.entryPointType === "video",
+    )?.uri ||
+    null;
+  const meetId = calendarEvent?.conferenceData?.conferenceId || null;
+
+  if (!meetLink && !meetId) {
+    return null;
+  }
+
+  return prisma.activity.update({
+    where: { id: Number(activityId) },
+    data: {
+      meetingPlatform: "GOOGLE_MEET",
+      meetingLink: meetLink,
+      meetingId: meetId,
+    },
+  });
+};
+
+const trySyncCreateActivityCalendarEvent = async (activity, userId) => {
+  const eventData = buildActivityCalendarEventData(activity);
+  return createUserCalendarEvent(userId, eventData);
+};
+
+const trySyncUpdateActivityCalendarEvent = async (activity, userId) => {
+  const eventData = buildActivityCalendarEventData(activity);
+  const linkedEvent = await findUserCalendarEventByActivityId(userId, activity.id);
+
+  if (linkedEvent?.id) {
+    return updateUserCalendarEvent(userId, linkedEvent.id, eventData);
+  }
+
+  return createUserCalendarEvent(userId, eventData);
+};
+
+const trySyncDeleteActivityCalendarEvent = async (activityId, userId) => {
+  const linkedEvent = await findUserCalendarEventByActivityId(userId, activityId);
+
+  if (!linkedEvent?.id) {
+    return null;
+  }
+
+  await deleteUserCalendarEvent(userId, linkedEvent.id);
+  return linkedEvent.id;
+};
 
 export const createActivity = async (req, res) => {
   try {
     const payload = req.body;
     const file = req.file;
+    const calendarOwnerUserId = Number(payload.organizerId || req.userId);
 
     // Tạo slug từ tiêu đề hoạt động
     const activitySlug = payload.title
@@ -81,10 +154,37 @@ export const createActivity = async (req, res) => {
       },
     });
 
+    let calendarSync = {
+      synced: false,
+      eventId: null,
+      error: null,
+    };
+
+    try {
+      const calendarEvent = await trySyncCreateActivityCalendarEvent(
+        newActivity,
+        calendarOwnerUserId,
+      );
+      await applyGoogleMeetDetailsToActivity(newActivity.id, calendarEvent);
+      if (calendarEvent?.hangoutLink) {
+        newActivity.meetingPlatform = "GOOGLE_MEET";
+        newActivity.meetingLink = calendarEvent.hangoutLink;
+        newActivity.meetingId = calendarEvent?.conferenceData?.conferenceId || null;
+      }
+      calendarSync = {
+        synced: true,
+        eventId: calendarEvent?.id || null,
+        error: null,
+      };
+    } catch (calendarError) {
+      calendarSync.error = calendarError.message;
+    }
+
     res.status(201).json({
       success: true,
       message: "Activity created successfully",
       data: newActivity,
+      calendarSync,
     });
   } catch (err) {
     console.log("Error create activity function: ", err.message);
@@ -250,10 +350,38 @@ export const updateActivity = async (req, res) => {
       },
     });
 
+    const calendarOwnerUserId = Number(updatedActivity.organizerId || req.userId);
+    let calendarSync = {
+      synced: false,
+      eventId: null,
+      error: null,
+    };
+
+    try {
+      const calendarEvent = await trySyncUpdateActivityCalendarEvent(
+        updatedActivity,
+        calendarOwnerUserId,
+      );
+      await applyGoogleMeetDetailsToActivity(updatedActivity.id, calendarEvent);
+      if (calendarEvent?.hangoutLink) {
+        updatedActivity.meetingPlatform = "GOOGLE_MEET";
+        updatedActivity.meetingLink = calendarEvent.hangoutLink;
+        updatedActivity.meetingId = calendarEvent?.conferenceData?.conferenceId || null;
+      }
+      calendarSync = {
+        synced: true,
+        eventId: calendarEvent?.id || null,
+        error: null,
+      };
+    } catch (calendarError) {
+      calendarSync.error = calendarError.message;
+    }
+
     res.status(200).json({
       success: true,
       message: "Activity updated successfully",
       data: updatedActivity,
+      calendarSync,
     });
   } catch (err) {
     console.log("Error update activity function: ", err.message);
@@ -268,15 +396,48 @@ export const softDeleteActivity = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const existingActivity = await prisma.activity.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existingActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
     const deletedActivity = await prisma.activity.update({
       where: { id: Number(id) },
       data: { status: ACTIVITY_STATUS.CANCELLED },
     });
 
+    const calendarOwnerUserId = Number(deletedActivity.organizerId || req.userId);
+    let calendarSync = {
+      synced: false,
+      eventId: null,
+      error: null,
+    };
+
+    try {
+      const deletedEventId = await trySyncDeleteActivityCalendarEvent(
+        deletedActivity.id,
+        calendarOwnerUserId,
+      );
+      calendarSync = {
+        synced: true,
+        eventId: deletedEventId,
+        error: null,
+      };
+    } catch (calendarError) {
+      calendarSync.error = calendarError.message;
+    }
+
     res.status(200).json({
       success: true,
       message: "Activity soft deleted successfully",
       data: deletedActivity,
+      calendarSync,
     });
   } catch (err) {
     console.log("Error soft delete activity function: ", err.message);
@@ -312,6 +473,27 @@ export const hardDeleteActivity = async (req, res) => {
       });
     }
 
+    const calendarOwnerUserId = Number(storedActivity.organizerId || req.userId);
+    let calendarSync = {
+      synced: false,
+      eventId: null,
+      error: null,
+    };
+
+    try {
+      const deletedEventId = await trySyncDeleteActivityCalendarEvent(
+        storedActivity.id,
+        calendarOwnerUserId,
+      );
+      calendarSync = {
+        synced: true,
+        eventId: deletedEventId,
+        error: null,
+      };
+    } catch (calendarError) {
+      calendarSync.error = calendarError.message;
+    }
+
     const deletedActivity = await prisma.activity.delete({
       where: { id: Number(id) },
     });
@@ -320,6 +502,7 @@ export const hardDeleteActivity = async (req, res) => {
       success: true,
       message: "Activity deleted successfully",
       data: deletedActivity,
+      calendarSync,
     });
   } catch (err) {
     console.log("Error hard delete activity function: ", err.message);

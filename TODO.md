@@ -2,31 +2,31 @@
 
 ## 1) Data model and migration
 - [x] Create model `UserGoogleCredential` (1-1 with `User`, `userId` unique).
-- [x] Add fields: `googleSub`, `encryptedRefreshToken`, `encryptedAccessToken`, `tokenType`, `scope`, `expiryDate`, `revokedAt`, `createdAt`, `updatedAt`.
+- [x] Add fields: `googleId`, `encryptedRefreshToken`, `encryptedAccessToken`, `tokenType`, `scope`, `expiryDate`, `revokedAt`, `createdAt`, `updatedAt`.
 - [x] Add reverse relation from `User` to `UserGoogleCredential`.
 - [x] Create Prisma migration and apply to dev database.
 
 ## 2) Refactor Google auth library
-- [ ] Keep scopes/config in `src/libs/google.js`.
-- [ ] Remove shared mutable OAuth credentials pattern (no global client that is reused across users).
-- [ ] Add factory helpers, for example: `createOAuthClient()` and `createOAuthClientWithCredentials(credentials)`.
+- [x] Keep scopes/config in `src/libs/google.js`.
+- [x] Remove shared mutable OAuth credentials pattern (no global client that is reused across users).
+- [x] Add factory helpers, for example: `createOAuthClient()` and `createOAuthClientWithCredentials(credentials)`.
 
 ## 3) Create per-user Google credential service
-- [ ] Create service to load Google credentials by `userId` from DB.
-- [ ] Decrypt token values before setting credentials on OAuth client.
-- [ ] Return a fresh OAuth client for the target user.
-- [ ] Handle edge cases: no credential, revoked credential, missing refresh token.
+- [x] Create service to load Google credentials by `userId` from DB.
+- [x] Decrypt token values before setting credentials on OAuth client.
+- [x] Return a fresh OAuth client for the target user.
+- [x] Handle edge cases: no credential, revoked credential, missing refresh token.
 
 ## 4) Update Google login callback flow
-- [ ] In `googleAuthCallback`, create a local OAuth client instance.
-- [ ] Use local client for `getToken` and `userinfo`.
-- [ ] Upsert `UserGoogleCredential` after user is identified.
-- [ ] If Google does not return a new `refresh_token`, keep the existing one in DB (do not overwrite with null).
+- [x] In `googleAuthCallback`, create a local OAuth client instance.
+- [x] Use local client for `getToken` and `userinfo`.
+- [x] Upsert `UserGoogleCredential` after user is identified.
+- [x] If Google does not return a new `refresh_token`, keep the existing one in DB (do not overwrite with null).
 
 ## 5) Update Google API call sites (Drive/Calendar/Forms/...)
-- [ ] For each API request, resolve current `userId`.
-- [ ] Build a fresh OAuth client from stored credentials.
-- [ ] Call Google APIs with that per-user client, not a shared global credentials client.
+- [x] For each API request, resolve current `userId`.
+- [x] Build a fresh OAuth client from stored credentials.
+- [x] Call Google APIs with that per-user client, not a shared global credentials client.
 
 ## 6) Security requirements
 - [ ] Never store user OAuth tokens in `.env`.

@@ -13,7 +13,8 @@ import {
   sendResetPasswordEmail,
   sendChangePasswordConfirmationEmail,
 } from "../utils/emailUtil.js";
-import { oauth2Client, roleBasedScopes } from "../libs/google.js";
+import { createOAuthClient, roleBasedScopes } from "../libs/google.js";
+import { upsertUserGoogleCredential } from "../services/userGoogleCredentialService.js";
 import crypto from "crypto";
 import { google } from "googleapis";
 import {
@@ -22,7 +23,35 @@ import {
   userIncludeSystemRoleOptions,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import { PROVIDER, USER_STATUS } from "../utils/constant.js";
+import { PROVIDER, ROLE, USER_STATUS } from "../utils/constant.js";
+
+const GOOGLE_SCOPE_UPGRADE_ATTEMPTED = "googleScopeUpgradeAttempted";
+
+const getScopeKeyBySystemRole = (systemRole) => {
+  const normalizedRole = String(systemRole || ROLE.MEMBER).toUpperCase();
+
+  if (normalizedRole === ROLE.ADMIN) {
+    return "admin";
+  }
+
+  if (normalizedRole === ROLE.MODERATOR) {
+    return "moderator";
+  }
+
+  return "member";
+};
+
+const splitScopeString = (scopeString = "") => {
+  return scopeString
+    .split(" ")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const hasAllScopes = (grantedScopeString, requiredScopes = []) => {
+  const grantedScopes = new Set(splitScopeString(grantedScopeString));
+  return requiredScopes.every((scope) => grantedScopes.has(scope));
+};
 
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
 export const refreshAccessToken = async (req, res) => {
@@ -414,6 +443,7 @@ export const googleAuth = async (req, res) => {
   try {
     // TODO: Implement Google authentication logic
     const state = crypto.randomBytes(32).toString("hex");
+    const oauth2Client = createOAuthClient();
 
     req.session.state = state;
 
@@ -438,6 +468,8 @@ export const googleAuthCallback = async (req, res) => {
   const { code, state, error } = req.query;
 
   try {
+    const oauth2Client = createOAuthClient();
+
     // TODO: Implement Google authentication callback logic
     // Handle the OAuth 2.0 server response
     if (error) {
@@ -518,6 +550,43 @@ export const googleAuthCallback = async (req, res) => {
         },
         include: userIncludeSystemRoleOptions,
       });
+    }
+
+    const userSystemRole = user.userPosition?.[0]?.position?.systemRole;
+    const scopeKey = getScopeKeyBySystemRole(userSystemRole);
+    const requiredScopes = roleBasedScopes[scopeKey] || roleBasedScopes.member;
+    const grantedScopeString = tokens.scope || "";
+    const alreadyAttemptedScopeUpgrade = Boolean(
+      req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED],
+    );
+
+    if (
+      !hasAllScopes(grantedScopeString, requiredScopes) &&
+      !alreadyAttemptedScopeUpgrade
+    ) {
+      req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED] = true;
+
+      const reauthorizeState = crypto.randomBytes(32).toString("hex");
+      req.session.state = reauthorizeState;
+
+      const reauthorizeUrl = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        include_granted_scopes: true,
+        prompt: "consent",
+        scope: requiredScopes,
+        state: reauthorizeState,
+      });
+
+      return res.redirect(reauthorizeUrl);
+    }
+
+    delete req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED];
+
+    try {
+      const scopeString = grantedScopeString || requiredScopes.join(" ");
+      await upsertUserGoogleCredential(user.id, userInfo.id, tokens, scopeString);
+    } catch (err) {
+      console.warn("Warning: Failed to upsert Google credential:", err.message);
     }
 
     const accessToken = await createAccessToken(
