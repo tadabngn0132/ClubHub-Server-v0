@@ -45,8 +45,8 @@ router.delete(
 router.delete(
   "/:id",
   verifyAccessToken,
-  requirePermission("notifications", "read"),
-  getNotificationById,
+  requirePermission("notifications", "delete"),
+  deleteNotificationById,
 );
 router.put(
   "/:id",
@@ -55,11 +55,4 @@ router.put(
   validateNotificationUpdate,
   updateNotification,
 );
-router.delete(
-  "/:id",
-  verifyAccessToken,
-  requirePermission("notifications", "delete"),
-  deleteNotificationById,
-);
-
 export default router;

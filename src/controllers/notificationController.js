@@ -1,4 +1,6 @@
 import { prisma } from "../libs/prisma.js";
+import { SOCKET_EVENTS } from "../utils/constant.js";
+import { emitToUser } from "../socket/socketGateway.js";
 
 export const createNotification = async (req, res) => {
   try {
@@ -9,6 +11,9 @@ export const createNotification = async (req, res) => {
         message,
       },
     });
+
+    emitToUser(userId, SOCKET_EVENTS.NOTIFICATION_RECEIVE, notification);
+
     res.status(201).json({
       success: true,
       message: "Notification created successfully",
@@ -117,7 +122,7 @@ export const getNotificationsByUserId = async (req, res) => {
 export const updateNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const { message } = req.body;
+    const { message, isRead } = req.body;
     const notification = await prisma.notification.findUnique({
       where: { id: Number(id) },
     });
@@ -131,8 +136,16 @@ export const updateNotification = async (req, res) => {
       where: { id: Number(id) },
       data: {
         message: message || notification.message,
+        isRead: typeof isRead === "boolean" ? isRead : notification.isRead,
       },
     });
+
+    if (typeof isRead === "boolean" && isRead === true) {
+      emitToUser(updatedNotification.userId, SOCKET_EVENTS.NOTIFICATION_READ, updatedNotification);
+    } else {
+      emitToUser(updatedNotification.userId, SOCKET_EVENTS.NOTIFICATION_RECEIVE, updatedNotification);
+    }
+
     res.status(200).json({
       success: true,
       message: "Notification updated successfully",
@@ -192,6 +205,10 @@ export const deleteNotificationById = async (req, res) => {
 
     await prisma.notification.delete({
       where: { id: Number(id) },
+    });
+
+    emitToUser(notification.userId, SOCKET_EVENTS.NOTIFICATION_DELETE, {
+      id: Number(id),
     });
 
     res.status(200).json({

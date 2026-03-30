@@ -2,7 +2,8 @@ import { SOCKET_EVENTS } from "../../utils/constant.js";
 
 export const setupTypingHandler = (io, socket) => {
   socket.on(SOCKET_EVENTS.USER_TYPING, (data) => {
-    const { senderId, receiverId } = data;
+    const senderId = Number(socket.data.userId);
+    const { receiverId } = data;
 
     if (!senderId || !receiverId) return;
 
@@ -12,7 +13,8 @@ export const setupTypingHandler = (io, socket) => {
   });
 
   socket.on(SOCKET_EVENTS.USER_STOP_TYPING, (data) => {
-    const { senderId, receiverId } = data;
+    const senderId = Number(socket.data.userId);
+    const { receiverId } = data;
 
     if (!senderId || !receiverId) return;
 

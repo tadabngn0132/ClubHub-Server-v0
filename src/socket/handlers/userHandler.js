@@ -8,9 +8,11 @@ const onlineUsers = new Map();
 const socketToUserId = new Map();
 
 export const setupUserHandler = (io, socket) => {
-    socket.on(SOCKET_EVENTS.USER_ONLINE, (userId) => {
-        if (!userId) {
-            console.error('USER_ONLINE event missing userId');
+    const authenticatedUserId = Number(socket.data.userId);
+
+    const markUserOnline = (userId) => {
+        if (!userId || Number.isNaN(Number(userId))) {
+            console.error('USER_ONLINE event missing valid userId');
             return;
         }
 
@@ -31,6 +33,12 @@ export const setupUserHandler = (io, socket) => {
         });
 
         console.log(`User ${userId} online. Total online users: ${onlineUsers.size}`);
+    };
+
+    markUserOnline(authenticatedUserId);
+
+    socket.on(SOCKET_EVENTS.USER_ONLINE, () => {
+        markUserOnline(authenticatedUserId);
     });
 
     socket.on('disconnect', () => {

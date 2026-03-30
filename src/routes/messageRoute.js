@@ -12,11 +12,11 @@ import { requirePermission } from '../middlewares/permissionMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', verifyAccessToken, requirePermission('message', 'create'), createNewMessage);
-router.get('/rooms', verifyAccessToken, requirePermission('message', 'read'), getAllRoomsForUser);
-router.get('/rooms/:roomId', verifyAccessToken, requirePermission('message', 'read'), getAllMessagesByRoomId);
-router.put('/:messageId', verifyAccessToken, requirePermission('message', 'update'), updateMessage);
-router.put('/:messageId/soft', verifyAccessToken, requirePermission('message', 'delete'), softDeleteMessage);
-router.delete('/:messageId/hard', verifyAccessToken, requirePermission('message', 'delete'), hardDeleteMessage);
+router.post('/', verifyAccessToken, requirePermission('messages', 'create'), createNewMessage);
+router.get('/rooms', verifyAccessToken, requirePermission('messages', 'read'), getAllRoomsForUser);
+router.get('/rooms/:roomId', verifyAccessToken, requirePermission('messages', 'read'), getAllMessagesByRoomId);
+router.put('/:messageId', verifyAccessToken, requirePermission('messages', 'update'), updateMessage);
+router.put('/:messageId/soft', verifyAccessToken, requirePermission('messages', 'delete'), softDeleteMessage);
+router.delete('/:messageId/hard', verifyAccessToken, requirePermission('messages', 'delete'), hardDeleteMessage);
 
 export default router;

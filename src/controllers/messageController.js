@@ -1,8 +1,10 @@
 import { prisma } from '../libs/prisma.js';
+import { SOCKET_EVENTS } from '../utils/constant.js';
+import { emitToRoom, emitToUser } from '../socket/socketGateway.js';
 
 export const createNewMessage = async (req, res) => {
     const { roomId, receiverId, content } = req.body;
-    const senderId = req.user.id;
+    const senderId = req.userId;
 
     try {
         const newMessage = await prisma.message.create({
@@ -12,6 +14,14 @@ export const createNewMessage = async (req, res) => {
                 receiverId,
                 content
             }
+        });
+
+        emitToUser(receiverId, SOCKET_EVENTS.MESSAGE_RECEIVE, newMessage);
+        emitToRoom(roomId, SOCKET_EVENTS.MESSAGE_RECEIVE, newMessage);
+        emitToUser(senderId, SOCKET_EVENTS.MESSAGE_SENT, {
+            success: true,
+            messageId: newMessage.id,
+            createdAt: newMessage.createdAt,
         });
 
         res.status(201).json({ success: true, message: 'Message sent successfully', data: newMessage });
@@ -24,7 +34,7 @@ export const createNewMessage = async (req, res) => {
 export const updateMessage = async (req, res) => {
     const { messageId } = req.params;
     const { content } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     try {
         const message = await prisma.message.findUnique({
@@ -40,9 +50,14 @@ export const updateMessage = async (req, res) => {
         }
 
         const updatedMessage = await prisma.message.update({
-            where: { id: messageId },
+            where: { id: Number(messageId) },
             data: { content }
         });
+
+        emitToRoom(updatedMessage.roomId, SOCKET_EVENTS.MESSAGE_RECEIVE, updatedMessage);
+        if (updatedMessage.receiverId) {
+            emitToUser(updatedMessage.receiverId, SOCKET_EVENTS.MESSAGE_RECEIVE, updatedMessage);
+        }
 
         res.status(200).json({ success: true, message: 'Message updated successfully', data: updatedMessage });
     } catch (error) {
@@ -53,7 +68,7 @@ export const updateMessage = async (req, res) => {
 
 export const getAllMessagesByRoomId = async (req, res) => {
     const { roomId } = req.params;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     try {
         const messages = await prisma.message.findMany({
@@ -76,7 +91,7 @@ export const getAllMessagesByRoomId = async (req, res) => {
 
 export const softDeleteMessage = async (req, res) => {
     const { messageId } = req.params;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     try {
         const message = await prisma.message.findUnique({
@@ -92,9 +107,20 @@ export const softDeleteMessage = async (req, res) => {
         }
 
         const deletedMessage = await prisma.message.update({
-            where: { id: messageId },
+            where: { id: Number(messageId) },
             data: { isDeleted: true }
         });
+
+        emitToRoom(deletedMessage.roomId, SOCKET_EVENTS.MESSAGE_DELETED, {
+            messageId: deletedMessage.id,
+            roomId: deletedMessage.roomId,
+        });
+        if (deletedMessage.receiverId) {
+            emitToUser(deletedMessage.receiverId, SOCKET_EVENTS.MESSAGE_DELETED, {
+                messageId: deletedMessage.id,
+                roomId: deletedMessage.roomId,
+            });
+        }
 
         res.status(200).json({ success: true, message: 'Message soft deleted successfully', data: deletedMessage });
     } catch (error) {
@@ -105,7 +131,7 @@ export const softDeleteMessage = async (req, res) => {
 
 export const hardDeleteMessage = async (req, res) => {
     const { messageId } = req.params;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     try {
         const message = await prisma.message.findUnique({
@@ -120,8 +146,19 @@ export const hardDeleteMessage = async (req, res) => {
         }
 
         await prisma.message.delete({
-            where: { id: messageId }
+            where: { id: Number(messageId) }
         });
+
+        emitToRoom(message.roomId, SOCKET_EVENTS.MESSAGE_DELETED, {
+            messageId: Number(messageId),
+            roomId: message.roomId,
+        });
+        if (message.receiverId) {
+            emitToUser(message.receiverId, SOCKET_EVENTS.MESSAGE_DELETED, {
+                messageId: Number(messageId),
+                roomId: message.roomId,
+            });
+        }
 
         res.status(200).json({ success: true, message: 'Message deleted successfully' });
     } catch (error) {
@@ -131,7 +168,7 @@ export const hardDeleteMessage = async (req, res) => {
 };
 
 export const getAllRoomsForUser = async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.userId;
 
     try {
         const rooms = await prisma.message.groupBy({

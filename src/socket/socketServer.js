@@ -2,8 +2,13 @@ import { setupUserHandler } from "./handlers/userHandler.js";
 import { setupMessageHandler } from "./handlers/messageHandler.js";
 import { setupNotificationHandler } from "./handlers/notificationHandler.js";
 import { setupTypingHandler } from "./handlers/typingHandler.js";
+import { socketAuthMiddleware } from "./middlewares/socketAuthMiddleware.js";
+import { setSocketIO } from "./socketGateway.js";
 
 export const initializeSocketServer = (io) => {
+    setSocketIO(io);
+    io.use(socketAuthMiddleware);
+
     io.on("connection", (socket) => {
         console.log(`New client connected: ${socket.id}`);
 
