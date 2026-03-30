@@ -28,6 +28,7 @@ import { Server } from "socket.io";
 import { initializeSocketServer } from "./src/socket/socketServer.js";
 import messageRoute from "./src/routes/messageRoute.js";
 import chatRoomRoute from "./src/routes/chatRoomRoute.js";
+import aiRouter from "./src/routes/aiRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,6 +76,7 @@ app.use("/api/positions", positionRouter);
 app.use("/api/department-applications", departmentApplicationRouter);
 app.use("/api/messages", messageRoute);
 app.use("/api/chat-rooms", chatRoomRoute);
+app.use("/api/ai", aiRouter);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
