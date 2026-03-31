@@ -5,7 +5,7 @@ export const createDepartmentApplication = async (req, res) => {
   try {
     const deptApplicationData = req.body;
 
-    const existingApplication = await prisma.departmentApplication.findFirst({
+    const existingApplication = await prisma.departmentMemberApplication.findFirst({
       where: {
         memberApplicationId: deptApplicationData.memberApplicationId,
         departmentId: deptApplicationData.departmentId,
@@ -19,7 +19,7 @@ export const createDepartmentApplication = async (req, res) => {
       });
     }
 
-    const newDeptApplication = await prisma.departmentApplication.create({
+    const newDeptApplication = await prisma.departmentMemberApplication.create({
       data: {
         memberApplicationId: deptApplicationData.memberApplicationId,
         departmentId: deptApplicationData.departmentId,
@@ -56,7 +56,7 @@ export const getDepartmentApplicationsByMemberApplicationId = async (
   try {
     const { memberApplicationId } = req.params;
 
-    const deptApplications = await prisma.departmentApplication.findMany({
+    const deptApplications = await prisma.departmentMemberApplication.findMany({
       where: {
         memberApplicationId: Number(memberApplicationId),
       },
@@ -82,7 +82,7 @@ export const getDepartmentApplicationsByMemberApplicationId = async (
 
 export const getDepartmentApplications = async (req, res) => {
   try {
-    const deptApplications = await prisma.departmentApplication.findMany({
+    const deptApplications = await prisma.departmentMemberApplication.findMany({
       include: {
         department: true,
         interviewer: true,
@@ -105,7 +105,7 @@ export const getDepartmentApplications = async (req, res) => {
 export const getDepartmentApplicationById = async (req, res) => {
   try {
     const { id } = req.params;
-    const deptApplication = await prisma.departmentApplication.findUnique({
+    const deptApplication = await prisma.departmentMemberApplication.findUnique({
       where: {
         id: Number(id),
       },
@@ -141,7 +141,7 @@ export const updateDepartmentApplication = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const updatedDeptApplication = await prisma.departmentApplication.update({
+    const updatedDeptApplication = await prisma.departmentMemberApplication.update({
       where: {
         id: Number(id),
       },
@@ -176,7 +176,7 @@ export const softDeleteDepartmentApplication = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedDeptApplication = await prisma.departmentApplication.update({
+    const deletedDeptApplication = await prisma.departmentMemberApplication.update({
       where: {
         id: Number(id),
       },
@@ -204,7 +204,7 @@ export const hardDeleteDepartmentApplication = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.departmentApplication.delete({
+    await prisma.departmentMemberApplication.delete({
       where: {
         id: Number(id),
       },

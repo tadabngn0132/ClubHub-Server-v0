@@ -24,13 +24,13 @@ router.post(
 );
 router.get(
   "/",
-  verifyAccessToken,
+  // verifyAccessToken,
   requirePermission("departments", "read"),
   getAllDepartments,
 );
 router.get(
   "/:id",
-  verifyAccessToken,
+  // verifyAccessToken,
   requirePermission("departments", "read"),
   getDepartmentById,
 );

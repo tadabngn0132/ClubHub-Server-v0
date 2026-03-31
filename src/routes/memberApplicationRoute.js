@@ -20,7 +20,7 @@ const router = express.Router();
 
 router.post(
   "/",
-  verifyAccessToken,
+  // verifyAccessToken,
   requirePermission("memberApplications", "create"),
   validateMemberApplicationCreation,
   createMemberApplication,

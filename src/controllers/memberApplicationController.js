@@ -18,7 +18,7 @@ export const createMemberApplication = async (req, res) => {
         fullname: applicationData.fullname,
         email: applicationData.email,
         phoneNumber: applicationData.phoneNumber,
-        dateOfBirth: applicationData.dateOfBirth,
+        dateOfBirth: new Date(applicationData.dateOfBirth),
         gender: applicationData.gender,
         major: applicationData.major,
         studentId: applicationData.studentId,

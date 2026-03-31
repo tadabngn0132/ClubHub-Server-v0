@@ -16,6 +16,7 @@ export const createPosition = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: "Position created successfully",
       data: newPosition,
     });
   } catch (err) {
@@ -33,6 +34,7 @@ export const getAllPositions = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get all positions successfully",
       data: positions,
     });
   } catch (err) {
@@ -63,6 +65,7 @@ export const getPositionById = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get position by ID successfully",
       data: position,
     });
   } catch (err) {
@@ -106,6 +109,7 @@ export const updatePosition = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Position updated successfully",
       data: updatedPosition,
     });
   } catch (err) {

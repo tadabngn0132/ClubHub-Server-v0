@@ -14,6 +14,7 @@ export const createDepartment = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: "Department created successfully",
       data: newDepartment,
     });
   } catch (err) {
@@ -31,6 +32,7 @@ export const getAllDepartments = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get all departments successfully",
       data: departments,
     });
   } catch (err) {
@@ -61,6 +63,7 @@ export const getDepartmentById = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get department by ID successfully",
       data: department,
     });
   } catch (err) {
@@ -104,6 +107,7 @@ export const updateDepartment = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Department updated successfully",
       data: updatedDepartment,
     });
   } catch (err) {

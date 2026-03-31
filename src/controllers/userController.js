@@ -153,6 +153,7 @@ export const getUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get user by ID successfully",
       data: necessaryUserData,
     });
   } catch (err) {
@@ -200,6 +201,7 @@ export const getUsers = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Get users successfully",
       data: users,
     });
   } catch (err) {
