@@ -32,6 +32,7 @@ model User {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   rootDepartmentId          Int?                       @map("root_department_id")
+  isDeleted                 Boolean                    @default(false) @map("is_deleted")
   rootDepartment            Department?                @relation("RootDepartment", fields: [rootDepartmentId], references: [id], onDelete: SetNull)
   refreshTokens             RefreshToken[]
   resetToken                ResetPasswordToken[]
@@ -108,6 +109,7 @@ model Department {
   isActive      Boolean       @default(true)
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
+  isDeleted     Boolean       @default(false) @map("is_deleted")
   positions     Position[]
   memberApplications DepartmentMemberApplication[]
   rootUsers      User[]        @relation("RootDepartment")
@@ -122,6 +124,7 @@ model Position {
   systemRole      Role
   department      Department        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   departmentId    Int               @map("department_id")
+  isDeleted       Boolean           @default(false) @map("is_deleted")
   userPosition    UserPosition[]
 
   @@map("positions")
@@ -173,6 +176,7 @@ model Activity {
   isPublic                Boolean                   @default(true) @map("is_public")
   isFeatured              Boolean                   @default(false) @map("is_featured")
   priority                Int                       @default(0) @db.SmallInt
+  isDeleted               Boolean                   @default(false) @map("is_deleted")
   images                  ActivityImage[]
   videos                  ActivityVideo[]
 
@@ -211,6 +215,7 @@ model Task {
   isCheckCf Boolean     @default(false) @map("is_check_cf_task")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
+  isDeleted   Boolean     @default(false) @map("is_deleted")
   assignees   AssigneeTask[]
   assignorId  Int?        @map("assignor_id")
   assignedBy   User?       @relation("TaskAssigner", fields: [assignorId], references: [id], onDelete: SetNull)
@@ -256,6 +261,7 @@ model MemberApplication {
   finalReviewComment        String?                     @map("final_review_comment")
   cvReviewer                User?                       @relation("CVReviewer", fields: [cvReviewerId], references: [id], onDelete: SetNull)
   finalReviewer             User?                       @relation("FinalReviewer", fields: [finalReviewerId], references: [id], onDelete: SetNull)
+  isDeleted                 Boolean                     @default(false) @map("is_deleted")
   departmentApplications     DepartmentMemberApplication[]
   
   @@index([cvReviewerId])
@@ -277,6 +283,7 @@ model DepartmentMemberApplication {
   memberApplication       MemberApplication           @relation(fields: [memberApplicationId], references: [id], onDelete: Cascade)
   department              Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   interviewer             User?                       @relation("Interviewer", fields: [interviewerId], references: [id], onDelete: SetNull)
+  isDeleted               Boolean                     @default(false) @map("is_deleted")
 
   @@unique([memberApplicationId, departmentId])
   @@map("department_member_applications")
@@ -293,6 +300,7 @@ model Notification {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDeleted   Boolean     @default(false) @map("is_deleted")
 
   @@map("notifications")
   @@index([userId])
@@ -306,6 +314,7 @@ model ActivityImage {
   updatedAt        DateTime    @updatedAt
   activityId       Int         @map("activity_id")
   activity         Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  isDeleted        Boolean     @default(false) @map("is_deleted")
 
   @@index([activityId])
 }
@@ -318,6 +327,7 @@ model ActivityVideo {
   updatedAt        DateTime    @updatedAt
   activityId       Int         @map("activity_id")
   activity         Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  isDeleted        Boolean     @default(false) @map("is_deleted")
 
   @@index([activityId])
 }
@@ -348,6 +358,7 @@ model ChatRoom {
   isGroup     Boolean     @default(false) @map("is_group")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
+  isDeleted   Boolean     @default(false) @map("is_deleted")
   members     ChatRoomMember[]
   messages    Message[]
 }
