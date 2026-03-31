@@ -408,14 +408,14 @@ export const SOCKET_EVENTS = {
   NOTIFICATION_DELETE: 'notification:delete',
 };
 
-const THINKING_LEVELS = {
+export const THINKING_LEVELS = {
   LOW: "low",
   MEDIUM: "medium",
   HIGH: "high",
 };
 
 // Define different system instructions for different use cases
-const SYSTEM_INSTRUCTIONS = {
+export const SYSTEM_INSTRUCTIONS = {
   activity_recommender: `You are an activity recommendation assistant for a dance crew management system. 
     Help suggest activities, training sessions, and performance opportunities based on member profiles and preferences.
     Keep responses concise and actionable.`,
