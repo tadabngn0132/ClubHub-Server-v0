@@ -45,7 +45,18 @@ export const createMemberApplication = async (req, res) => {
 
 export const getMemberApplications = async (req, res) => {
   try {
-    const applications = await prisma.memberApplication.findMany();
+    const applications = await prisma.memberApplication.findMany({
+      include: {
+        cvReviewer: true,
+        finalReviewer: true,
+        departmentApplications: {
+          include: {
+            department: true,
+            interviewer: true,
+          },
+        },
+      },
+    });
     res.status(200).json({
       success: true,
       message: "Get all member applications successfully",
@@ -65,6 +76,16 @@ export const getMemberApplicationById = async (req, res) => {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
+      include: {
+        cvReviewer: true,
+        finalReviewer: true,
+        departmentApplications: {
+          include: {
+            department: true,
+            interviewer: true,
+          },
+        },
+      },
     });
     if (!application) {
       return res.status(404).json({

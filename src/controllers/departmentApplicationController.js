@@ -182,7 +182,7 @@ export const softDeleteDepartmentApplication = async (req, res) => {
       },
       data: {
         isDeleted: true,
-        status: getInterviewStatus("pending"), // Set to pending or any default status to indicate soft deletion
+        interviewStatus: getInterviewStatus("pending"), // Keep interview status consistent with model field
         updatedAt: new Date(),
       },
     });

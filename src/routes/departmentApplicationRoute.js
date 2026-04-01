@@ -25,76 +25,76 @@ const router = express.Router();
 router.post(
   "/many/create",
   verifyAccessToken,
-  requirePermission("departmentApplication", "create"),
+  requirePermission("departmentApplications", "create"),
   createManyDepartmentApplications,
 );
 router.post(
   "/many/get",
   verifyAccessToken,
-  requirePermission("departmentApplication", "read"),
+  requirePermission("departmentApplications", "read"),
   getManyDepartmentApplications,
 );
 router.put(
   "/many/update",
   verifyAccessToken,
-  requirePermission("departmentApplication", "update"),
+  requirePermission("departmentApplications", "update"),
   updateManyDepartmentApplications,
 );
 router.put(
   "/many/soft-delete",
   verifyAccessToken,
-  requirePermission("departmentApplication", "softDelete"),
+  requirePermission("departmentApplications", "softDelete"),
   softDeleteManyDepartmentApplications,
 );
 router.delete(
   "/many/hard-delete",
   verifyAccessToken,
-  requirePermission("departmentApplication", "hardDelete"),
+  requirePermission("departmentApplications", "hardDelete"),
   hardDeleteManyDepartmentApplications,
 );
 
 router.post(
   "/",
   verifyAccessToken,
-  requirePermission("departmentApplication", "create"),
+  requirePermission("departmentApplications", "create"),
   validateDepartmentApplicationCreation,
   createDepartmentApplication,
 );
 router.get(
   "/",
   verifyAccessToken,
-  requirePermission("departmentApplication", "read"),
+  requirePermission("departmentApplications", "read"),
   getDepartmentApplications,
 );
 router.get(
   "/memberApplication/:memberApplicationId",
   verifyAccessToken,
-  requirePermission("departmentApplication", "read"),
+  requirePermission("departmentApplications", "read"),
   getDepartmentApplicationsByMemberApplicationId,
 );
 router.get(
   "/:id",
   verifyAccessToken,
-  requirePermission("departmentApplication", "read"),
+  requirePermission("departmentApplications", "read"),
   getDepartmentApplicationById,
 );
 router.put(
   "/:id",
   verifyAccessToken,
-  requirePermission("departmentApplication", "update"),
+  requirePermission("departmentApplications", "update"),
   validateDepartmentApplicationUpdate,
   updateDepartmentApplication,
 );
 router.put(
   "/:id/soft",
   verifyAccessToken,
-  requirePermission("departmentApplication", "softDelete"),
+  requirePermission("departmentApplications", "softDelete"),
   softDeleteDepartmentApplication,
 );
 router.delete(
   "/:id/hard",
   verifyAccessToken,
-  requirePermission("departmentApplication", "hardDelete"),
+  requirePermission("departmentApplications", "hardDelete"),
   hardDeleteDepartmentApplication,
 );
 
