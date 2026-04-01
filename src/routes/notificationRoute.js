@@ -7,6 +7,10 @@ import {
   getNotificationsByUserId,
   updateNotification,
   deleteNotificationById,
+  createManyNotifications,
+  getManyNotifications,
+  updateManyNotifications,
+  deleteManyNotifications,
 } from "../controllers/notificationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -16,6 +20,31 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("notifications", "create"),
+  createManyNotifications,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("notifications", "read"),
+  getManyNotifications,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("notifications", "update"),
+  updateManyNotifications,
+);
+router.delete(
+  "/many/delete",
+  verifyAccessToken,
+  requirePermission("notifications", "delete"),
+  deleteManyNotifications,
+);
 
 router.post(
   "/",

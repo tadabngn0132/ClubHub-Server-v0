@@ -154,3 +154,77 @@ export const deleteDepartment = async (req, res) => {
     });
   }
 };
+
+export const createManyDepartments = async (req, res) => {
+  try {
+    const items = req.body?.items;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
+    }
+
+    const result = await prisma.department.createMany({ data: items, skipDuplicates: true });
+    res.status(201).json({ success: true, message: "Departments createMany successful", data: result });
+  } catch (err) {
+    console.error("Error in createManyDepartments:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Create many departments error: ${err.message}` });
+  }
+};
+
+export const getManyDepartments = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const records = await prisma.department.findMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Departments getMany successful", data: records });
+  } catch (err) {
+    console.error("Error in getManyDepartments:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Get many departments error: ${err.message}` });
+  }
+};
+
+export const updateManyDepartments = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    const updateData = req.body?.data;
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
+    }
+
+    const result = await prisma.department.updateMany({ where: { id: { in: ids } }, data: updateData });
+    res.status(200).json({ success: true, message: "Departments updateMany successful", data: result });
+  } catch (err) {
+    console.error("Error in updateManyDepartments:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Update many departments error: ${err.message}` });
+  }
+};
+
+export const deleteManyDepartments = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.department.deleteMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Departments deleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in deleteManyDepartments:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Delete many departments error: ${err.message}` });
+  }
+};

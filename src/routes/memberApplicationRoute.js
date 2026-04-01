@@ -7,6 +7,11 @@ import {
   hardDeleteMemberApplication,
   updateMemberApplicationCVReviewDetail,
   updateMemberApplicationFinalReviewDetail,
+  createManyMemberApplications,
+  getManyMemberApplications,
+  updateManyMemberApplications,
+  softDeleteManyMemberApplications,
+  hardDeleteManyMemberApplications,
 } from "../controllers/memberApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -17,6 +22,37 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("memberApplications", "create"),
+  createManyMemberApplications,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("memberApplications", "read"),
+  getManyMemberApplications,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("memberApplications", "update"),
+  updateManyMemberApplications,
+);
+router.put(
+  "/many/soft-delete",
+  verifyAccessToken,
+  requirePermission("memberApplications", "update"),
+  softDeleteManyMemberApplications,
+);
+router.delete(
+  "/many/hard-delete",
+  verifyAccessToken,
+  requirePermission("memberApplications", "delete"),
+  hardDeleteManyMemberApplications,
+);
 
 router.post(
   "/",

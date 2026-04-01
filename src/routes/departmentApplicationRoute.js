@@ -7,6 +7,11 @@ import {
   updateDepartmentApplication,
   softDeleteDepartmentApplication,
   hardDeleteDepartmentApplication,
+  createManyDepartmentApplications,
+  getManyDepartmentApplications,
+  updateManyDepartmentApplications,
+  softDeleteManyDepartmentApplications,
+  hardDeleteManyDepartmentApplications,
 } from "../controllers/departmentApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -16,6 +21,37 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("departmentApplication", "create"),
+  createManyDepartmentApplications,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("departmentApplication", "read"),
+  getManyDepartmentApplications,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("departmentApplication", "update"),
+  updateManyDepartmentApplications,
+);
+router.put(
+  "/many/soft-delete",
+  verifyAccessToken,
+  requirePermission("departmentApplication", "softDelete"),
+  softDeleteManyDepartmentApplications,
+);
+router.delete(
+  "/many/hard-delete",
+  verifyAccessToken,
+  requirePermission("departmentApplication", "hardDelete"),
+  hardDeleteManyDepartmentApplications,
+);
 
 router.post(
   "/",

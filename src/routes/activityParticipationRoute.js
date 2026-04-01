@@ -7,6 +7,10 @@ import {
   getParticipationsByUserId,
   updateParticipationById,
   deleteParticipation,
+  createManyParticipations,
+  getManyParticipations,
+  updateManyParticipations,
+  deleteManyParticipations,
 } from "../controllers/activityParticipationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -16,6 +20,31 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "create"),
+  createManyParticipations,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "read"),
+  getManyParticipations,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "update"),
+  updateManyParticipations,
+);
+router.delete(
+  "/many/delete",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "delete"),
+  deleteManyParticipations,
+);
 
 router.post(
   "/",

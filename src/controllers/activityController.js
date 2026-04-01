@@ -409,7 +409,10 @@ export const softDeleteActivity = async (req, res) => {
 
     const deletedActivity = await prisma.activity.update({
       where: { id: Number(id) },
-      data: { status: ACTIVITY_STATUS.CANCELLED },
+      data: {
+        status: ACTIVITY_STATUS.CANCELLED,
+        isDeleted: true,
+      },
     });
 
     const calendarOwnerUserId = Number(deletedActivity.organizerId || req.userId);
@@ -692,5 +695,101 @@ export const deleteActivityVideo = async (req, res) => {
       success: false,
       message: `Internal server error / Delete activity video error: ${err.message}`,
     });
+  }
+};
+
+export const createManyActivities = async (req, res) => {
+  try {
+    const items = req.body?.items;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
+    }
+
+    const result = await prisma.activity.createMany({ data: items, skipDuplicates: true });
+    res.status(201).json({ success: true, message: "Activities createMany successful", data: result });
+  } catch (err) {
+    console.error("Error in createManyActivities:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Create many activities error: ${err.message}` });
+  }
+};
+
+export const getManyActivities = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const records = await prisma.activity.findMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Activities getMany successful", data: records });
+  } catch (err) {
+    console.error("Error in getManyActivities:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Get many activities error: ${err.message}` });
+  }
+};
+
+export const updateManyActivities = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    const updateData = req.body?.data;
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
+    }
+
+    const result = await prisma.activity.updateMany({ where: { id: { in: ids } }, data: updateData });
+    res.status(200).json({ success: true, message: "Activities updateMany successful", data: result });
+  } catch (err) {
+    console.error("Error in updateManyActivities:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Update many activities error: ${err.message}` });
+  }
+};
+
+export const softDeleteManyActivities = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.activity.updateMany({
+      where: { id: { in: ids } },
+      data: { isDeleted: true, status: ACTIVITY_STATUS.CANCELLED },
+    });
+
+    res.status(200).json({ success: true, message: "Activities softDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in softDeleteManyActivities:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Soft delete many activities error: ${err.message}` });
+  }
+};
+
+export const hardDeleteManyActivities = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.activity.deleteMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Activities hardDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in hardDeleteManyActivities:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Hard delete many activities error: ${err.message}` });
   }
 };

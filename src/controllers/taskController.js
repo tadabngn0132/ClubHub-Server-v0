@@ -184,7 +184,10 @@ export const softDeleteTask = async (req, res) => {
     const { taskId } = req.params;
     const task = await prisma.task.update({
       where: { id: Number(taskId) },
-      data: { status: TASK_STATUS.CANCELLED },
+      data: {
+        status: TASK_STATUS.CANCELLED,
+        isDeleted: true,
+      },
     });
     if (!task) {
       return res.status(404).json({
@@ -315,5 +318,105 @@ export const confirmTaskCompletion = async (req, res) => {
       success: false,
       message: `Internal server error / Confirm task completion error: ${err.message}`,
     });
+  }
+};
+
+export const createManyTasks = async (req, res) => {
+  try {
+    const items = req.body?.items;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
+    }
+
+    const result = await prisma.task.createMany({ data: items, skipDuplicates: true });
+
+    res.status(201).json({ success: true, message: "Tasks createMany successful", data: result });
+  } catch (err) {
+    console.error("Error in createManyTasks:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Create many tasks error: ${err.message}` });
+  }
+};
+
+export const getManyTasks = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const records = await prisma.task.findMany({ where: { id: { in: ids } }, include: taskInclude });
+
+    res.status(200).json({ success: true, message: "Tasks getMany successful", data: records });
+  } catch (err) {
+    console.error("Error in getManyTasks:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Get many tasks error: ${err.message}` });
+  }
+};
+
+export const updateManyTasks = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    const updateData = req.body?.data;
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
+    }
+
+    const result = await prisma.task.updateMany({ where: { id: { in: ids } }, data: updateData });
+
+    res.status(200).json({ success: true, message: "Tasks updateMany successful", data: result });
+  } catch (err) {
+    console.error("Error in updateManyTasks:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Update many tasks error: ${err.message}` });
+  }
+};
+
+export const softDeleteManyTasks = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.task.updateMany({
+      where: { id: { in: ids } },
+      data: { isDeleted: true, status: TASK_STATUS.CANCELLED },
+    });
+
+    res.status(200).json({ success: true, message: "Tasks softDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in softDeleteManyTasks:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Soft delete many tasks error: ${err.message}` });
+  }
+};
+
+export const hardDeleteManyTasks = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.task.deleteMany({ where: { id: { in: ids } } });
+
+    res.status(200).json({ success: true, message: "Tasks hardDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in hardDeleteManyTasks:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Hard delete many tasks error: ${err.message}` });
   }
 };

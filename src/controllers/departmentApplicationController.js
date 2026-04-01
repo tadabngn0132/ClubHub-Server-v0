@@ -181,6 +181,7 @@ export const softDeleteDepartmentApplication = async (req, res) => {
         id: Number(id),
       },
       data: {
+        isDeleted: true,
         status: getInterviewStatus("pending"), // Set to pending or any default status to indicate soft deletion
         updatedAt: new Date(),
       },
@@ -220,5 +221,104 @@ export const hardDeleteDepartmentApplication = async (req, res) => {
       success: false,
       message: `Internal server error / Hard delete department application error: ${err.message}`,
     });
+  }
+};
+
+export const createManyDepartmentApplications = async (req, res) => {
+  try {
+    const items = req.body?.items;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
+    }
+
+    const result = await prisma.departmentMemberApplication.createMany({ data: items, skipDuplicates: true });
+    res.status(201).json({ success: true, message: "Department applications createMany successful", data: result });
+  } catch (err) {
+    console.error("Error in createManyDepartmentApplications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Create many department applications error: ${err.message}` });
+  }
+};
+
+export const getManyDepartmentApplications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const records = await prisma.departmentMemberApplication.findMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Department applications getMany successful", data: records });
+  } catch (err) {
+    console.error("Error in getManyDepartmentApplications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Get many department applications error: ${err.message}` });
+  }
+};
+
+export const updateManyDepartmentApplications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    const updateData = req.body?.data;
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
+    }
+
+    const result = await prisma.departmentMemberApplication.updateMany({ where: { id: { in: ids } }, data: updateData });
+    res.status(200).json({ success: true, message: "Department applications updateMany successful", data: result });
+  } catch (err) {
+    console.error("Error in updateManyDepartmentApplications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Update many department applications error: ${err.message}` });
+  }
+};
+
+export const softDeleteManyDepartmentApplications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.departmentMemberApplication.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        isDeleted: true,
+        status: getInterviewStatus("pending"),
+        updatedAt: new Date(),
+      },
+    });
+    res.status(200).json({ success: true, message: "Department applications softDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in softDeleteManyDepartmentApplications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Soft delete many department applications error: ${err.message}` });
+  }
+};
+
+export const hardDeleteManyDepartmentApplications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+
+    const result = await prisma.departmentMemberApplication.deleteMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Department applications hardDeleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in hardDeleteManyDepartmentApplications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Hard delete many department applications error: ${err.message}` });
   }
 };

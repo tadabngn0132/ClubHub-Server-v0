@@ -223,3 +223,69 @@ export const deleteNotificationById = async (req, res) => {
     });
   }
 };
+
+export const createManyNotifications = async (req, res) => {
+  try {
+    const items = req.body?.items;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
+    }
+    const result = await prisma.notification.createMany({ data: items, skipDuplicates: true });
+    res.status(201).json({ success: true, message: "Notifications createMany successful", data: result });
+  } catch (err) {
+    console.error("Error in createManyNotifications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Create many notifications error: ${err.message}` });
+  }
+};
+
+export const getManyNotifications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    const records = await prisma.notification.findMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Notifications getMany successful", data: records });
+  } catch (err) {
+    console.error("Error in getManyNotifications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Get many notifications error: ${err.message}` });
+  }
+};
+
+export const updateManyNotifications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    const updateData = req.body?.data;
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
+    }
+    const result = await prisma.notification.updateMany({ where: { id: { in: ids } }, data: updateData });
+    res.status(200).json({ success: true, message: "Notifications updateMany successful", data: result });
+  } catch (err) {
+    console.error("Error in updateManyNotifications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Update many notifications error: ${err.message}` });
+  }
+};
+
+export const deleteManyNotifications = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : [];
+    if (ids.length === 0) {
+      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
+    }
+    const result = await prisma.notification.deleteMany({ where: { id: { in: ids } } });
+    res.status(200).json({ success: true, message: "Notifications deleteMany successful", data: result });
+  } catch (err) {
+    console.error("Error in deleteManyNotifications:", err);
+    res.status(500).json({ success: false, message: `Internal server error / Delete many notifications error: ${err.message}` });
+  }
+};

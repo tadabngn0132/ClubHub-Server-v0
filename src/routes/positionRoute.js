@@ -5,6 +5,10 @@ import {
   createPosition,
   updatePosition,
   deletePosition,
+  createManyPositions,
+  getManyPositions,
+  updateManyPositions,
+  deleteManyPositions,
 } from "../controllers/positionController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -14,6 +18,31 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("positions", "create"),
+  createManyPositions,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("positions", "read"),
+  getManyPositions,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("positions", "update"),
+  updateManyPositions,
+);
+router.delete(
+  "/many/delete",
+  verifyAccessToken,
+  requirePermission("positions", "delete"),
+  deleteManyPositions,
+);
 
 router.post(
   "/",

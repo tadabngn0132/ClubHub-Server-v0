@@ -5,12 +5,23 @@ import {
   getAllMessagesByRoomId,
   softDeleteMessage,
   hardDeleteMessage,
-  getAllRoomsForUser
+  getAllRoomsForUser,
+  createManyMessages,
+  getManyMessages,
+  updateManyMessages,
+  softDeleteManyMessages,
+  hardDeleteManyMessages,
 } from '../controllers/messageController.js';
 import { verifyAccessToken } from '../middlewares/authMiddleware.js';
 import { requirePermission } from '../middlewares/permissionMiddleware.js';
 
 const router = express.Router();
+
+router.post('/many/create', verifyAccessToken, requirePermission('messages', 'create'), createManyMessages);
+router.post('/many/get', verifyAccessToken, requirePermission('messages', 'read'), getManyMessages);
+router.put('/many/update', verifyAccessToken, requirePermission('messages', 'update'), updateManyMessages);
+router.put('/many/soft-delete', verifyAccessToken, requirePermission('messages', 'delete'), softDeleteManyMessages);
+router.delete('/many/hard-delete', verifyAccessToken, requirePermission('messages', 'delete'), hardDeleteManyMessages);
 
 router.post('/', verifyAccessToken, requirePermission('messages', 'create'), createNewMessage);
 router.get('/rooms', verifyAccessToken, requirePermission('messages', 'read'), getAllRoomsForUser);

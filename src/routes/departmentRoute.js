@@ -5,6 +5,10 @@ import {
   createDepartment,
   updateDepartment,
   deleteDepartment,
+  createManyDepartments,
+  getManyDepartments,
+  updateManyDepartments,
+  deleteManyDepartments,
 } from "../controllers/departmentController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -14,6 +18,31 @@ import {
 } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
+
+router.post(
+  "/many/create",
+  verifyAccessToken,
+  requirePermission("departments", "create"),
+  createManyDepartments,
+);
+router.post(
+  "/many/get",
+  verifyAccessToken,
+  requirePermission("departments", "read"),
+  getManyDepartments,
+);
+router.put(
+  "/many/update",
+  verifyAccessToken,
+  requirePermission("departments", "update"),
+  updateManyDepartments,
+);
+router.delete(
+  "/many/delete",
+  verifyAccessToken,
+  requirePermission("departments", "delete"),
+  deleteManyDepartments,
+);
 
 router.post(
   "/",
