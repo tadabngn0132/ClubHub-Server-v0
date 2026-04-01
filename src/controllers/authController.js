@@ -112,7 +112,7 @@ export const refreshAccessToken = async (req, res) => {
 // Xử lý logic đăng nhập kiểm tra, xác thực email, mật khẩu, trả về thông tin và token
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe, rememberForDays } = req.body;
 
     const storedUser = await prisma.user.findUnique({
       where: {
@@ -158,12 +158,22 @@ export const login = async (req, res) => {
       updatedUser.userPosition[0].position.systemRole,
     );
 
-    res.cookie("refreshToken", refreshToken, {
+    const parsedRememberDays = Number(rememberForDays);
+    const safeRememberDays = [1, 7, 30].includes(parsedRememberDays)
+      ? parsedRememberDays
+      : 7;
+    const shouldRemember = Boolean(rememberMe);
+
+    const refreshCookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge: 15 * 24 * 60 * 60 * 1000,
-    });
+      ...(shouldRemember
+        ? { maxAge: safeRememberDays * 24 * 60 * 60 * 1000 }
+        : {}),
+    };
+
+    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
     const necessaryUserData = removeSensitiveUserData(updatedUser);
 

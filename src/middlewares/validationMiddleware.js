@@ -1,5 +1,5 @@
 export const validateLogin = (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe, rememberForDays } = req.body;
 
   if (!email) {
     return res.status(400).json({
@@ -18,6 +18,23 @@ export const validateLogin = (req, res, next) => {
       success: false,
       message: "Password cannot be empty",
     });
+  }
+
+  if (rememberMe !== undefined && typeof rememberMe !== "boolean") {
+    return res.status(400).json({
+      success: false,
+      message: "rememberMe must be a boolean",
+    });
+  }
+
+  if (rememberForDays !== undefined) {
+    const parsedRememberDays = Number(rememberForDays);
+    if (![1, 7, 30].includes(parsedRememberDays)) {
+      return res.status(400).json({
+        success: false,
+        message: "rememberForDays must be one of: 1, 7, 30",
+      });
+    }
   }
 
   next();
