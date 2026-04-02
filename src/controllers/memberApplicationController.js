@@ -3,11 +3,7 @@ import {
   hashedDefaultPassword,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import {
-  CV_STATUS,
-  FINAL_STATUS,
-  PROVIDER,
-} from "../utils/constant.js";
+import { CV_STATUS, FINAL_STATUS, PROVIDER } from "../utils/constant.js";
 
 export const createMemberApplication = async (req, res) => {
   // TODO: Implement file upload handling for CV and avatar, and save the file URLs in the database
@@ -280,90 +276,5 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       success: false,
       message: `Internal server error / Update member application final review detail error: ${err.message}`,
     });
-  }
-};
-
-export const createManyMemberApplications = async (req, res) => {
-  try {
-    const items = req.body?.items;
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
-    }
-    const result = await prisma.memberApplication.createMany({ data: items, skipDuplicates: true });
-    res.status(201).json({ success: true, message: "Member applications createMany successful", data: result });
-  } catch (err) {
-    console.error("Error in createManyMemberApplications:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Create many member applications error: ${err.message}` });
-  }
-};
-
-export const getManyMemberApplications = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-    const records = await prisma.memberApplication.findMany({ where: { id: { in: ids } } });
-    res.status(200).json({ success: true, message: "Member applications getMany successful", data: records });
-  } catch (err) {
-    console.error("Error in getManyMemberApplications:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Get many member applications error: ${err.message}` });
-  }
-};
-
-export const updateManyMemberApplications = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-    const updateData = req.body?.data;
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
-      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
-    }
-    const result = await prisma.memberApplication.updateMany({ where: { id: { in: ids } }, data: updateData });
-    res.status(200).json({ success: true, message: "Member applications updateMany successful", data: result });
-  } catch (err) {
-    console.error("Error in updateManyMemberApplications:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Update many member applications error: ${err.message}` });
-  }
-};
-
-export const softDeleteManyMemberApplications = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-    const result = await prisma.memberApplication.updateMany({
-      where: { id: { in: ids } },
-      data: { isDeleted: true, cvStatus: CV_STATUS.FAILED, finalStatus: FINAL_STATUS.FAILED },
-    });
-    res.status(200).json({ success: true, message: "Member applications softDeleteMany successful", data: result });
-  } catch (err) {
-    console.error("Error in softDeleteManyMemberApplications:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Soft delete many member applications error: ${err.message}` });
-  }
-};
-
-export const hardDeleteManyMemberApplications = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-    const result = await prisma.memberApplication.deleteMany({ where: { id: { in: ids } } });
-    res.status(200).json({ success: true, message: "Member applications hardDeleteMany successful", data: result });
-  } catch (err) {
-    console.error("Error in hardDeleteManyMemberApplications:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Hard delete many member applications error: ${err.message}` });
   }
 };

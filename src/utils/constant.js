@@ -178,7 +178,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activities: {
       create: true,
@@ -186,7 +185,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     tasks: {
       create: true,
@@ -194,7 +192,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: false,
-      delete: false,
     },
     positions: {
       create: false,
@@ -202,7 +199,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departments: {
       create: false,
@@ -210,7 +206,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     memberApplications: {
       create: false,
@@ -221,7 +216,6 @@ export const ROLE_PERMISSIONS = {
       createUserFromApplication: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departmentApplications: {
       create: true,
@@ -230,7 +224,6 @@ export const ROLE_PERMISSIONS = {
       interviewReview: true,
       softDelete: true,
       hardDelete: false,
-      delete: false,
     },
     notifications: {
       create: true,
@@ -238,7 +231,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipants: {
       create: true,
@@ -246,7 +238,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipations: {
       create: true,
@@ -254,7 +245,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     messages: {
       create: true,
@@ -272,7 +262,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activities: {
       create: false,
@@ -280,7 +269,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     tasks: {
       create: false,
@@ -288,7 +276,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     positions: {
       create: false,
@@ -296,7 +283,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departments: {
       create: false,
@@ -304,7 +290,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     memberApplications: {
       create: false,
@@ -315,7 +300,6 @@ export const ROLE_PERMISSIONS = {
       createUserFromApplication: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departmentApplications: {
       create: false,
@@ -324,7 +308,6 @@ export const ROLE_PERMISSIONS = {
       interviewReview: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     notifications: {
       create: true,
@@ -332,7 +315,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipants: {
       create: true,
@@ -340,7 +322,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipations: {
       create: true,
@@ -348,7 +329,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     messages: {
       create: true,
@@ -356,7 +336,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: false,
-      delete: false,
     },
   },
   GUEST: {
@@ -366,7 +345,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activities: {
       create: false,
@@ -374,7 +352,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     tasks: {
       create: false,
@@ -382,7 +359,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     positions: {
       create: false,
@@ -390,7 +366,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departments: {
       create: false,
@@ -398,7 +373,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     memberApplications: {
       create: true,
@@ -409,7 +383,6 @@ export const ROLE_PERMISSIONS = {
       createUserFromApplication: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     departmentApplications: {
       create: false,
@@ -418,7 +391,6 @@ export const ROLE_PERMISSIONS = {
       interviewReview: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     notifications: {
       create: false,
@@ -426,7 +398,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipants: {
       create: false,
@@ -434,7 +405,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     activityParticipations: {
       create: false,
@@ -442,7 +412,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
     messages: {
       create: false,
@@ -450,7 +419,6 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
-      delete: false,
     },
   },
 };

@@ -13,7 +13,8 @@ const buildActivityCalendarEventData = (activity) => {
   return {
     summary: activity.title,
     description: activity.description,
-    location: activity.venueAddress || activity.venueName || activity.meetingLink || "",
+    location:
+      activity.venueAddress || activity.venueName || activity.meetingLink || "",
     startDateTime: new Date(activity.startDate).toISOString(),
     endDateTime: new Date(activity.endDate).toISOString(),
     extendedProperties: {
@@ -55,7 +56,10 @@ const trySyncCreateActivityCalendarEvent = async (activity, userId) => {
 
 const trySyncUpdateActivityCalendarEvent = async (activity, userId) => {
   const eventData = buildActivityCalendarEventData(activity);
-  const linkedEvent = await findUserCalendarEventByActivityId(userId, activity.id);
+  const linkedEvent = await findUserCalendarEventByActivityId(
+    userId,
+    activity.id,
+  );
 
   if (linkedEvent?.id) {
     return updateUserCalendarEvent(userId, linkedEvent.id, eventData);
@@ -65,7 +69,10 @@ const trySyncUpdateActivityCalendarEvent = async (activity, userId) => {
 };
 
 const trySyncDeleteActivityCalendarEvent = async (activityId, userId) => {
-  const linkedEvent = await findUserCalendarEventByActivityId(userId, activityId);
+  const linkedEvent = await findUserCalendarEventByActivityId(
+    userId,
+    activityId,
+  );
 
   if (!linkedEvent?.id) {
     return null;
@@ -169,7 +176,8 @@ export const createActivity = async (req, res) => {
       if (calendarEvent?.hangoutLink) {
         newActivity.meetingPlatform = "GOOGLE_MEET";
         newActivity.meetingLink = calendarEvent.hangoutLink;
-        newActivity.meetingId = calendarEvent?.conferenceData?.conferenceId || null;
+        newActivity.meetingId =
+          calendarEvent?.conferenceData?.conferenceId || null;
       }
       calendarSync = {
         synced: true,
@@ -310,13 +318,16 @@ export const updateActivity = async (req, res) => {
         payload.thumbnailPublicId = uploadResult.public_id;
 
         if (storedActivity.thumbnailPublicId) {
-          cloudinary.uploader.destroy(storedActivity.thumbnailPublicId, (error, result) => {
-            if (error) {
-              console.log("Cloudinary deletion error:", error);
-            } else {
-              console.log("Cloudinary deletion result:", result);
-            }
-          });
+          cloudinary.uploader.destroy(
+            storedActivity.thumbnailPublicId,
+            (error, result) => {
+              if (error) {
+                console.log("Cloudinary deletion error:", error);
+              } else {
+                console.log("Cloudinary deletion result:", result);
+              }
+            },
+          );
         }
       } catch (error) {
         console.error("Cloudinary upload error:", error);
@@ -350,7 +361,9 @@ export const updateActivity = async (req, res) => {
       },
     });
 
-    const calendarOwnerUserId = Number(updatedActivity.organizerId || req.userId);
+    const calendarOwnerUserId = Number(
+      updatedActivity.organizerId || req.userId,
+    );
     let calendarSync = {
       synced: false,
       eventId: null,
@@ -366,7 +379,8 @@ export const updateActivity = async (req, res) => {
       if (calendarEvent?.hangoutLink) {
         updatedActivity.meetingPlatform = "GOOGLE_MEET";
         updatedActivity.meetingLink = calendarEvent.hangoutLink;
-        updatedActivity.meetingId = calendarEvent?.conferenceData?.conferenceId || null;
+        updatedActivity.meetingId =
+          calendarEvent?.conferenceData?.conferenceId || null;
       }
       calendarSync = {
         synced: true,
@@ -415,7 +429,9 @@ export const softDeleteActivity = async (req, res) => {
       },
     });
 
-    const calendarOwnerUserId = Number(deletedActivity.organizerId || req.userId);
+    const calendarOwnerUserId = Number(
+      deletedActivity.organizerId || req.userId,
+    );
     let calendarSync = {
       synced: false,
       eventId: null,
@@ -465,18 +481,23 @@ export const hardDeleteActivity = async (req, res) => {
         message: "Activity not found",
       });
     }
-    
+
     if (storedActivity.thumbnailPublicId) {
-      cloudinary.uploader.destroy(storedActivity.thumbnailPublicId, (error, result) => {
-        if (error) {
-          console.log("Cloudinary deletion error:", error);
-        } else {
-          console.log("Cloudinary deletion result:", result);
-        }
-      });
+      cloudinary.uploader.destroy(
+        storedActivity.thumbnailPublicId,
+        (error, result) => {
+          if (error) {
+            console.log("Cloudinary deletion error:", error);
+          } else {
+            console.log("Cloudinary deletion result:", result);
+          }
+        },
+      );
     }
 
-    const calendarOwnerUserId = Number(storedActivity.organizerId || req.userId);
+    const calendarOwnerUserId = Number(
+      storedActivity.organizerId || req.userId,
+    );
     let calendarSync = {
       synced: false,
       eventId: null,
@@ -591,13 +612,16 @@ export const deleteActivityImage = async (req, res) => {
     }
 
     if (storedImage.imagePublicId) {
-      cloudinary.uploader.destroy(storedImage.imagePublicId, (error, result) => {
-        if (error) {
-          console.log("Cloudinary deletion error:", error);
-        } else {
-          console.log("Cloudinary deletion result:", result);
-        }
-      });
+      cloudinary.uploader.destroy(
+        storedImage.imagePublicId,
+        (error, result) => {
+          if (error) {
+            console.log("Cloudinary deletion error:", error);
+          } else {
+            console.log("Cloudinary deletion result:", result);
+          }
+        },
+      );
     }
 
     const deletedImage = await prisma.activityImage.delete({
@@ -671,13 +695,17 @@ export const deleteActivityVideo = async (req, res) => {
     }
 
     if (storedVideo.videoPublicId) {
-      cloudinary.uploader.destroy(storedVideo.videoPublicId, { resource_type: "video" }, (error, result) => {
-        if (error) {
-          console.log("Cloudinary deletion error:", error);
-        } else {
-          console.log("Cloudinary deletion result:", result);
-        }
-      });
+      cloudinary.uploader.destroy(
+        storedVideo.videoPublicId,
+        { resource_type: "video" },
+        (error, result) => {
+          if (error) {
+            console.log("Cloudinary deletion error:", error);
+          } else {
+            console.log("Cloudinary deletion result:", result);
+          }
+        },
+      );
     }
 
     const deletedVideo = await prisma.activityVideo.delete({
@@ -695,101 +723,5 @@ export const deleteActivityVideo = async (req, res) => {
       success: false,
       message: `Internal server error / Delete activity video error: ${err.message}`,
     });
-  }
-};
-
-export const createManyActivities = async (req, res) => {
-  try {
-    const items = req.body?.items;
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: "items array is required and cannot be empty" });
-    }
-
-    const result = await prisma.activity.createMany({ data: items, skipDuplicates: true });
-    res.status(201).json({ success: true, message: "Activities createMany successful", data: result });
-  } catch (err) {
-    console.error("Error in createManyActivities:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Create many activities error: ${err.message}` });
-  }
-};
-
-export const getManyActivities = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-
-    const records = await prisma.activity.findMany({ where: { id: { in: ids } } });
-    res.status(200).json({ success: true, message: "Activities getMany successful", data: records });
-  } catch (err) {
-    console.error("Error in getManyActivities:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Get many activities error: ${err.message}` });
-  }
-};
-
-export const updateManyActivities = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-    const updateData = req.body?.data;
-
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData) || Object.keys(updateData).length === 0) {
-      return res.status(400).json({ success: false, message: "data object is required and cannot be empty" });
-    }
-
-    const result = await prisma.activity.updateMany({ where: { id: { in: ids } }, data: updateData });
-    res.status(200).json({ success: true, message: "Activities updateMany successful", data: result });
-  } catch (err) {
-    console.error("Error in updateManyActivities:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Update many activities error: ${err.message}` });
-  }
-};
-
-export const softDeleteManyActivities = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-
-    const result = await prisma.activity.updateMany({
-      where: { id: { in: ids } },
-      data: { isDeleted: true, status: ACTIVITY_STATUS.CANCELLED },
-    });
-
-    res.status(200).json({ success: true, message: "Activities softDeleteMany successful", data: result });
-  } catch (err) {
-    console.error("Error in softDeleteManyActivities:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Soft delete many activities error: ${err.message}` });
-  }
-};
-
-export const hardDeleteManyActivities = async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id))
-      : [];
-
-    if (ids.length === 0) {
-      return res.status(400).json({ success: false, message: "ids array is required and cannot be empty" });
-    }
-
-    const result = await prisma.activity.deleteMany({ where: { id: { in: ids } } });
-    res.status(200).json({ success: true, message: "Activities hardDeleteMany successful", data: result });
-  } catch (err) {
-    console.error("Error in hardDeleteManyActivities:", err);
-    res.status(500).json({ success: false, message: `Internal server error / Hard delete many activities error: ${err.message}` });
   }
 };

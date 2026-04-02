@@ -8,11 +8,6 @@ import {
   softDeleteTask,
   hardDeleteTask,
   confirmTaskCompletion,
-  createManyTasks,
-  getManyTasks,
-  updateManyTasks,
-  softDeleteManyTasks,
-  hardDeleteManyTasks,
 } from "../controllers/taskController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -23,37 +18,6 @@ import {
 import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
-
-router.post(
-  "/many/create",
-  verifyAccessToken,
-  requirePermission("tasks", "create"),
-  createManyTasks,
-);
-router.post(
-  "/many/get",
-  verifyAccessToken,
-  requirePermission("tasks", "read"),
-  getManyTasks,
-);
-router.put(
-  "/many/update",
-  verifyAccessToken,
-  requirePermission("tasks", "update"),
-  updateManyTasks,
-);
-router.put(
-  "/many/soft-delete",
-  verifyAccessToken,
-  requirePermission("tasks", "delete"),
-  softDeleteManyTasks,
-);
-router.delete(
-  "/many/hard-delete",
-  verifyAccessToken,
-  requirePermission("tasks", "delete"),
-  hardDeleteManyTasks,
-);
 
 router.post(
   "/",

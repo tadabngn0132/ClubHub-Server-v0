@@ -56,34 +56,13 @@ export const uploadUserDriveFile = async (userId, metadata, media) => {
   });
 };
 
-export const updateUserDriveFile = async (userId, fileId, updates) => {
+export const downloadUserDriveFile = async (userId, fileId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.update({
-      fileId,
-      requestBody: updates,
-      fields: "id,name,mimeType,modifiedTime",
-    });
+    const response = await googleDrive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "stream" },
+    );
 
     return response.data;
-  });
-};
-
-export const deleteUserDriveFile = async (userId, fileId) => {
-  return withUserGoogleDrive(userId, async (googleDrive) => {
-    await googleDrive.files.delete({ fileId });
-    return { success: true };
-  });
-};
-
-export const searchUserDriveFiles = async (userId, searchTerm, pageSize = 20) => {
-  const query = `name contains '${searchTerm.replace(/'/g, "\\'")}' and trashed = false`;
-  return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.list({
-      q: query,
-      pageSize,
-      fields: "files(id,name,mimeType,webViewLink)",
-    });
-
-    return response.data.files ?? [];
   });
 };

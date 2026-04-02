@@ -6,15 +6,15 @@ export const generateAIResponse = async (req, res) => {
     const aiResponse = await generateResponse(prompt);
 
     res.json({
-        success: true,
-        message: 'AI response generated successfully',
-        data: { response: aiResponse }
-     });
+      success: true,
+      message: "AI response generated successfully",
+      data: { response: aiResponse },
+    });
   } catch (error) {
-    console.error('Error generating AI response:', error);
+    console.error("Error generating AI response:", error);
     res.status(500).json({
-        success: false,
-        message: `Internal Server Error / Generate AI Response Error: ${error.message}`,
+      success: false,
+      message: `Internal Server Error / Generate AI Response Error: ${error.message}`,
     });
   }
 };

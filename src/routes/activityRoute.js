@@ -12,11 +12,6 @@ import {
   createActivityVideo,
   deleteActivityImage,
   deleteActivityVideo,
-  createManyActivities,
-  getManyActivities,
-  updateManyActivities,
-  softDeleteManyActivities,
-  hardDeleteManyActivities,
 } from "../controllers/activityController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -27,37 +22,6 @@ import {
 import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
-
-router.post(
-  "/many/create",
-  verifyAccessToken,
-  requirePermission("activities", "create"),
-  createManyActivities,
-);
-router.post(
-  "/many/get",
-  verifyAccessToken,
-  requirePermission("activities", "read"),
-  getManyActivities,
-);
-router.put(
-  "/many/update",
-  verifyAccessToken,
-  requirePermission("activities", "update"),
-  updateManyActivities,
-);
-router.put(
-  "/many/soft-delete",
-  verifyAccessToken,
-  requirePermission("activities", "delete"),
-  softDeleteManyActivities,
-);
-router.delete(
-  "/many/hard-delete",
-  verifyAccessToken,
-  requirePermission("activities", "delete"),
-  hardDeleteManyActivities,
-);
 
 router.post(
   "/",
@@ -88,22 +52,22 @@ router.get(
 router.post(
   "/images/create/:activityId",
   verifyAccessToken,
-  createActivityImage
+  createActivityImage,
 );
 router.post(
   "/videos/create/:activityId",
   verifyAccessToken,
-  createActivityVideo
+  createActivityVideo,
 );
 router.delete(
   "/images/delete/:videoId",
   verifyAccessToken,
-  deleteActivityImage
+  deleteActivityImage,
 );
 router.delete(
   "/videos/delete/:videoId",
   verifyAccessToken,
-  deleteActivityVideo
+  deleteActivityVideo,
 );
 
 router.get(

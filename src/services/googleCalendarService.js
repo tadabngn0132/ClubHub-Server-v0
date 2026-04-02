@@ -1,59 +1,5 @@
 import { withUserGoogleCalendar } from "./googleAuthContextService.js";
 
-export const listUserCalendarEvents = async (
-  userId,
-  calendarId = "primary",
-  timeMin = null,
-  timeMax = null,
-  maxResults = 50,
-) => {
-  return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    const params = {
-      calendarId,
-      singleEvents: true,
-      orderBy: "startTime",
-      maxResults,
-      fields: "items(id,summary,description,start,end,location)",
-    };
-
-    if (timeMin) params.timeMin = timeMin;
-    if (timeMax) params.timeMax = timeMax;
-
-    const response = await googleCalendar.events.list(params);
-    return response.data.items ?? [];
-  });
-};
-
-export const getUserCalendarEvent = async (userId, eventId, calendarId = "primary") => {
-  return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    const response = await googleCalendar.events.get({
-      calendarId,
-      eventId,
-      fields: "id,summary,description,start,end,location,attendees,conferenceData",
-    });
-
-    return response.data;
-  });
-};
-
-export const findUserCalendarEventByActivityId = async (
-  userId,
-  activityId,
-  calendarId = "primary",
-) => {
-  return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    const response = await googleCalendar.events.list({
-      calendarId,
-      privateExtendedProperty: `activityId=${String(activityId)}`,
-      singleEvents: true,
-      maxResults: 1,
-      fields: "items(id,summary,start,end,extendedProperties)",
-    });
-
-    return response.data.items?.[0] ?? null;
-  });
-};
-
 export const createUserCalendarEvent = async (userId, eventData, calendarId = "primary") => {
   return withUserGoogleCalendar(userId, async (googleCalendar) => {
     const shouldCreateGoogleMeet = eventData.createGoogleMeet !== false;
@@ -145,29 +91,27 @@ export const deleteUserCalendarEvent = async (userId, eventId, calendarId = "pri
   });
 };
 
-export const searchUserCalendarEvents = async (
-  userId,
-  searchTerm,
-  calendarId = "primary",
-) => {
+export const exportICSFile = async (userId, eventId, calendarId = "primary") => {
   return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    const response = await googleCalendar.events.list({
+    const response = await googleCalendar.events.get({
       calendarId,
-      q: searchTerm,
-      maxResults: 20,
-      fields: "items(id,summary,start,end)",
+      eventId,
+      fields: "id,summary,start,end,location,description",
     });
+    const event = response.data;
 
-    return response.data.items ?? [];
-  });
-};
-
-export const getUserCalendarList = async (userId) => {
-  return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    const response = await googleCalendar.calendarList.list({
-      fields: "items(id,summary,description,primary,backgroundColor)",
-    });
-
-    return response.data.items ?? [];
+    const icsContent = `BEGIN:VCALENDAR
+      VERSION:2.0
+      PRODID:-//ClubHub//Google Calendar Export//EN
+      BEGIN:VEVENT
+      UID:${event.id}@clubhub
+      SUMMARY:${event.summary}
+      DTSTART:${formatDateToICS(event.start.dateTime)}
+      DTEND:${formatDateToICS(event.end.dateTime)}
+      LOCATION:${event.location || ""}
+      DESCRIPTION:${event.description || ""}
+      END:VEVENT
+      END:VCALENDAR`;
+    return icsContent;
   });
 };

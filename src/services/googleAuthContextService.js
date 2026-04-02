@@ -24,3 +24,15 @@ export const withUserGoogleForms = async (userId, handler) => {
   const apis = createGoogleApis(oauthClient);
   return handler(apis.googleForms);
 };
+
+export const withUserGoogleSheets = async (userId, handler) => {
+  const { oauthClient } = await getUserGoogleOAuthContext(userId);
+  const apis = createGoogleApis(oauthClient);
+  return handler(apis.googleSheets);
+};
+
+export const withUserGoogleDocs = async (userId, handler) => {
+  const { oauthClient } = await getUserGoogleOAuthContext(userId);
+  const apis = createGoogleApis(oauthClient);
+  return handler(apis.googleDocs);
+};

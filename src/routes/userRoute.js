@@ -6,11 +6,6 @@ import {
   updateUser,
   softDeleteUser,
   hardDeleteUser,
-  createManyUsers,
-  getManyUsers,
-  updateManyUsers,
-  softDeleteManyUsers,
-  hardDeleteManyUsers,
 } from "../controllers/userController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import {
@@ -23,37 +18,13 @@ import { uploadImage } from "../middlewares/uploadMiddleware.js";
 const router = express.Router();
 
 router.post(
-  "/many/create",
+  "/",
   verifyAccessToken,
   requirePermission("users", "create"),
-  createManyUsers,
+  uploadImage.single("avatar"),
+  validateUserCreation,
+  createUser,
 );
-router.post(
-  "/many/get",
-  verifyAccessToken,
-  requirePermission("users", "read"),
-  getManyUsers,
-);
-router.put(
-  "/many/update",
-  verifyAccessToken,
-  requirePermission("users", "update"),
-  updateManyUsers,
-);
-router.put(
-  "/many/soft-delete",
-  verifyAccessToken,
-  requirePermission("users", "delete"),
-  softDeleteManyUsers,
-);
-router.delete(
-  "/many/hard-delete",
-  verifyAccessToken,
-  requirePermission("users", "delete"),
-  hardDeleteManyUsers,
-);
-
-router.post("/", verifyAccessToken, requirePermission("users", "create"), uploadImage.single("avatar"), validateUserCreation, createUser);
 router.get(
   "/:id",
   verifyAccessToken,
