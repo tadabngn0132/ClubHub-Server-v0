@@ -29,6 +29,9 @@ import { initializeSocketServer } from "./src/socket/socketServer.js";
 import messageRoute from "./src/routes/messageRoute.js";
 import chatRoomRoute from "./src/routes/chatRoomRoute.js";
 import aiRouter from "./src/routes/aiRoute.js";
+import driveRoute from "./src/routes/googleDriveRoute.js";
+import docsRoute from "./src/routes/googleDocsRoute.js";
+import sheetsRoute from "./src/routes/googleSheetsRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -77,6 +80,9 @@ app.use("/api/department-applications", departmentApplicationRouter);
 app.use("/api/messages", messageRoute);
 app.use("/api/chat-rooms", chatRoomRoute);
 app.use("/api/ai", aiRouter);
+app.use("/api/drive", driveRoute);
+app.use("/api/docs", docsRoute);
+app.use("/api/sheets", sheetsRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;

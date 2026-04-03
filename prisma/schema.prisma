@@ -153,6 +153,7 @@ model Activity {
   slug                    String                    @unique
   startDate               DateTime                  @map("start_date")
   endDate                 DateTime                  @map("end_date")
+  googleCalendarEventId   String?                   @map("google_calendar_event_id")
   locationType            String                    @map("location_type")
   meetingPlatform         String?                   @map("meeting_platform")
   meetingLink             String?                   @map("meeting_link")
@@ -185,6 +186,7 @@ model Activity {
   @@index([status])
   @@index([startDate])
   @@index([slug])
+  @@index([googleCalendarEventId])
 }
 
 model ActivityParticipation {

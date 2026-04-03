@@ -1,0 +1,83 @@
+import {
+    createGoogleDocFromTemplate,
+    createGoogleDocTemplate,
+    getEmbeddableLinkForGoogleDoc,
+    listGoogleDocsTemplates,
+} from "../services/googleDocsService.js";
+
+export const createGoogleDocFromExistingTemplate = async (req, res) => {
+  try {
+    const { userId, templateId, newDocTitle } = req.body;
+
+    const newDoc = await createGoogleDocFromTemplate(userId, templateId, newDocTitle);
+
+    res.status(201).json({
+      success: true,
+      message: "Google Doc created from template successfully",
+      data: newDoc,
+    });
+  } catch (err) {
+    console.error("Error creating Google Doc from template:", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Create Google Doc from template error: ${err.message}`,
+    });
+  }
+};
+
+export const createNewGoogleDocTemplate = async (req, res) => {
+  try {
+    const { userId, title } = req.body;
+
+    const newDocTemplate = await createGoogleDocTemplate(userId, title);
+
+    res.status(201).json({
+      success: true,
+      message: "Google Doc template created successfully",
+      data: newDocTemplate,
+    });
+  } catch (err) {
+    console.error("Error creating Google Doc template:", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Create Google Doc template error: ${err.message}`,
+    });
+  }
+};
+
+export const getGoogleDocEmbedLink = async (req, res) => {
+  try {
+    const { userId, documentId } = req.params;
+    const embedLink = await getEmbeddableLinkForGoogleDoc(userId, documentId);
+
+    res.json({
+        success: true,
+        message: "Embeddable link retrieved successfully",
+        data: { embedLink },
+    });
+  } catch (err) {
+    console.error("Error retrieving embeddable link for Google Doc:", err.message);
+    res.status(500).json({
+        success: false,
+        message: `Internal server error / Get embeddable link for Google Doc error: ${err.message}`,
+    });
+  }
+};
+
+export const listGoogleDocTemplates = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const templates = await listGoogleDocsTemplates(userId);
+    res.json({
+        success: true,
+        message: "Google Doc templates retrieved successfully",
+        data: templates,
+    });
+  } catch (err) {
+    console.error("Error listing Google Doc templates:", err.message);
+    res.status(500).json({
+        success: false,
+        message: `Internal server error / List Google Doc templates error: ${err.message}`,
+    });
+  }
+};

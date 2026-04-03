@@ -1,4 +1,4 @@
-import { withUserGoogleDocs } from "./googleAuthContextService";
+import { withUserGoogleDocs } from './googleAuthContextService.js';
 
 export const createGoogleDocFromTemplate = async (userId, templateId, newDocTitle) => {
   return withUserGoogleDocs(userId, async (googleDocs) => {
@@ -22,5 +22,26 @@ export const createGoogleDocTemplate = async (userId, title) => {
       fields: "documentId,title,createdTime,modifiedTime",
     });
     return response.data;
+  });
+};
+
+export const getEmbeddableLinkForGoogleDoc = async (userId, documentId) => {
+  return withUserGoogleDocs(userId, async (googleDocs) => {
+    const response = await googleDocs.documents.get({
+      documentId,
+      fields: "documentId,title,createdTime,modifiedTime",
+    });
+    const docData = response.data;
+    return `https://docs.google.com/document/d/${docData.documentId}/edit?usp=sharing`;
+  });
+};
+
+export const listGoogleDocsTemplates = async (userId) => {
+  return withUserGoogleDocs(userId, async (googleDocs) => {
+    const response = await googleDocs.documents.list({
+      q: "mimeType='application/vnd.google-apps.document' and name contains 'Template'",
+      fields: "documents(documentId,title,createdTime,modifiedTime)",
+    });
+    return response.data.documents || [];
   });
 };

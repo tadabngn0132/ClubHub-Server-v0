@@ -3,84 +3,11 @@ import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
 import { ACTIVITY_STATUS } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
 import {
-  createUserCalendarEvent,
-  updateUserCalendarEvent,
-  deleteUserCalendarEvent,
-  findUserCalendarEventByActivityId,
+  createCalendarEventAndMeetingLink,
+  updateGoogleCalendarEvent,
+  deleteGoogleCalendarEvent,
+  exportICSFile,
 } from "../services/googleCalendarService.js";
-
-const buildActivityCalendarEventData = (activity) => {
-  return {
-    summary: activity.title,
-    description: activity.description,
-    location:
-      activity.venueAddress || activity.venueName || activity.meetingLink || "",
-    startDateTime: new Date(activity.startDate).toISOString(),
-    endDateTime: new Date(activity.endDate).toISOString(),
-    extendedProperties: {
-      private: {
-        activityId: String(activity.id),
-        activitySlug: activity.slug,
-      },
-    },
-  };
-};
-
-const applyGoogleMeetDetailsToActivity = async (activityId, calendarEvent) => {
-  const meetLink =
-    calendarEvent?.hangoutLink ||
-    calendarEvent?.conferenceData?.entryPoints?.find(
-      (entry) => entry.entryPointType === "video",
-    )?.uri ||
-    null;
-  const meetId = calendarEvent?.conferenceData?.conferenceId || null;
-
-  if (!meetLink && !meetId) {
-    return null;
-  }
-
-  return prisma.activity.update({
-    where: { id: Number(activityId) },
-    data: {
-      meetingPlatform: "GOOGLE_MEET",
-      meetingLink: meetLink,
-      meetingId: meetId,
-    },
-  });
-};
-
-const trySyncCreateActivityCalendarEvent = async (activity, userId) => {
-  const eventData = buildActivityCalendarEventData(activity);
-  return createUserCalendarEvent(userId, eventData);
-};
-
-const trySyncUpdateActivityCalendarEvent = async (activity, userId) => {
-  const eventData = buildActivityCalendarEventData(activity);
-  const linkedEvent = await findUserCalendarEventByActivityId(
-    userId,
-    activity.id,
-  );
-
-  if (linkedEvent?.id) {
-    return updateUserCalendarEvent(userId, linkedEvent.id, eventData);
-  }
-
-  return createUserCalendarEvent(userId, eventData);
-};
-
-const trySyncDeleteActivityCalendarEvent = async (activityId, userId) => {
-  const linkedEvent = await findUserCalendarEventByActivityId(
-    userId,
-    activityId,
-  );
-
-  if (!linkedEvent?.id) {
-    return null;
-  }
-
-  await deleteUserCalendarEvent(userId, linkedEvent.id);
-  return linkedEvent.id;
-};
 
 export const createActivity = async (req, res) => {
   try {
@@ -134,10 +61,6 @@ export const createActivity = async (req, res) => {
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
         locationType: payload.locationType,
-        meetingPlatform: payload.meetingPlatform || null,
-        meetingLink: payload.meetingLink || null,
-        meetingId: payload.meetingId || null,
-        meetingPassword: payload.meetingPassword || null,
         venueName: payload.venueName || null,
         venueAddress: payload.venueAddress || null,
         roomNumber: payload.roomNumber || null,
@@ -161,38 +84,20 @@ export const createActivity = async (req, res) => {
       },
     });
 
-    let calendarSync = {
-      synced: false,
-      eventId: null,
-      error: null,
-    };
+    const calendarEventData = await createCalendarEventAndMeetingLink(calendarOwnerUserId, newActivity);
 
-    try {
-      const calendarEvent = await trySyncCreateActivityCalendarEvent(
-        newActivity,
-        calendarOwnerUserId,
-      );
-      await applyGoogleMeetDetailsToActivity(newActivity.id, calendarEvent);
-      if (calendarEvent?.hangoutLink) {
-        newActivity.meetingPlatform = "GOOGLE_MEET";
-        newActivity.meetingLink = calendarEvent.hangoutLink;
-        newActivity.meetingId =
-          calendarEvent?.conferenceData?.conferenceId || null;
-      }
-      calendarSync = {
-        synced: true,
-        eventId: calendarEvent?.id || null,
-        error: null,
-      };
-    } catch (calendarError) {
-      calendarSync.error = calendarError.message;
-    }
+    const updatedActivity = await prisma.activity.update({
+      where: { id: newActivity.id },
+      data: {
+        googleCalendarEventId: calendarEventData.id,
+        meetingLink: calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+      },
+    });
 
     res.status(201).json({
       success: true,
       message: "Activity created successfully",
-      data: newActivity,
-      calendarSync,
+      data: updatedActivity,
     });
   } catch (err) {
     console.log("Error create activity function: ", err.message);
@@ -346,10 +251,6 @@ export const updateActivity = async (req, res) => {
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
         locationType: payload.locationType,
-        meetingPlatform: payload.meetingPlatform,
-        meetingLink: payload.meetingLink,
-        meetingId: payload.meetingId,
-        meetingPassword: payload.meetingPassword,
         venueName: payload.venueName,
         venueAddress: payload.venueAddress,
         roomNumber: payload.roomNumber,
@@ -361,41 +262,24 @@ export const updateActivity = async (req, res) => {
       },
     });
 
-    const calendarOwnerUserId = Number(
-      updatedActivity.organizerId || req.userId,
+    const calendarEventData = await updateGoogleCalendarEvent(
+      Number(payload.organizerId || req.userId),
+      storedActivity.calendarEventId,
+      updatedActivity,
     );
-    let calendarSync = {
-      synced: false,
-      eventId: null,
-      error: null,
-    };
 
-    try {
-      const calendarEvent = await trySyncUpdateActivityCalendarEvent(
-        updatedActivity,
-        calendarOwnerUserId,
-      );
-      await applyGoogleMeetDetailsToActivity(updatedActivity.id, calendarEvent);
-      if (calendarEvent?.hangoutLink) {
-        updatedActivity.meetingPlatform = "GOOGLE_MEET";
-        updatedActivity.meetingLink = calendarEvent.hangoutLink;
-        updatedActivity.meetingId =
-          calendarEvent?.conferenceData?.conferenceId || null;
-      }
-      calendarSync = {
-        synced: true,
-        eventId: calendarEvent?.id || null,
-        error: null,
-      };
-    } catch (calendarError) {
-      calendarSync.error = calendarError.message;
-    }
+    const finalUpdatedActivity = await prisma.activity.update({
+      where: { id: Number(id) },
+      data: {
+        googleCalendarEventId: calendarEventData.id,
+        meetingLink: calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+      },
+    });
 
     res.status(200).json({
       success: true,
       message: "Activity updated successfully",
-      data: updatedActivity,
-      calendarSync,
+      data: finalUpdatedActivity,
     });
   } catch (err) {
     console.log("Error update activity function: ", err.message);
@@ -429,34 +313,10 @@ export const softDeleteActivity = async (req, res) => {
       },
     });
 
-    const calendarOwnerUserId = Number(
-      deletedActivity.organizerId || req.userId,
-    );
-    let calendarSync = {
-      synced: false,
-      eventId: null,
-      error: null,
-    };
-
-    try {
-      const deletedEventId = await trySyncDeleteActivityCalendarEvent(
-        deletedActivity.id,
-        calendarOwnerUserId,
-      );
-      calendarSync = {
-        synced: true,
-        eventId: deletedEventId,
-        error: null,
-      };
-    } catch (calendarError) {
-      calendarSync.error = calendarError.message;
-    }
-
     res.status(200).json({
       success: true,
       message: "Activity soft deleted successfully",
       data: deletedActivity,
-      calendarSync,
     });
   } catch (err) {
     console.log("Error soft delete activity function: ", err.message);
@@ -495,28 +355,10 @@ export const hardDeleteActivity = async (req, res) => {
       );
     }
 
-    const calendarOwnerUserId = Number(
-      storedActivity.organizerId || req.userId,
+    await deleteGoogleCalendarEvent(
+      Number(storedActivity.organizerId || req.userId),
+      storedActivity.calendarEventId,
     );
-    let calendarSync = {
-      synced: false,
-      eventId: null,
-      error: null,
-    };
-
-    try {
-      const deletedEventId = await trySyncDeleteActivityCalendarEvent(
-        storedActivity.id,
-        calendarOwnerUserId,
-      );
-      calendarSync = {
-        synced: true,
-        eventId: deletedEventId,
-        error: null,
-      };
-    } catch (calendarError) {
-      calendarSync.error = calendarError.message;
-    }
 
     const deletedActivity = await prisma.activity.delete({
       where: { id: Number(id) },
@@ -526,7 +368,6 @@ export const hardDeleteActivity = async (req, res) => {
       success: true,
       message: "Activity deleted successfully",
       data: deletedActivity,
-      calendarSync,
     });
   } catch (err) {
     console.log("Error hard delete activity function: ", err.message);

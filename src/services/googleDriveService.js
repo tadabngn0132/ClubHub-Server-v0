@@ -1,68 +1,93 @@
 import { withUserGoogleDrive } from "./googleAuthContextService.js";
 
-export const listUserDriveFiles = async (userId, query = "trashed = false", pageSize = 50) => {
-  return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.list({
-      q: query,
-      pageSize,
-      fields: "files(id,name,mimeType,modifiedTime,webViewLink,size,parents)",
-    });
-    return response.data.files ?? [];
-  });
-};
-
-export const getUserDriveFile = async (userId, fileId) => {
-  return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.get({
-      fileId,
-      fields: "id,name,mimeType,size,webViewLink,parents,createdTime,modifiedTime",
-    });
-    return response.data;
-  });
-};
-
-export const createUserDriveFolder = async (userId, folderName, parentId = null) => {
+export const createFolder = async (userId, folderName) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
     const fileMetadata = {
       name: folderName,
       mimeType: "application/vnd.google-apps.folder",
     };
-
-    if (parentId) {
-      fileMetadata.parents = [parentId];
-    }
-
-    const response = await googleDrive.files.create({
-      requestBody: fileMetadata,
-      fields: "id,name,webViewLink",
+    const res = await googleDrive.files.create({
+      resource: fileMetadata,
+      fields: "id, name",
     });
-
-    return response.data;
+    return res.data;
   });
 };
 
-export const uploadUserDriveFile = async (userId, metadata, media) => {
+export const listFolders = async (userId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.create({
-      requestBody: {
-        name: metadata.name,
-        parents: metadata.parents || undefined,
-      },
+    const res = await googleDrive.files.list({
+      q: "mimeType='application/vnd.google-apps.folder'",
+      fields: "files(id, name)",
+    });
+    return res.data.files;
+  });
+};
+
+export const listFilesInFolder = async (userId, folderId) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    const res = await googleDrive.files.list({
+      q: `'${folderId}' in parents`,
+      fields: "files(id, name, mimeType)",
+    });
+    return res.data.files;
+  });
+};
+
+export const getFileMetadata = async (userId, fileId) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    const res = await googleDrive.files.get({
+      fileId,
+      fields: "id, name, mimeType, parents",
+    });
+    return res.data;
+  });
+};
+
+export const uploadFileToFolder = async (userId, folderId, fileName, fileContent) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    const fileMetadata = {
+      name: fileName,
+      parents: [folderId],
+    };
+    const media = {
+      mimeType: "application/octet-stream",
+      body: fileContent,
+    };
+    const res = await googleDrive.files.create({
+      resource: fileMetadata,
       media,
-      fields: "id,name,mimeType,webViewLink,webContentLink,size",
+      fields: "id, name",
     });
-
-    return response.data;
+    return res.data;
   });
 };
 
-export const downloadUserDriveFile = async (userId, fileId) => {
+export const downloadFile = async (userId, fileId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
-    const response = await googleDrive.files.get(
-      { fileId, alt: "media" },
-      { responseType: "stream" },
-    );
+    const res = await googleDrive.files.get({
+      fileId,
+      alt: "media",
+    }, { responseType: "stream" });
+    return res.data;
+  });
+};
 
-    return response.data;
+export const getSharedFileLink = async (userId, fileId) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    // First, set the file to be shared with anyone who has the link
+    await googleDrive.permissions.create({
+      fileId,
+      requestBody: {
+        role: "reader",
+        type: "anyone",
+      },
+    });
+    // Then, get the sharing link
+    const res = await googleDrive.files.get({
+      fileId,
+      fields: "id, name, webViewLink",
+    });
+    return res.data.webViewLink;
   });
 };
