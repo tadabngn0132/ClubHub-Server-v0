@@ -34,7 +34,7 @@ export const createActivity = async (req, res) => {
     }
 
     if (file) {
-      base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
       try {
         const uploadResult = await cloudinary.uploader.upload(base64, {
@@ -67,9 +67,6 @@ export const createActivity = async (req, res) => {
         type: getActivityType(payload.type.trim().toLowerCase()),
         status: getActivityStatus(payload.status.trim().toLowerCase()),
         organizerId: Number(payload.organizerId),
-        slug: finalSlug,
-        startDate: new Date(payload.startDate),
-        endDate: new Date(payload.endDate),
         thumbnailUrl: payload.thumbnailUrl || null,
         thumbnailPublicId: payload.thumbnailPublicId || null,
       },
@@ -211,12 +208,12 @@ export const updateActivity = async (req, res) => {
     }
 
     if (file) {
-      base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
       try {
         const uploadResult = await cloudinary.uploader.upload(base64, {
           folder: "clubhub/activities/thumbnails",
-          public_id: `activity_${finalSlug}_thumbnail_${Date.now()}`,
+          public_id: `activity_${storedActivity.slug}_thumbnail_${Date.now()}`,
           resource_type: "image",
         });
         payload.thumbnailUrl = uploadResult.secure_url;
