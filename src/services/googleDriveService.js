@@ -44,7 +44,12 @@ export const getFileMetadata = async (userId, fileId) => {
   });
 };
 
-export const uploadFileToFolder = async (userId, folderId, fileName, fileContent) => {
+export const uploadFileToFolder = async (
+  userId,
+  folderId,
+  fileName,
+  fileContent,
+) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
     const fileMetadata = {
       name: fileName,
@@ -65,10 +70,13 @@ export const uploadFileToFolder = async (userId, folderId, fileName, fileContent
 
 export const downloadFile = async (userId, fileId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
-    const res = await googleDrive.files.get({
-      fileId,
-      alt: "media",
-    }, { responseType: "stream" });
+    const res = await googleDrive.files.get(
+      {
+        fileId,
+        alt: "media",
+      },
+      { responseType: "stream" },
+    );
     return res.data;
   });
 };
@@ -89,5 +97,25 @@ export const getSharedFileLink = async (userId, fileId) => {
       fields: "id, name, webViewLink",
     });
     return res.data.webViewLink;
+  });
+};
+
+export const listGoogleDocsTemplates = async (userId) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    const res = await googleDrive.files.list({
+      q: "mimeType='application/vnd.google-apps.document' and name contains 'Template'",
+      fields: "files(id, name, createdTime, modifiedTime)",
+    });
+    return res.data.files || [];
+  });
+};
+
+export const listGoogleSheetsTemplates = async (userId) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
+    const res = await googleDrive.files.list({
+      q: "mimeType='application/vnd.google-apps.spreadsheet' and name contains 'Template'",
+      fields: "files(id, name, createdTime, modifiedTime)",
+    });
+    return res.data.files || [];
   });
 };

@@ -78,12 +78,8 @@ export const getChatRoomsByUserId = async (req, res) => {
     const chatRooms = await prisma.chatRoom.findMany({
       where: {
         members: {
-          includes: {
-            user: {
-              some: {
-                id: Number(userId),
-              },
-            },
+          some: {
+            userId: Number(userId),
           },
         },
       },

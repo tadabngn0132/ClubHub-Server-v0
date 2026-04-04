@@ -1,15 +1,19 @@
 import {
-    createGoogleDocFromTemplate,
-    createGoogleDocTemplate,
-    getEmbeddableLinkForGoogleDoc,
-    listGoogleDocsTemplates,
+  createGoogleDocFromTemplate,
+  createGoogleDocTemplate,
+  getEmbeddableLinkForGoogleDoc,
+  listGoogleDocsTemplates,
 } from "../services/googleDocsService.js";
 
 export const createGoogleDocFromExistingTemplate = async (req, res) => {
   try {
     const { userId, templateId, newDocTitle } = req.body;
 
-    const newDoc = await createGoogleDocFromTemplate(userId, templateId, newDocTitle);
+    const newDoc = await createGoogleDocFromTemplate(
+      userId,
+      templateId,
+      newDocTitle,
+    );
 
     res.status(201).json({
       success: true,
@@ -47,37 +51,23 @@ export const createNewGoogleDocTemplate = async (req, res) => {
 
 export const getGoogleDocEmbedLink = async (req, res) => {
   try {
-    const { userId, documentId } = req.params;
+    const userId = req.user.id;
+    const { documentId } = req.params;
     const embedLink = await getEmbeddableLinkForGoogleDoc(userId, documentId);
 
     res.json({
-        success: true,
-        message: "Embeddable link retrieved successfully",
-        data: { embedLink },
+      success: true,
+      message: "Embeddable link retrieved successfully",
+      data: { embedLink },
     });
   } catch (err) {
-    console.error("Error retrieving embeddable link for Google Doc:", err.message);
+    console.error(
+      "Error retrieving embeddable link for Google Doc:",
+      err.message,
+    );
     res.status(500).json({
-        success: false,
-        message: `Internal server error / Get embeddable link for Google Doc error: ${err.message}`,
-    });
-  }
-};
-
-export const listGoogleDocTemplates = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const templates = await listGoogleDocsTemplates(userId);
-    res.json({
-        success: true,
-        message: "Google Doc templates retrieved successfully",
-        data: templates,
-    });
-  } catch (err) {
-    console.error("Error listing Google Doc templates:", err.message);
-    res.status(500).json({
-        success: false,
-        message: `Internal server error / List Google Doc templates error: ${err.message}`,
+      success: false,
+      message: `Internal server error / Get embeddable link for Google Doc error: ${err.message}`,
     });
   }
 };

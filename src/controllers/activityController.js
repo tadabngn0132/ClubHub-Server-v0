@@ -8,6 +8,7 @@ import {
   deleteGoogleCalendarEvent,
   exportICSFile,
 } from "../services/googleCalendarService.js";
+import { start } from "repl";
 
 export const createActivity = async (req, res) => {
   try {
@@ -81,13 +82,26 @@ export const createActivity = async (req, res) => {
       },
     });
 
-    const calendarEventData = await createCalendarEventAndMeetingLink(calendarOwnerUserId, newActivity);
+    const calendarPayload = {
+      summary: newActivity.title,
+      description: newActivity.description,
+      startDateTime: newActivity.startDate.toISOString(),
+      endDateTime: newActivity.endDate.toISOString(),
+      timeZone: "Asia/Ho_Chi_Minh",
+      locationType: newActivity.locationType,
+    };
+
+    const calendarEventData = await createCalendarEventAndMeetingLink(
+      calendarOwnerUserId,
+      calendarPayload,
+    );
 
     const updatedActivity = await prisma.activity.update({
       where: { id: newActivity.id },
       data: {
         googleCalendarEventId: calendarEventData.id,
-        meetingLink: calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+        meetingLink:
+          calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
       },
     });
 
@@ -261,7 +275,7 @@ export const updateActivity = async (req, res) => {
 
     const calendarEventData = await updateGoogleCalendarEvent(
       Number(payload.organizerId || req.userId),
-      storedActivity.calendarEventId,
+      storedActivity.googleCalendarEventId,
       updatedActivity,
     );
 
@@ -269,7 +283,8 @@ export const updateActivity = async (req, res) => {
       where: { id: Number(id) },
       data: {
         googleCalendarEventId: calendarEventData.id,
-        meetingLink: calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+        meetingLink:
+          calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
       },
     });
 
@@ -354,7 +369,7 @@ export const hardDeleteActivity = async (req, res) => {
 
     await deleteGoogleCalendarEvent(
       Number(storedActivity.organizerId || req.userId),
-      storedActivity.calendarEventId,
+      storedActivity.googleCalendarEventId,
     );
 
     const deletedActivity = await prisma.activity.delete({

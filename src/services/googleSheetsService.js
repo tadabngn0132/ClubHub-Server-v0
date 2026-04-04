@@ -1,6 +1,10 @@
-import { withUserGoogleSheets } from './googleAuthContextService.js';
+import { withUserGoogleSheets } from "./googleAuthContextService.js";
 
-export const createGoogleSheetFromTemplate = async (userId, templateId, newSheetTitle) => {
+export const createGoogleSheetFromTemplate = async (
+  userId,
+  templateId,
+  newSheetTitle,
+) => {
   return withUserGoogleSheets(userId, async (googleSheets) => {
     const response = await googleSheets.spreadsheets.copyTo({
       spreadsheetId: templateId,
@@ -27,7 +31,11 @@ export const createGoogleSheetTemplate = async (userId, title) => {
   });
 };
 
-export const exportMemberListToGoogleSheet = async (userId, sheetTitle, memberList) => {
+export const exportMemberListToGoogleSheet = async (
+  userId,
+  sheetTitle,
+  memberList,
+) => {
   return withUserGoogleSheets(userId, async (googleSheets) => {
     // Step 1: Create a new Google Sheet
     const createResponse = await googleSheets.spreadsheets.create({
@@ -67,7 +75,11 @@ export const exportMemberListToGoogleSheet = async (userId, sheetTitle, memberLi
   });
 };
 
-export const exportAttendanceReportToGoogleSheet = async (userId, sheetTitle, attendanceData) => {
+export const exportAttendanceReportToGoogleSheet = async (
+  userId,
+  sheetTitle,
+  attendanceData,
+) => {
   return withUserGoogleSheets(userId, async (googleSheets) => {
     // Step 1: Create a new Google Sheet
     const createResponse = await googleSheets.spreadsheets.create({
@@ -96,8 +108,8 @@ export const exportAttendanceReportToGoogleSheet = async (userId, sheetTitle, at
           record.date,
           attendee.name,
           attendee.email,
-        ])
-      ) // Data rows
+        ]),
+      ), // Data rows
     ];
 
     // Step 3: Insert the data into the sheet
@@ -122,15 +134,5 @@ export const getEmbedableLinkForGoogleSheet = async (userId, spreadsheetId) => {
     });
     const sheetData = response.data;
     return `https://docs.google.com/spreadsheets/d/${sheetData.spreadsheetId}/edit?usp=sharing`;
-  });
-};
-
-export const listGoogleSheetsTemplates = async (userId) => {
-  return withUserGoogleSheets(userId, async (googleSheets) => {
-    const res = await googleSheets.files.list({
-      q: "mimeType='application/vnd.google-apps.spreadsheet' and name contains 'Template'",
-      fields: "files(id, name, createdTime, modifiedTime)",
-    });
-    return res.data.files || [];
   });
 };

@@ -521,6 +521,13 @@ export const googleAuthCallback = async (req, res) => {
       },
     });
 
+    const existingGoogleCredential =
+      await prisma.userGoogleCredential.findFirst({
+        where: {
+          googleId: userInfo.id,
+        },
+      });
+
     let user;
 
     if (!storedUser) {
@@ -531,23 +538,39 @@ export const googleAuthCallback = async (req, res) => {
       );
 
       return;
-    } else if (!storedUser.googleId || storedUser.googleId !== userInfo.id) {
-      user = await prisma.user.update({
-        where: {
-          id: storedUser.id,
-        },
-        data: {
-          fullname: userInfo.name,
-          hashedPassword: await hashedDefaultPassword(),
-          googleId: userInfo.id,
-          locale: userInfo.locale,
-          provider: PROVIDER.BOTH,
-          firstName: userInfo.given_name,
-          lastName: userInfo.family_name,
-          isEmailVerified: userInfo.verified_email,
-          lastLogin: new Date(),
-        },
-        include: userIncludeSystemRoleOptions,
+    } else if (
+      !existingGoogleCredential ||
+      existingGoogleCredential.googleId !== userInfo.id
+    ) {
+      user = await prisma.$transaction(async (prisma) => {
+        await prisma.userGoogleCredential.create({
+          data: {
+            googleId: userInfo.id,
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            scope: tokens.scope,
+            userId: storedUser.id,
+          },
+        });
+
+        const updatedUser = await prisma.user.update({
+          where: {
+            id: storedUser.id,
+          },
+          data: {
+            fullname: userInfo.name,
+            hashedPassword: await hashedDefaultPassword(),
+            locale: userInfo.locale,
+            provider: PROVIDER.BOTH,
+            firstName: userInfo.given_name,
+            lastName: userInfo.family_name,
+            isEmailVerified: userInfo.verified_email,
+            lastLogin: new Date(),
+          },
+          include: userIncludeSystemRoleOptions,
+        });
+
+        return updatedUser;
       });
     } else {
       user = await prisma.user.update({
@@ -594,7 +617,12 @@ export const googleAuthCallback = async (req, res) => {
 
     try {
       const scopeString = grantedScopeString || requiredScopes.join(" ");
-      await upsertUserGoogleCredential(user.id, userInfo.id, tokens, scopeString);
+      await upsertUserGoogleCredential(
+        user.id,
+        userInfo.id,
+        tokens,
+        scopeString,
+      );
     } catch (err) {
       console.warn("Warning: Failed to upsert Google credential:", err.message);
     }

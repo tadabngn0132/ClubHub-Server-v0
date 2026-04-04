@@ -1,6 +1,10 @@
-import { withUserGoogleDocs } from './googleAuthContextService.js';
+import { withUserGoogleDocs } from "./googleAuthContextService.js";
 
-export const createGoogleDocFromTemplate = async (userId, templateId, newDocTitle) => {
+export const createGoogleDocFromTemplate = async (
+  userId,
+  templateId,
+  newDocTitle,
+) => {
   return withUserGoogleDocs(userId, async (googleDocs) => {
     const response = await googleDocs.documents.copy({
       documentId: templateId,
@@ -33,15 +37,5 @@ export const getEmbeddableLinkForGoogleDoc = async (userId, documentId) => {
     });
     const docData = response.data;
     return `https://docs.google.com/document/d/${docData.documentId}/edit?usp=sharing`;
-  });
-};
-
-export const listGoogleDocsTemplates = async (userId) => {
-  return withUserGoogleDocs(userId, async (googleDocs) => {
-    const response = await googleDocs.documents.list({
-      q: "mimeType='application/vnd.google-apps.document' and name contains 'Template'",
-      fields: "documents(documentId,title,createdTime,modifiedTime)",
-    });
-    return response.data.documents || [];
   });
 };
