@@ -1,11 +1,21 @@
 import { prisma } from "../libs/prisma.js";
 import { userIncludeOptions } from "../utils/userUtil.js";
-import { USER_STATUS, ACTIVITY_STATUS, TASK_STATUS } from "../utils/constant";
+import {
+  USER_STATUS,
+  ACTIVITY_STATUS,
+  TASK_STATUS,
+  CV_STATUS,
+} from "../utils/constant";
 
 export const getDashboardStats = async (req, res) => {
-  // 3 aggregate queries to get the counts of total active users, upcoming events, and incomplete tasks
+  // 4 aggregate queries to get the counts of total active users, upcoming events, incomplete tasks, and pending member applications
   try {
-    const [totalUsers, upcomingEvents, pendingTasks] = await Promise.all([
+    const [
+      totalUsers,
+      upcomingEvents,
+      pendingTasks,
+      pendingMemberApplications,
+    ] = await Promise.all([
       prisma.user.count({
         where: {
           isDeleted: false,
@@ -30,6 +40,12 @@ export const getDashboardStats = async (req, res) => {
           },
         },
       }),
+      prisma.memberApplication.count({
+        where: {
+          isDeleted: false,
+          cvStatus: CV_STATUS.PENDING,
+        },
+      }),
     ]);
 
     res.status(200).json({
@@ -38,6 +54,7 @@ export const getDashboardStats = async (req, res) => {
         userCount: totalUsers,
         taskCount: pendingTasks,
         eventCount: upcomingEvents,
+        memberApplicationCount: pendingMemberApplications,
       },
     });
   } catch (err) {
