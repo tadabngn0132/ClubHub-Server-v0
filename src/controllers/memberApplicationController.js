@@ -3,7 +3,13 @@ import {
   hashedDefaultPassword,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import { CV_STATUS, FINAL_STATUS, PROVIDER } from "../utils/constant.js";
+import {
+  CV_STATUS,
+  FINAL_STATUS,
+  PROVIDER,
+  DEFAULT_PASSWORD,
+} from "../utils/constant.js";
+import { sendWelcomeEmail } from "../utils/emailUtil.js";
 
 export const createMemberApplication = async (req, res) => {
   // TODO: Implement file upload handling for CV and avatar, and save the file URLs in the database
@@ -261,6 +267,12 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
         include: userIncludeOptions,
       });
     });
+
+    await sendWelcomeEmail(
+      createdUser.email,
+      createdUser.fullname,
+      DEFAULT_PASSWORD,
+    );
 
     res.status(200).json({
       success: true,

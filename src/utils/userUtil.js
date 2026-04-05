@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { DEFAULT_PASSWORD } from "./constant";
 
 export const removeSensitiveUserData = (user) => {
   const {
@@ -13,7 +14,7 @@ export const removeSensitiveUserData = (user) => {
 };
 
 export const hashedDefaultPassword = async () => {
-  const defaultPassword = "WelcometoGDC22%^&";
+  const defaultPassword = DEFAULT_PASSWORD;
   const hashedPassword = await bcrypt.hash(defaultPassword, 12);
   return hashedPassword;
 };

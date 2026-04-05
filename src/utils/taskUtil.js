@@ -19,6 +19,9 @@ export const getTaskStatus = (status) => {
 
 export const taskInclude = {
   assignees: {
+    select: {
+      status: true,
+    },
     include: {
       user: {
         select: {
@@ -95,7 +98,9 @@ export const resolveAssigneeIds = async (tx, target = {}) => {
       select: { userId: true },
       distinct: ["userId"],
     });
-    departmentUsers.forEach((departmentUser) => finalSet.add(departmentUser.userId));
+    departmentUsers.forEach((departmentUser) =>
+      finalSet.add(departmentUser.userId),
+    );
   }
 
   // Fetch users from the specified user IDs and add them to the final set

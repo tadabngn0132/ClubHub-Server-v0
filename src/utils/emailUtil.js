@@ -56,3 +56,12 @@ export const sendEventRegistrationConfirmationEmail = async (
 
   await transporter.sendMail(message);
 };
+
+export const sendTaskDeadlineReminderEmail = async (email, name, taskTitle, deadline) => {
+  message.to = email;
+  message.subject = `Reminder: Upcoming Deadline for Task "${taskTitle}"`;
+  message.text = `Hello ${name},\n\nThis is a friendly reminder that the deadline for your task "${taskTitle}" is approaching on ${deadline}. Please make sure to complete it on time.`;
+  message.html = `<p>Hello ${name},</p><p>This is a friendly reminder that the deadline for your task <strong>"${taskTitle}"</strong> is approaching on <strong>${deadline}</strong>. Please make sure to complete it on time.</p><br/><p>Best regards,<br/>GDC - Greenwich Dance Crew</p>`;
+
+  await transporter.sendMail(message);
+};

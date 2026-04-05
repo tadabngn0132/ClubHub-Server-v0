@@ -159,6 +159,9 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: true,
     },
+    dashboard: {
+      read: true,
+    },
   },
   MODERATOR: {
     users: {
@@ -241,6 +244,9 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
+    },
+    dashboard: {
+      read: true,
     },
   },
   MEMBER: {
@@ -325,6 +331,9 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: false,
     },
+    dashboard: {
+      read: false,
+    },
   },
   GUEST: {
     users: {
@@ -408,6 +417,9 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
     },
+    dashboard: {
+      read: false,
+    },
   },
 };
 
@@ -482,3 +494,5 @@ export const ASSIGNEE_TASK_STATUS = {
   VERIFIED: "VERIFIED",
   REJECTED: "REJECTED",
 };
+
+export const DEFAULT_PASSWORD = "WelcometoGDC22%^&";

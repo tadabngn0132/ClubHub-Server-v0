@@ -32,6 +32,8 @@ import aiRouter from "./src/routes/aiRoute.js";
 import driveRoute from "./src/routes/googleDriveRoute.js";
 import docsRoute from "./src/routes/googleDocsRoute.js";
 import sheetsRoute from "./src/routes/googleSheetsRoute.js";
+import dashboardRoute from "./src/routes/dashboardRoute.js";
+import { startTaskReminderJob } from "./src/jobs/taskReminderJob.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,6 +85,7 @@ app.use("/api/ai", aiRouter);
 app.use("/api/drive", driveRoute);
 app.use("/api/docs", docsRoute);
 app.use("/api/sheets", sheetsRoute);
+app.use("/api/dashboard", dashboardRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
@@ -93,6 +96,7 @@ async function startServer() {
   try {
     await testDatabaseConnection();
     await ensureClubStructure();
+    startTaskReminderJob();
 
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

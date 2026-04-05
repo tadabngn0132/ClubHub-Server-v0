@@ -1,11 +1,16 @@
 import { prisma } from "../libs/prisma.js";
 import { removeSensitiveUserData } from "../utils/userUtil.js";
-import { USER_STATUS, AVATAR_PROVIDERS } from "../utils/constant.js";
+import {
+  USER_STATUS,
+  AVATAR_PROVIDERS,
+  DEFAULT_PASSWORD,
+} from "../utils/constant.js";
 import {
   hashedDefaultPassword,
   userIncludeOptions,
 } from "../utils/userUtil.js";
 import cloudinary from "../libs/cloudinary.js";
+import { sendWelcomeEmail } from "../utils/emailUtil.js";
 
 export const createUser = async (req, res) => {
   try {
@@ -119,6 +124,12 @@ export const createUser = async (req, res) => {
     });
 
     const necessaryUserData = removeSensitiveUserData(createdUser);
+
+    await sendWelcomeEmail(
+      createdUser.email,
+      createdUser.fullname,
+      DEFAULT_PASSWORD,
+    );
 
     res.status(201).json({
       success: true,
@@ -435,9 +446,7 @@ export const updateUserProfile = async (req, res) => {
       data: {
         fullname: payload.fullname,
         phoneNumber: payload.phoneNumber,
-        dateOfBirth: payload.dateOfBirth
-          ? new Date(payload.dateOfBirth)
-          : null,
+        dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
         gender: payload.gender,
         major: payload.major,
         avatarUrl: payload.avatarUrl,
