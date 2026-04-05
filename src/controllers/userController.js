@@ -56,15 +56,14 @@ export const createUser = async (req, res) => {
       const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
       try {
-        const uploadResult = await cloudinary.uploader
-          .upload(base64, {
-            folder: "clubhub/users/avatars",
-            public_id: `${payload.email}_avatar_${Date.now()}`,
-            resource_type: "image",
-          });
-          payload.avatarUrl = uploadResult.secure_url;
-          payload.avatarPublicId = uploadResult.public_id;
-          payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: "clubhub/users/avatars",
+          public_id: `${payload.email}_avatar_${Date.now()}`,
+          resource_type: "image",
+        });
+        payload.avatarUrl = uploadResult.secure_url;
+        payload.avatarPublicId = uploadResult.public_id;
+        payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
       } catch (err) {
         console.error("Error uploading image to Cloudinary:", err);
         return res.status(500).json({
@@ -87,7 +86,7 @@ export const createUser = async (req, res) => {
           gender: payload.gender,
           major: payload.major,
           generation: Number(payload.generation),
-          joinedAt: payload.joinedAt? new Date(payload.joinedAt) : null,
+          joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
           status:
             payload.status.trim().toLowerCase() === "active"
               ? USER_STATUS.ACTIVE
@@ -97,14 +96,18 @@ export const createUser = async (req, res) => {
           avatarPublicId: payload.avatarPublicId,
           avatarProvider: payload.avatarProvider,
           bio: payload.bio,
-          rootDepartmentId: payload.rootDepartmentId !== "" ? Number(payload.rootDepartmentId) : null,
+          rootDepartmentId:
+            payload.rootDepartmentId !== ""
+              ? Number(payload.rootDepartmentId)
+              : null,
         },
       });
 
       await prisma.userPosition.create({
         data: {
           userId: user.id,
-          positionId: payload.positionId !== "" ? Number(payload.positionId) : null,
+          positionId:
+            payload.positionId !== "" ? Number(payload.positionId) : null,
           isPrimary: true,
         },
       });
@@ -263,24 +266,26 @@ export const updateUser = async (req, res) => {
       const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
       try {
-        const uploadResult = await cloudinary.uploader
-          .upload(base64, {
-            folder: "clubhub/users/avatars",
-            public_id: `${payload.email}_avatar_${Date.now()}`,
-            resource_type: "image",
-          });
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: "clubhub/users/avatars",
+          public_id: `${payload.email}_avatar_${Date.now()}`,
+          resource_type: "image",
+        });
         payload.avatarUrl = uploadResult.secure_url;
         payload.avatarPublicId = uploadResult.public_id;
         payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
 
         if (storedUser.avatarPublicId) {
-          cloudinary.uploader.destroy(storedUser.avatarPublicId, (error, result) => {
-            if (error) {
-              console.log("Cloudinary deletion error:", error);
-            } else {
-              console.log("Cloudinary deletion result:", result);
-            }
-          });
+          cloudinary.uploader.destroy(
+            storedUser.avatarPublicId,
+            (error, result) => {
+              if (error) {
+                console.log("Cloudinary deletion error:", error);
+              } else {
+                console.log("Cloudinary deletion result:", result);
+              }
+            },
+          );
         }
       } catch (err) {
         console.error("Error uploading image to Cloudinary:", err);
@@ -316,7 +321,10 @@ export const updateUser = async (req, res) => {
           avatarPublicId: payload.avatarPublicId,
           avatarProvider: payload.avatarProvider,
           bio: payload.bio,
-          rootDepartmentId: payload.rootDepartmentId !== "" ? Number(payload.rootDepartmentId) : null,
+          rootDepartmentId:
+            payload.rootDepartmentId !== ""
+              ? Number(payload.rootDepartmentId)
+              : null,
         },
         include: {
           userPosition: {
@@ -337,10 +345,11 @@ export const updateUser = async (req, res) => {
           userId_positionId: {
             userId: user.id,
             positionId: user.userPosition[0].position.id,
-          }
+          },
         },
         data: {
-          positionId: payload.positionId !== "" ? Number(payload.positionId) : null,
+          positionId:
+            payload.positionId !== "" ? Number(payload.positionId) : null,
         },
       });
 
@@ -348,6 +357,95 @@ export const updateUser = async (req, res) => {
         where: { id: user.id },
         include: userIncludeOptions,
       });
+    });
+
+    const necessaryUserData = removeSensitiveUserData(updatedUser);
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: necessaryUserData,
+    });
+  } catch (err) {
+    console.log("Error in updateUser function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Update user error: ${err.message}`,
+    });
+  }
+};
+
+export const updateUserProfile = async (req, res) => {
+  const { id } = req.params;
+  const payload = req.body;
+  const file = req.file;
+
+  try {
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found user to update",
+      });
+    }
+
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+      try {
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: "clubhub/users/avatars",
+          public_id: `${payload.email}_avatar_${Date.now()}`,
+          resource_type: "image",
+        });
+        payload.avatarUrl = uploadResult.secure_url;
+        payload.avatarPublicId = uploadResult.public_id;
+        payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+
+        if (storedUser.avatarPublicId) {
+          cloudinary.uploader.destroy(
+            storedUser.avatarPublicId,
+            (error, result) => {
+              if (error) {
+                console.log("Cloudinary deletion error:", error);
+              } else {
+                console.log("Cloudinary deletion result:", result);
+              }
+            },
+          );
+        }
+      } catch (err) {
+        console.error("Error uploading image to Cloudinary:", err);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to upload avatar image: ${err.message}`,
+        });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        fullname: payload.fullname,
+        phoneNumber: payload.phoneNumber,
+        dateOfBirth: payload.dateOfBirth
+          ? new Date(payload.dateOfBirth)
+          : null,
+        gender: payload.gender,
+        major: payload.major,
+        avatarUrl: payload.avatarUrl,
+        avatarPublicId: payload.avatarPublicId,
+        avatarProvider: payload.avatarProvider,
+        bio: payload.bio,
+      },
+      include: userIncludeOptions,
     });
 
     const necessaryUserData = removeSensitiveUserData(updatedUser);
@@ -427,15 +525,18 @@ export const hardDeleteUser = async (req, res) => {
     }
 
     if (storedUser.avatarPublicId) {
-      cloudinary.uploader.destroy(storedUser.avatarPublicId, (error, result) => {
-        if (error) {
-          console.log("Cloudinary deletion error:", error);
-        } else {
-          console.log("Cloudinary deletion result:", result);
-        }
-      });
+      cloudinary.uploader.destroy(
+        storedUser.avatarPublicId,
+        (error, result) => {
+          if (error) {
+            console.log("Cloudinary deletion error:", error);
+          } else {
+            console.log("Cloudinary deletion result:", result);
+          }
+        },
+      );
     }
-    
+
     const deletedUser = await prisma.user.delete({
       where: {
         id: Number(id),

@@ -43,3 +43,16 @@ export const sendWelcomeEmail = async (email, name, password) => {
 
   await transporter.sendMail(message);
 };
+
+export const sendEventRegistrationConfirmationEmail = async (
+  email,
+  name,
+  eventName,
+) => {
+  message.to = email;
+  message.subject = `Registration Confirmation for ${eventName}`;
+  message.text = `Hello ${name},\n\nYou have successfully registered for the event: ${eventName}. We look forward to seeing you there!`;
+  message.html = `<p>Hello ${name},</p><p>You have successfully registered for the event: <strong>${eventName}</strong>. We look forward to seeing you there!</p><br/><p>Best regards,<br/>GDC - Greenwich Dance Crew</p>`;
+
+  await transporter.sendMail(message);
+};

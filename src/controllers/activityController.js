@@ -8,7 +8,6 @@ import {
   deleteGoogleCalendarEvent,
   exportICSFile,
 } from "../services/googleCalendarService.js";
-import { start } from "repl";
 
 export const createActivity = async (req, res) => {
   try {
@@ -575,6 +574,38 @@ export const deleteActivityVideo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Internal server error / Delete activity video error: ${err.message}`,
+    });
+  }
+};
+
+export const getICSFile = async (req, res) => {
+  try {
+    const { activityId } = req.params;
+
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: Number(activityId) },
+    });
+
+    if (!storedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
+    const icsFileData = await exportICSFile(storedActivity);
+
+    res.setHeader("Content-Type", "text/calendar");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=activity_${storedActivity.slug}.ics`,
+    );
+    res.status(200).send(icsFileData);
+  } catch (err) {
+    console.log("Error get ICS file function: ", err.message);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Get ICS file error: ${err.message}`,
     });
   }
 };

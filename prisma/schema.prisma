@@ -228,9 +228,11 @@ model AssigneeTask {
   taskId             Int         @map("task_id")
   assigneeId         Int         @map("user_id")
   confirmedAt        DateTime    @default(now()) @map("confirmed_at")
+  status             AssigneeTaskStatus  @default(PENDING) @map("status")
   evidenceUrl        String?     @map("evidence_url")
   evidencePublicId   String?     @map("evidence_public_id")
   additionalComments String?     @map("additional_comments")
+  reviewerComments   String?     @map("reviewer_comments")
   task               Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user               User        @relation(fields: [assigneeId], references: [id], onDelete: Cascade)
 
@@ -473,4 +475,11 @@ enum TaskAssigneeScope {
 enum AvatarProvider {
   GOOGLE
   CLOUDINARY
+}
+
+enum AssigneeTaskStatus {
+  PENDING
+  CONFIRMED
+  VERIFIED
+  REJECTED
 }

@@ -12,6 +12,7 @@ import {
   createActivityVideo,
   deleteActivityImage,
   deleteActivityVideo,
+  getICSFile,
 } from "../controllers/activityController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -69,7 +70,12 @@ router.delete(
   verifyAccessToken,
   deleteActivityVideo,
 );
-
+router.get(
+  "/ics/:activityId",
+  verifyAccessToken,
+  requirePermission("activities", "read"),
+  getICSFile,
+);
 router.get(
   "/:id",
   verifyAccessToken,

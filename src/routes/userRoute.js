@@ -4,6 +4,7 @@ import {
   getUser,
   getUsers,
   updateUser,
+  updateUserProfile,
   softDeleteUser,
   hardDeleteUser,
 } from "../controllers/userController.js";
@@ -11,6 +12,7 @@ import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import {
   validateUserCreation,
   validateUserUpdate,
+  validateUserProfileUpdate,
 } from "../middlewares/validationMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
 import { uploadImage } from "../middlewares/uploadMiddleware.js";
@@ -26,16 +28,24 @@ router.post(
   createUser,
 );
 router.get(
-  "/:id",
-  verifyAccessToken,
-  requirePermission("users", "read"),
-  getUser,
-);
-router.get(
   "/",
   verifyAccessToken,
   requirePermission("users", "read"),
   getUsers,
+);
+router.put(
+  "/profile/:id",
+  verifyAccessToken,
+  requirePermission("users", "update", { allowOwner: true }),
+  uploadImage.single("avatar"),
+  validateUserProfileUpdate,
+  updateUserProfile,
+);
+router.get(
+  "/:id",
+  verifyAccessToken,
+  requirePermission("users", "read"),
+  getUser,
 );
 router.put(
   "/:id",
@@ -45,16 +55,16 @@ router.put(
   validateUserUpdate,
   updateUser,
 );
-router.delete(
+router.put(
   "/:id/soft",
   verifyAccessToken,
-  requirePermission("users", "delete"),
+  requirePermission("users", "softDelete"),
   softDeleteUser,
 );
 router.delete(
   "/:id/hard",
   verifyAccessToken,
-  requirePermission("users", "delete"),
+  requirePermission("users", "hardDelete"),
   hardDeleteUser,
 );
 

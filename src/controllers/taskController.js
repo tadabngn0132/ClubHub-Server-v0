@@ -5,7 +5,7 @@ import {
   getAssigneeScopeValue,
   resolveAssigneeIds,
 } from "../utils/taskUtil.js";
-import { TASK_STATUS } from "../utils/constant.js";
+import { TASK_STATUS, ASSIGNEE_TASK_STATUS } from "../utils/constant.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -164,6 +164,7 @@ export const updateTask = async (req, res) => {
         data: assigneeIds.map((assigneeId) => ({
           taskId: task.id,
           assigneeId,
+          status: ASSIGNEE_TASK_STATUS.PENDING,
         })),
         skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
       });
@@ -313,6 +314,7 @@ export const confirmTaskCompletion = async (req, res) => {
         evidenceUrl: taskCfData.evidenceUrl,
         evidencePublicId: taskCfData.evidencePublicId,
         additionalComments: taskCfData.additionalComments,
+        status: ASSIGNEE_TASK_STATUS.CONFIRMED,
       },
     });
 
@@ -326,6 +328,48 @@ export const confirmTaskCompletion = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Internal server error / Confirm task completion error: ${err.message}`,
+    });
+  }
+};
+
+export const verifyTaskCompletion = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const taskVerifyData = req.body;
+
+    const assigneeTask = await prisma.assigneeTask.findFirst({
+      where: {
+        taskId: Number(taskId),
+      },
+    });
+
+    if (!assigneeTask) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignee task not found",
+      });
+    }
+
+    const updatedAssigneeTask = await prisma.assigneeTask.update({
+      where: { id: assigneeTask.id },
+      data: {
+        status: taskVerifyData.isVerified
+          ? ASSIGNEE_TASK_STATUS.VERIFIED
+          : ASSIGNEE_TASK_STATUS.REJECTED,
+        reviewerComments: taskVerifyData.reviewerComments || "",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task completion verified successfully",
+      data: updatedAssigneeTask,
+    });
+  } catch (err) {
+    console.error("Error in verifyTaskCompletion function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Verify task completion error: ${err.message}`,
     });
   }
 };

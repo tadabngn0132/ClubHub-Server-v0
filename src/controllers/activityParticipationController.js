@@ -1,5 +1,6 @@
 import { prisma } from "../libs/prisma.js";
 import { getParticipationStatus } from "../utils/activityUtil.js";
+import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 
 export const createActivityParticipation = async (req, res) => {
   try {
@@ -13,6 +14,21 @@ export const createActivityParticipation = async (req, res) => {
         ),
       },
     });
+
+    const activity = await prisma.activity.findUnique({
+      where: { id: Number(participationData.activityId) },
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: Number(participationData.userId) },
+    });
+
+    await sendEventRegistrationConfirmationEmail(
+      user.email,
+      user.fullname,
+      activity.title,
+    );
+
     res.status(201).json({
       success: true,
       message: "Activity participation created successfully",

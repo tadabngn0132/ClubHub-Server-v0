@@ -84,7 +84,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     activities: {
       create: true,
@@ -92,7 +91,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     tasks: {
       create: true,
@@ -100,7 +98,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     positions: {
       create: true,
@@ -108,7 +105,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     departments: {
       create: true,
@@ -116,7 +112,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     memberApplications: {
       create: true,
@@ -127,7 +122,6 @@ export const ROLE_PERMISSIONS = {
       createUserFromApplication: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     departmentApplications: {
       create: true,
@@ -136,7 +130,6 @@ export const ROLE_PERMISSIONS = {
       interviewReview: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     notifications: {
       create: true,
@@ -144,7 +137,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     activityParticipants: {
       create: true,
@@ -152,7 +144,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     activityParticipations: {
       create: true,
@@ -160,7 +151,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
     messages: {
       create: true,
@@ -168,7 +158,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
   },
   MODERATOR: {
@@ -252,7 +241,6 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
-      delete: true,
     },
   },
   MEMBER: {
@@ -441,27 +429,27 @@ export const AVATAR_PROVIDERS = {
 
 export const SOCKET_EVENTS = {
   // User events
-  USER_ONLINE: 'user:online',
-  USER_OFFLINE: 'user:offline',
-  USERS_ONLINE_STATUS: 'users:online-status',
+  USER_ONLINE: "user:online",
+  USER_OFFLINE: "user:offline",
+  USERS_ONLINE_STATUS: "users:online-status",
 
   // Message events
-  MESSAGE_SEND: 'message:send',
-  MESSAGE_RECEIVE: 'message:receive',
-  MESSAGE_DELETE: 'message:delete',
-  MESSAGE_SENT: 'message:sent',
-  MESSAGE_DELETED: 'message:deleted',
-  MESSAGE_ERROR: 'message:error',
+  MESSAGE_SEND: "message:send",
+  MESSAGE_RECEIVE: "message:receive",
+  MESSAGE_DELETE: "message:delete",
+  MESSAGE_SENT: "message:sent",
+  MESSAGE_DELETED: "message:deleted",
+  MESSAGE_ERROR: "message:error",
 
   // Typing events
-  USER_TYPING: 'user:typing',
-  USER_STOP_TYPING: 'user:stop-typing',
+  USER_TYPING: "user:typing",
+  USER_STOP_TYPING: "user:stop-typing",
 
   // Notification events
-  NOTIFICATION_SEND: 'notification:send',
-  NOTIFICATION_RECEIVE: 'notification:receive',
-  NOTIFICATION_READ: 'notification:read',
-  NOTIFICATION_DELETE: 'notification:delete',
+  NOTIFICATION_SEND: "notification:send",
+  NOTIFICATION_RECEIVE: "notification:receive",
+  NOTIFICATION_READ: "notification:read",
+  NOTIFICATION_DELETE: "notification:delete",
 };
 
 export const THINKING_LEVELS = {
@@ -486,4 +474,11 @@ export const SYSTEM_INSTRUCTIONS = {
   task_planner: `You are a project planning assistant for event management.
     Help break down complex tasks into actionable steps with timelines.
     Consider resource constraints typical for a volunteer-run dance crew.`,
+};
+
+export const ASSIGNEE_TASK_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
 };
