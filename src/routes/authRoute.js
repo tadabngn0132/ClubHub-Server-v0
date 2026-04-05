@@ -24,7 +24,7 @@ import {
 const router = express.Router();
 
 router.post("/refresh-access-token", refreshAccessToken);
-router.post("/login", validateLogin, login);
+router.post("/login", loginLimiter, validateLogin, login);
 router.post("/register", register);
 router.post("/logout", logout);
 router.post("/forgot-password", validateForgotPassword, forgotPassword);

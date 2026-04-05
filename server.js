@@ -49,9 +49,9 @@ const io = new Server(httpServer, {
 initializeSocketServer(io);
 
 app.use(cors(corsOptions));
-app.use(limiter);
-app.use(cookieParser());
+app.use("/api", limiter);
 app.use(helmet());
+app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

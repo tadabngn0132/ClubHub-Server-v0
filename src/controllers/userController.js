@@ -567,3 +567,43 @@ export const hardDeleteUser = async (req, res) => {
     });
   }
 };
+
+export const unlockAccount = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User with this email does not exist",
+      });
+    }
+
+    await prisma.user.update({
+      where: {
+        id: storedUser.id,
+      },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Account unlocked successfully",
+    });
+  } catch (err) {
+    console.log("Error in unlockAccount function", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Unlock account error: ${err.message}`,
+    });
+  }
+};

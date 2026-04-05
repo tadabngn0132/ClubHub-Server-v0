@@ -127,12 +127,36 @@ export const login = async (req, res) => {
       });
     }
 
+    if (storedUser.lockedUntil && storedUser.lockedUntil > new Date()) {
+      return res.status(403).json({
+        success: false,
+        message: `Account is locked until ${storedUser.lockedUntil.toLocaleString()}`,
+      });
+    }
+
     const correctPassword = await bcrypt.compare(
       password,
       storedUser.hashedPassword,
     );
 
     if (!correctPassword) {
+      const attempts = storedUser.failedLoginAttempts + 1;
+      const lockoutThreshold = 5;
+      const lockoutDuration = 30 * 60 * 1000; // 30 minutes
+
+      await prisma.user.update({
+        where: {
+          id: storedUser.id,
+        },
+        data: {
+          failedLoginAttempts: attempts,
+          lockedUntil:
+            attempts >= lockoutThreshold
+              ? new Date(Date.now() + lockoutDuration)
+              : null,
+        },
+      });
+
       return res.status(401).json({
         success: false,
         message: "Incorrect password",
@@ -145,6 +169,8 @@ export const login = async (req, res) => {
       },
       data: {
         lastLogin: new Date(),
+        failedLoginAttempts: 0,
+        lockedUntil: null,
       },
       include: userIncludeSystemRoleOptions,
     });

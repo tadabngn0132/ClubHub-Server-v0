@@ -1,6 +1,7 @@
 import { prisma } from "../libs/prisma.js";
 import { getParticipationStatus } from "../utils/activityUtil.js";
 import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
+import { PARTICIPATION_STATUS } from "../utils/constant.js";
 
 export const createActivityParticipation = async (req, res) => {
   try {
@@ -178,6 +179,77 @@ export const deleteParticipation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Internal server error / Delete participation error: ${err.message}`,
+    });
+  }
+};
+
+export const checkInParticipant = async (req, res) => {
+  try {
+    const { participationId } = req.params;
+
+    const participation = await prisma.activityParticipation.findUnique({
+      where: { id: Number(participationId) },
+    });
+
+    if (!participation) {
+      return res.status(404).json({
+        success: false,
+        message: "Participation not found",
+      });
+    }
+
+    if (
+      participation.status.toUpperCase() !== PARTICIPATION_STATUS.REGISTERED
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Only registered participants can be checked in",
+      });
+    }
+
+    const updatedParticipation = await prisma.activityParticipation.update({
+      where: { id: Number(participationId) },
+      data: { status: PARTICIPATION_STATUS.ATTENDED },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Participant checked in successfully",
+      data: updatedParticipation,
+    });
+  } catch (err) {
+    console.error("Error in checkInParticipant function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Check in participant error: ${err.message}`,
+    });
+  }
+};
+
+export const markParticipantNoShow = async (req, res) => {
+  try {
+    const { activityId } = req.params;
+
+    const updatedParticipations = await prisma.activityParticipation.updateMany(
+      {
+        where: {
+          activityId: Number(activityId),
+          status: PARTICIPATION_STATUS.REGISTERED,
+        },
+        data: { status: PARTICIPATION_STATUS.ABSENT },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Participants marked as no-show successfully",
+      data: updatedParticipations,
+    });
+  } catch (err) {
+    console.error("Error in markParticipantNoShow function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Mark participant no-show error: ${err.message}`,
     });
   }
 };

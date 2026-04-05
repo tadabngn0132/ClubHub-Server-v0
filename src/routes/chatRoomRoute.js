@@ -6,15 +6,26 @@ import {
   getChatRoomsByUserId,
   updateChatRoom,
   deleteChatRoom,
+  getChatRoomMembers,
+  addMemberToChatRoom,
+  removeMemberFromChatRoom,
 } from "../controllers/chatRoomController.js";
+import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createChatRoom);
-router.get("/", getChatRooms);
-router.get("/user/:userId", getChatRoomsByUserId);
-router.get("/:id", getChatRoomById);
-router.put("/:id", updateChatRoom);
-router.delete("/:id", deleteChatRoom);
+router.post("/", verifyAccessToken, createChatRoom);
+router.get("/", verifyAccessToken, getChatRooms);
+router.get("/user/:userId", verifyAccessToken, getChatRoomsByUserId);
+router.get("/:id", verifyAccessToken, getChatRoomById);
+router.put("/:id", verifyAccessToken, updateChatRoom);
+router.delete("/:id", verifyAccessToken, deleteChatRoom);
+router.get("/:id/members", verifyAccessToken, getChatRoomMembers);
+router.post("/:id/members", verifyAccessToken, addMemberToChatRoom);
+router.delete(
+  "/:id/members/:userId",
+  verifyAccessToken,
+  removeMemberFromChatRoom,
+);
 
 export default router;

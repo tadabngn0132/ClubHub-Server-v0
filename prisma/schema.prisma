@@ -34,6 +34,8 @@ model User {
   rootDepartmentId          Int?                       @map("root_department_id")
   isDeleted                 Boolean                    @default(false) @map("is_deleted")
   rootDepartment            Department?                @relation("RootDepartment", fields: [rootDepartmentId], references: [id], onDelete: SetNull)
+  failedLoginAttempts       Int                        @default(0) @map("failed_login_attempts")
+  lockedUntil               DateTime?                  @map("locked_until")
   refreshTokens             RefreshToken[]
   resetToken                ResetPasswordToken[]
   userPosition              UserPosition[]

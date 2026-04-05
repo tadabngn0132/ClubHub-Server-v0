@@ -7,6 +7,7 @@ import {
   updateUserProfile,
   softDeleteUser,
   hardDeleteUser,
+  unlockAccount,
 } from "../controllers/userController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import {
@@ -41,6 +42,12 @@ router.put(
   validateUserProfileUpdate,
   updateUserProfile,
 );
+router.put(
+  "/unlock/:id",
+  verifyAccessToken,
+  requirePermission("users", "update"),
+  unlockAccount,
+);
 router.get(
   "/:id",
   verifyAccessToken,
@@ -50,7 +57,7 @@ router.get(
 router.put(
   "/:id",
   verifyAccessToken,
-  requirePermission("users", "update", { allowOwner: true }),
+  requirePermission("users", "update"),
   uploadImage.single("avatar"),
   validateUserUpdate,
   updateUser,

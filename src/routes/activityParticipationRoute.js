@@ -7,6 +7,8 @@ import {
   getParticipationsByUserId,
   updateParticipationById,
   deleteParticipation,
+  checkInParticipant,
+  markParticipantNoShow,
 } from "../controllers/activityParticipationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -60,6 +62,18 @@ router.delete(
   verifyAccessToken,
   requirePermission("activityParticipations", "delete"),
   deleteParticipation,
+);
+router.put(
+  "/:participationId/check-in",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "update"),
+  checkInParticipant,
+);
+router.put(
+  "/:activityId/no-show",
+  verifyAccessToken,
+  requirePermission("activityParticipations", "update"),
+  markParticipantNoShow,
 );
 
 export default router;
