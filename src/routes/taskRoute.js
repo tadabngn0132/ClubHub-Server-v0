@@ -8,6 +8,7 @@ import {
   softDeleteTask,
   hardDeleteTask,
   confirmTaskCompletion,
+  verifyTaskCompletion,
 } from "../controllers/taskController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -69,6 +70,12 @@ router.put(
   requirePermission("tasks", "update"),
   uploadImage.single("evidence"),
   confirmTaskCompletion,
+);
+router.put(
+  "/:taskId/verify-completion",
+  verifyAccessToken,
+  requirePermission("tasks", "update"),
+  verifyTaskCompletion,
 );
 
 export default router;
