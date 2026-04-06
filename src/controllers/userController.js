@@ -667,9 +667,10 @@ export const getUserDashboardStats = async (req, res) => {
       },
       select: {
         id: true,
-        name: true,
+        title: true,
         startDate: true,
         endDate: true,
+        slug: true,
       },
     });
 

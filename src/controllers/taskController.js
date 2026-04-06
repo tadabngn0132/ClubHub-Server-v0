@@ -16,29 +16,25 @@ export const createTask = async (req, res) => {
       const assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
 
       if (assigneeIds.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "No valid assignees found for the specified target",
-        });
+        throw new Error("No valid assignees found for the specified target");
       }
 
-      const newTask = await prisma.$transaction(async (prisma) => {
-        const task = await prisma.task.create({
-          data: {
-            title: taskData.title,
-            description: taskData.description,
-            dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
-            status: getTaskStatus(taskData.status.trim().toLowerCase()),
-            // Remove or modify this line if you want to handle assignee scope differently
-            assigneeScope: getAssigneeScopeValue(
-              taskData.assigneeScope.trim().toLowerCase(),
-            ),
-            assignorId: Number(taskData.assignorId),
-            isCheckCf: taskData.isCheckCf || false,
-          },
-        });
+      const newTask = await prisma.task.create({
+        data: {
+          title: taskData.title,
+          description: taskData.description,
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
+          status: getTaskStatus(taskData.status.trim().toLowerCase()),
+          // Remove or modify this line if you want to handle assignee scope differently
+          assigneeScope: getAssigneeScopeValue(
+            taskData.assigneeScope.trim().toLowerCase(),
+          ),
+          assignorId: Number(taskData.assignorId),
+          isCheckCf: taskData.isCheckCf || false,
+        },
+      });
 
-        await prisma.assigneeTask.createMany({
+      await prisma.assigneeTask.createMany({
         data: assigneeIds.map((assigneeId) => ({
           taskId: newTask.id,
           assigneeId: assigneeId,
@@ -49,30 +45,21 @@ export const createTask = async (req, res) => {
         skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
       });
 
-        return task;
-      });
-
-      await Promise.all(
-        newTask.assignees.map(async (assignee) => {
-          const user = await prisma.user.findUnique({
-            where: { id: assignee.assigneeId },
-          });
-          if (user) {
-            await sendTaskAssignmentEmail(
-              user.email,
-              user.name,
-              newTask.title,
-              taskData.assignorName
-            );
-          }
-        })
-      );
-
       return prisma.task.findUnique({
         where: { id: newTask.id },
         include: taskInclude,
       });
     });
+
+    const assignees = createdTask.assignees;
+    for (const assignee of assignees) {
+      await sendTaskAssignmentEmail(
+        assignee.user.email,
+        assignee.user.fullname,
+        createdTask.title,
+        createdTask.assignedBy.fullname ?? "Ad/Mod",
+      ).catch(console.error);
+    }
 
     res.status(201).json({
       success: true,
@@ -80,6 +67,12 @@ export const createTask = async (req, res) => {
       data: createdTask,
     });
   } catch (err) {
+    if (err.message === "No valid assignees found for the specified target") {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
     console.error("Error in createTask function:", err);
     res.status(500).json({
       success: false,
@@ -157,10 +150,7 @@ export const updateTask = async (req, res) => {
       const assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
 
       if (assigneeIds.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "No valid assignees found for the specified target",
-        });
+        throw new Error("No valid assignees found for the specified target");
       }
 
       const task = await prisma.task.update({
@@ -208,6 +198,12 @@ export const updateTask = async (req, res) => {
       data: updatedTask,
     });
   } catch (err) {
+    if (err.message === "No valid assignees found for the specified target") {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
     console.error("Error in updateTask function:", err);
     res.status(500).json({
       success: false,

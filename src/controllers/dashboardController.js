@@ -4,7 +4,7 @@ import {
   ACTIVITY_STATUS,
   TASK_STATUS,
   CV_STATUS,
-} from "../utils/constant";
+} from "../utils/constant.js";
 
 export const getDashboardStats = async (req, res) => {
   // 4 aggregate queries to get the counts of total active users, upcoming events, incomplete tasks, and pending member applications

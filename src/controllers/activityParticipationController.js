@@ -9,6 +9,9 @@ export const createActivityParticipation = async (req, res) => {
 
     const activity = await prisma.activity.findUnique({
       where: { id: Number(participationData.activityId) },
+      include: {
+        activityParticipations: true,
+      },
     });
 
     if (!activity) {

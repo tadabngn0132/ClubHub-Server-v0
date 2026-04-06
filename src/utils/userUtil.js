@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { DEFAULT_PASSWORD } from "./constant";
+import { DEFAULT_PASSWORD } from "./constant.js";
 
 export const removeSensitiveUserData = (user) => {
   const {
