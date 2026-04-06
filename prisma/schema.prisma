@@ -303,6 +303,7 @@ model Notification {
   userId      Int         @map("user_id")
   message     String      @map("message")
   isRead      Boolean     @default(false) @map("is_read")
+  type        NotificationType @default(GENERAL) @map("type")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -484,4 +485,11 @@ enum AssigneeTaskStatus {
   CONFIRMED
   VERIFIED
   REJECTED
+}
+
+enum NotificationType {
+  GENERAL
+  ACTIVITY
+  TASK
+  SYSTEM
 }

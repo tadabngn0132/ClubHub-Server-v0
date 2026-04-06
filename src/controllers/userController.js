@@ -607,3 +607,52 @@ export const unlockAccount = async (req, res) => {
     });
   }
 };
+
+export const getUserDashboardStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const [
+      upcomingEvents,
+      incompleteTasks,
+    ] = await Promise.all([
+      prisma.activity.count({
+        where: {
+          isDeleted: false,
+          status: ACTIVITY_STATUS.PUBLISHED,
+          startDate: {
+            gte: new Date(),
+          },
+        },
+      }),
+      prisma.task.count({
+        where: {
+          isDeleted: false,
+          status: {
+            in: [TASK_STATUS.IN_PROGRESS, TASK_STATUS.NEW],
+          },
+        },
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        taskCount: incompleteTasks,
+        eventCount: upcomingEvents,
+      },
+    });
+}

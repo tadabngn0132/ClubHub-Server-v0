@@ -57,11 +57,30 @@ export const sendEventRegistrationConfirmationEmail = async (
   await transporter.sendMail(message);
 };
 
-export const sendTaskDeadlineReminderEmail = async (email, name, taskTitle, deadline) => {
+export const sendTaskDeadlineReminderEmail = async (
+  email,
+  name,
+  taskTitle,
+  deadline,
+) => {
   message.to = email;
   message.subject = `Reminder: Upcoming Deadline for Task "${taskTitle}"`;
   message.text = `Hello ${name},\n\nThis is a friendly reminder that the deadline for your task "${taskTitle}" is approaching on ${deadline}. Please make sure to complete it on time.`;
   message.html = `<p>Hello ${name},</p><p>This is a friendly reminder that the deadline for your task <strong>"${taskTitle}"</strong> is approaching on <strong>${deadline}</strong>. Please make sure to complete it on time.</p><br/><p>Best regards,<br/>GDC - Greenwich Dance Crew</p>`;
+
+  await transporter.sendMail(message);
+};
+
+export const sendTaskAssignmentEmail = async (
+  email,
+  name,
+  taskTitle,
+  assignedBy,
+) => {
+  message.to = email;
+  message.subject = `New Task Assigned: "${taskTitle}"`;
+  message.text = `Hello ${name},\n\nYou have been assigned a new task titled "${taskTitle}" by ${assignedBy}. Please check your task list for more details and complete it by the deadline.`;
+  message.html = `<p>Hello ${name},</p><p>You have been assigned a new task titled <strong>"${taskTitle}"</strong> by <strong>${assignedBy}</strong>. Please check your task list for more details and complete it by the deadline.</p><br/><p>Best regards,<br/>GDC - Greenwich Dance Crew</p>`;
 
   await transporter.sendMail(message);
 };
