@@ -8,6 +8,7 @@ import {
   softDeleteUser,
   hardDeleteUser,
   unlockAccount,
+  getUserDashboardStats,
 } from "../controllers/userController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import {
@@ -73,6 +74,12 @@ router.delete(
   verifyAccessToken,
   requirePermission("users", "hardDelete"),
   hardDeleteUser,
+);
+router.get(
+  "/:id/dashboard-stats",
+  verifyAccessToken,
+  requirePermission("users", "read"),
+  getUserDashboardStats,
 );
 
 export default router;

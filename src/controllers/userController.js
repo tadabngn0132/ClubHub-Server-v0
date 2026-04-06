@@ -4,6 +4,7 @@ import {
   USER_STATUS,
   AVATAR_PROVIDERS,
   DEFAULT_PASSWORD,
+  ASSIGNEE_TASK_STATUS,
 } from "../utils/constant.js";
 import {
   hashedDefaultPassword,
@@ -625,34 +626,66 @@ export const getUserDashboardStats = async (req, res) => {
       });
     }
 
-    const [
-      upcomingEvents,
-      incompleteTasks,
-    ] = await Promise.all([
-      prisma.activity.count({
-        where: {
-          isDeleted: false,
-          status: ACTIVITY_STATUS.PUBLISHED,
-          startDate: {
-            gte: new Date(),
+    const incompleteTasks = await prisma.assigneeTask.count({
+      where: {
+        assigneeId: Number(id),
+        status: {
+          in: [ASSIGNEE_TASK_STATUS.PENDING, ASSIGNEE_TASK_STATUS.REJECTED],
+        },
+      },
+    });
+
+    const upcomingEvents = await prisma.activity.findMany({
+      where: {
+        activityParticipations: {
+          some: {
+            userId: Number(id),
           },
         },
-      }),
-      prisma.task.count({
-        where: {
-          isDeleted: false,
-          status: {
-            in: [TASK_STATUS.IN_PROGRESS, TASK_STATUS.NEW],
+        startDate: {
+          gte: new Date(),
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+      },
+    });
+
+    const recentActivities = await prisma.activity.findMany({
+      where: {
+        activityParticipations: {
+          some: {
+            userId: Number(id),
           },
         },
-      }),
-    ]);
+        endDate: {
+          gte: new Date(new Date().setDate(new Date().getDate() - 30)), // Activities that ended in the last 30 days
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+      },
+    });
 
     res.status(200).json({
       success: true,
       data: {
         taskCount: incompleteTasks,
-        eventCount: upcomingEvents,
+        upcomingEvents: upcomingEvents,
+        recentActivities: recentActivities,
       },
     });
-}
+  } catch (err) {
+    console.error("Error in getUserDashboardStats function:", err);
+    res.status(500).json({
+      success: false,
+      message: `Internal server error / Get user dashboard stats error: ${err.message}`,
+    });
+  }
+};
