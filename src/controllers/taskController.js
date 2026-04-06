@@ -42,7 +42,9 @@ export const createTask = async (req, res) => {
           assigneeId: assigneeId,
           evidenceUrl: taskData.evidenceUrl || "",
           additionalComments: taskData.additionalComments || "",
+          status: ASSIGNEE_TASK_STATUS.PENDING,
         })),
+        skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
       });
 
       return prisma.task.findUnique({
@@ -67,7 +69,11 @@ export const createTask = async (req, res) => {
 
 export const getTasks = async (req, res) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
     const tasks = await prisma.task.findMany({
+      skip: offset,
+      take: Number(limit),
       include: taskInclude,
     });
 

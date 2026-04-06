@@ -6,6 +6,47 @@ import { PARTICIPATION_STATUS } from "../utils/constant.js";
 export const createActivityParticipation = async (req, res) => {
   try {
     const participationData = req.body;
+
+    const activity = await prisma.activity.findUnique({
+      where: { id: Number(participationData.activityId) },
+    });
+
+    if (!activity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
+    if (activity.maxParticipants && activity.activityParticipations.length >= activity.maxParticipants) {
+      return res.status(400).json({
+        success: false,
+        message: "Activity has reached maximum participant limit",
+      });
+    }
+
+    if (activity.registrationDeadline && new Date() > activity.registrationDeadline) {
+      return res.status(400).json({
+        success: false,
+        message: "Registration deadline has passed",
+      });
+    }
+
+    const existingParticipation = await prisma.activityParticipation.findFirst({
+      where: {
+        userId: Number(participationData.userId),
+        activityId: Number(participationData.activityId),
+      },
+    });
+
+    if (existingParticipation) {
+      return res.status(400).json({
+        success: false,
+        message: "User is already registered for this activity",
+        data: existingParticipation,
+      });
+    }
+
     const participation = await prisma.activityParticipation.create({
       data: {
         userId: Number(participationData.userId),
@@ -14,10 +55,6 @@ export const createActivityParticipation = async (req, res) => {
           participationData.status.trim().toLowerCase(),
         ),
       },
-    });
-
-    const activity = await prisma.activity.findUnique({
-      where: { id: Number(participationData.activityId) },
     });
 
     const user = await prisma.user.findUnique({

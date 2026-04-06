@@ -1,5 +1,4 @@
 import { prisma } from "../libs/prisma.js";
-import { userIncludeOptions } from "../utils/userUtil.js";
 import {
   USER_STATUS,
   ACTIVITY_STATUS,
@@ -21,9 +20,8 @@ export const getDashboardStats = async (req, res) => {
           isDeleted: false,
           status: USER_STATUS.ACTIVE,
         },
-        include: userIncludeOptions,
       }),
-      prisma.event.count({
+      prisma.activity.count({
         where: {
           isDeleted: false,
           status: ACTIVITY_STATUS.PUBLISHED,

@@ -5,6 +5,6 @@ import { requirePermission } from "../middlewares/permissionMiddleware.js";
 
 const router = express.Router();
 
-router.get("/stats", verifyAccessToken, requirePermission, getDashboardStats);
+router.get("/stats", verifyAccessToken, requirePermission("dashboard", "read"), getDashboardStats);
 
 export default router;
