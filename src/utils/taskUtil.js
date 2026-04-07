@@ -21,8 +21,6 @@ export const taskInclude = {
   assignees: {
     select: {
       status: true,
-    },
-    include: {
       user: {
         select: {
           id: true,

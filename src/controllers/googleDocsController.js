@@ -2,7 +2,6 @@ import {
   createGoogleDocFromTemplate,
   createGoogleDocTemplate,
   getEmbeddableLinkForGoogleDoc,
-  listGoogleDocsTemplates,
 } from "../services/googleDocsService.js";
 
 export const createGoogleDocFromExistingTemplate = async (req, res) => {
