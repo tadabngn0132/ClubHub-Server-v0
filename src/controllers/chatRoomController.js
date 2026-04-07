@@ -1,4 +1,3 @@
-import { chat } from "googleapis/build/src/apis/chat/index.js";
 import { prisma } from "../libs/prisma.js";
 
 export const createChatRoom = async (req, res) => {

@@ -5,7 +5,6 @@ import {
   getAllMessagesByRoomId,
   softDeleteMessage,
   hardDeleteMessage,
-  getAllRoomsForUser,
 } from "../controllers/messageController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -17,12 +16,6 @@ router.post(
   verifyAccessToken,
   requirePermission("messages", "create"),
   createNewMessage,
-);
-router.get(
-  "/rooms",
-  verifyAccessToken,
-  requirePermission("messages", "read"),
-  getAllRoomsForUser,
 );
 router.get(
   "/rooms/:roomId",
