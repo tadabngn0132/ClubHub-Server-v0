@@ -1,6 +1,4 @@
 import { prisma } from "../libs/prisma.js";
-import { SOCKET_EVENTS } from "../utils/constant.js";
-import { emitToRoom, emitToUser } from "../socket/socketGateway.js";
 
 const DOMAIN_ERRORS = new Set([
   "Message not found",
@@ -31,14 +29,6 @@ export const createNewMessageService = async (
       },
     });
 
-    emitToUser(receiverId, SOCKET_EVENTS.MESSAGE_RECEIVE, newMessage);
-    emitToRoom(roomId, SOCKET_EVENTS.MESSAGE_RECEIVE, newMessage);
-    emitToUser(senderId, SOCKET_EVENTS.MESSAGE_SENT, {
-      success: true,
-      messageId: newMessage.id,
-      createdAt: newMessage.createdAt,
-    });
-
     return newMessage;
   } catch (error) {
     console.error("Error creating message:", error);
@@ -64,19 +54,6 @@ export const updateMessageService = async (messageId, content, userId) => {
       where: { id: Number(messageId) },
       data: { content },
     });
-
-    emitToRoom(
-      updatedMessage.roomId,
-      SOCKET_EVENTS.MESSAGE_RECEIVE,
-      updatedMessage,
-    );
-    if (updatedMessage.receiverId) {
-      emitToUser(
-        updatedMessage.receiverId,
-        SOCKET_EVENTS.MESSAGE_RECEIVE,
-        updatedMessage,
-      );
-    }
 
     return updatedMessage;
   } catch (error) {
@@ -121,17 +98,6 @@ export const softDeleteMessageService = async (messageId, userId) => {
       data: { isDeleted: true },
     });
 
-    emitToRoom(deletedMessage.roomId, SOCKET_EVENTS.MESSAGE_DELETED, {
-      messageId: deletedMessage.id,
-      roomId: deletedMessage.roomId,
-    });
-    if (deletedMessage.receiverId) {
-      emitToUser(deletedMessage.receiverId, SOCKET_EVENTS.MESSAGE_DELETED, {
-        messageId: deletedMessage.id,
-        roomId: deletedMessage.roomId,
-      });
-    }
-
     return deletedMessage;
   } catch (error) {
     console.error("Error soft deleting message:", error);
@@ -156,17 +122,6 @@ export const hardDeleteMessageService = async (messageId, userId) => {
     await prisma.message.delete({
       where: { id: Number(messageId) },
     });
-
-    emitToRoom(message.roomId, SOCKET_EVENTS.MESSAGE_DELETED, {
-      messageId: Number(messageId),
-      roomId: message.roomId,
-    });
-    if (message.receiverId) {
-      emitToUser(message.receiverId, SOCKET_EVENTS.MESSAGE_DELETED, {
-        messageId: Number(messageId),
-        roomId: message.roomId,
-      });
-    }
 
     return { success: true, message: "Message deleted successfully" };
   } catch (error) {
