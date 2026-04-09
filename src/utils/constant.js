@@ -471,3 +471,14 @@ export const ASSIGNEE_TASK_STATUS = {
 };
 
 export const DEFAULT_PASSWORD = "WelcometoGDC22%^&";
+
+export const SOCKET_EVENTS = {
+  NOTIFICATION_SEND: "notification:send",
+  NOTIFICATION_READ: "notification:read",
+  NOTIFICATION_SOFT_DELETE: "notification:softDelete",
+  NOTIFICATION_HARD_DELETE: "notification:hardDelete",
+  CHAT_MESSAGE_SEND: "chatMessage:send",
+  CHAT_MESSAGE_UPDATE: "chatMessage:update",
+  CHAT_MESSAGE_SOFT_DELETE: "chatMessage:softDelete",
+  CHAT_MESSAGE_HARD_DELETE: "chatMessage:hardDelete",
+}
