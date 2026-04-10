@@ -44,9 +44,6 @@ export const createMessageService = async (messageData) => {
         include: messageInclude
     });
 
-    // Emit the new message to all members of the chat room
-    emitToChatRoom(chatRoomId, SOCKET_EVENTS.CHAT_MESSAGE_RECEIVE, newMessage);
-
     return newMessage;
 }
 

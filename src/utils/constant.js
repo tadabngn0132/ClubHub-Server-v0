@@ -474,6 +474,7 @@ export const DEFAULT_PASSWORD = "WelcometoGDC22%^&";
 
 export const SOCKET_EVENTS = {
   NOTIFICATION_SEND: "notification:send",
+  NOTIFICATION_RECEIVE: "notification:receive",
   NOTIFICATION_READ: "notification:read",
   NOTIFICATION_SOFT_DELETE: "notification:softDelete",
   NOTIFICATION_HARD_DELETE: "notification:hardDelete",
