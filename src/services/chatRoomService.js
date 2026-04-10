@@ -1,43 +1,287 @@
-export const createChatRoomService = (chatRoomData) => {
-    // Logic to create a chat room in the database
+import { prisma } from '../libs/prisma.js';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/AppError.js';
+
+const chatRoomInclude = {
+    members: {
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    fullname: true,
+                    email: true,
+                    avatarUrl: true
+                }
+            }
+        }
+    }
 }
 
-export const getChatRoomsService = () => {
-    // Logic to get all chat rooms from the database
+const chatRoomMemberInclude = {
+    user: {
+        select: {
+            id: true,
+            fullname: true,
+            email: true,
+            avatarUrl: true
+        }
+    },
+    chatRoom: {
+        select: {
+            id: true,
+            name: true,
+            isGroup: true
+        }
+    }
 }
 
-export const getChatRoomByIdService = (chatRoomId) => {
-    // Logic to get a chat room by ID from the database
+export const createChatRoomService = async (chatRoomData) => {
+    const userIds = chatRoomData.userIds || [];
+
+    if (!chatRoomData.isGroup && userIds.length === 2) {
+        const existingRoom = await prisma.chatRoom.findFirst({
+            where: {
+                isGroup: false,
+                isDeleted: false,
+                AND: userIds.map((userId) => ({
+                    members: {
+                        some: {
+                            userId: userId
+                        }
+                    }
+                })),
+            },
+        });
+        if (existingRoom) {
+            return existingRoom;
+        }
+    } else if (!chatRoomData.isGroup && userIds.length !== 2) {
+        throw new BadRequestError("Private chat rooms must have exactly 2 members");
+    } else if (chatRoomData.isGroup && userIds.length < 3) {
+        throw new BadRequestError("Group chat rooms must have at least 3 members");
+    }
+
+    const room = await prisma.$transaction(async (tx) => {
+        const newRoom = await tx.chatRoom.create({
+            data: {
+                name: chatRoomData.name,
+                isGroup: chatRoomData.isGroup,
+            }
+        });
+
+        await tx.chatRoomMember.createMany({
+            data: chatRoomData.userIds.map((userId) => ({
+                roomId: newRoom.id,
+                userId: userId
+            }))
+        });
+
+        const createdRoom = await tx.chatRoom.findUnique({
+            where: { id: newRoom.id },
+            include: chatRoomInclude
+        });
+
+        return createdRoom;
+    });
+    return room;
 }
 
-export const getChatRoomByUserIdService = (userId) => {
-    // Logic to get chat rooms by user ID from the database
+export const getChatRoomsService = async () => {
+    const chatRooms = await prisma.chatRoom.findMany({
+        where: { isDeleted: false },
+        include: chatRoomInclude
+    });
+    return chatRooms;
 }
 
-export const updateChatRoomService = (chatRoomId, chatRoomData) => {
-    // Logic to update a chat room in the database
+export const getChatRoomByIdService = async (chatRoomId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+        include: chatRoomInclude
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    return chatRoom;
 }
 
-export const softDeleteChatRoomService = (chatRoomId) => {
-    // Logic to soft delete a chat room in the database
+export const getChatRoomByUserIdService = async (userId) => {
+    const chatRooms = await prisma.chatRoom.findMany({
+        where: {
+            isDeleted: false,
+            members: {
+                some: {
+                    userId: userId
+                }
+            }
+        },
+        include: chatRoomInclude
+    });
+
+    return chatRooms;
 }
 
-export const hardDeleteChatRoomService = (chatRoomId) => {
-    // Logic to hard delete a chat room from the database
+export const updateChatRoomService = async (chatRoomId, chatRoomData) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    const updatedRoom = await prisma.chatRoom.update({
+        where: { id: chatRoomId, isDeleted: false },
+        data: {
+            name: chatRoomData.name,
+            isGroup: chatRoomData.isGroup,
+        },
+        include: chatRoomInclude
+
+    });
+
+    return updatedRoom;
 }
 
-export const getChatRoomMembersService = (chatRoomId) => {
-    // Logic to get members of a chat room from the database
+export const softDeleteChatRoomService = async (chatRoomId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+    
+    const deletedRoom = await prisma.chatRoom.update({
+        where: { id: chatRoomId, isDeleted: false },
+        data: { isDeleted: true },
+        include: chatRoomInclude
+    });
+    return deletedRoom;
 }
 
-export const addMemberToChatRoomService = (chatRoomId, userId) => {
-    // Logic to add a member to a chat room in the database
+export const hardDeleteChatRoomService = async (chatRoomId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    const deletedRoom = await prisma.chatRoom.delete({
+        where: { id: chatRoomId },
+        include: chatRoomInclude
+    });
+    return deletedRoom;
 }
 
-export const removeMemberFromChatRoomService = (chatRoomId, userId) => {
-    // Logic to remove a member from a chat room in the database
+export const getChatRoomMembersService = async (chatRoomId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    const members = await prisma.chatRoomMember.findMany({
+        where: { roomId: chatRoomId },
+        include: chatRoomMemberInclude
+    });
+    return members;
 }
 
-export const checkUserMembershipInChatRoomService = (chatRoomId, userId) => {
-    // Logic to check if a user is a member of a chat room in the database
+export const addMemberToChatRoomService = async (chatRoomId, userId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    if (!chatRoom.isGroup) {
+        throw new ForbiddenError("Cannot add members to a private chat room");
+    }
+
+    const existingMember = await prisma.chatRoomMember.findUnique({
+        where: {
+            roomId_userId: {
+                roomId: chatRoomId,
+                userId: userId
+            }
+        }
+    });
+
+    if (existingMember) {
+        throw new BadRequestError("User is already a member of this chat room");
+    }
+
+    const addedMember = await prisma.chatRoomMember.create({
+        data: {
+            roomId: chatRoomId,
+            userId: userId
+        },
+        include: chatRoomMemberInclude
+    });
+
+    return addedMember;
+}
+
+export const removeMemberFromChatRoomService = async (chatRoomId, userId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    const existingMember = await prisma.chatRoomMember.findUnique({
+        where: {
+            roomId_userId: {
+                roomId: chatRoomId,
+                userId: userId
+            }
+        }
+    });
+
+    if (!existingMember) {
+        throw new BadRequestError("User is not a member of this chat room");
+    }
+
+    const removedMember = await prisma.chatRoomMember.delete({
+        where: {
+            roomId_userId: {
+                roomId: chatRoomId,
+                userId: userId
+            }
+        },
+        include: chatRoomMemberInclude
+    });
+
+    return removedMember;
+}
+
+export const checkUserMembershipInChatRoomService = async (chatRoomId, userId) => {
+    const chatRoom = await prisma.chatRoom.findUnique({
+        where: { id: chatRoomId, isDeleted: false },
+    });
+
+    if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+    }
+
+    const isMember = await prisma.chatRoomMember.findUnique({
+        where: {
+            roomId_userId: {
+                roomId: chatRoomId,
+                userId: userId
+            }
+        }
+    });
+
+    return !!isMember;
 }

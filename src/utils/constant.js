@@ -478,6 +478,7 @@ export const SOCKET_EVENTS = {
   NOTIFICATION_SOFT_DELETE: "notification:softDelete",
   NOTIFICATION_HARD_DELETE: "notification:hardDelete",
   CHAT_MESSAGE_SEND: "chatMessage:send",
+  CHAT_MESSAGE_RECEIVE: "chatMessage:receive",
   CHAT_MESSAGE_UPDATE: "chatMessage:update",
   CHAT_MESSAGE_SOFT_DELETE: "chatMessage:softDelete",
   CHAT_MESSAGE_HARD_DELETE: "chatMessage:hardDelete",
