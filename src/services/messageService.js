@@ -1,137 +1,159 @@
-import { prisma } from '../libs/prisma.js';
-import { SOCKET_EVENTS } from '../utils/constant.js';
-import { checkUserMembershipInChatRoomService } from './chatRoomService.js';
-import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/AppError.js';
-import { emitToChatRoom } from '../socket/socketGateway.js';
+import { prisma } from "../libs/prisma.js";
+import { SOCKET_EVENTS } from "../utils/constant.js";
+import { checkUserMembershipInChatRoomService } from "./chatRoomService.js";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/AppError.js";
+import { emitToChatRoom } from "../socket/socketGateway.js";
 
 const messageInclude = {
-    sender: {
-        select: {
-            id: true,
-            fullname: true,
-            avatarUrl: true
-        }
-    }
-}
+  sender: {
+    select: {
+      id: true,
+      fullname: true,
+      avatarUrl: true,
+    },
+  },
+};
 
 export const createMessageService = async (messageData) => {
-    const { chatRoomId, senderId, content } = messageData;
-    
-    if (!content || content.trim() === "") {
-        throw new BadRequestError("Message content cannot be empty");
-    }
+  const { chatRoomId, senderId, content } = messageData;
 
-    const chatRoom = await prisma.chatRoom.findUnique({
-        where: { id: chatRoomId, isDeleted: false },
-    });
-    
-    if (!chatRoom) {
-        throw new NotFoundError("Chat room not found");
-    }
+  if (!content || content.trim() === "") {
+    throw new BadRequestError("Message content cannot be empty");
+  }
 
-    // Check if the user is a member of the chat room
-    const isMember = await checkUserMembershipInChatRoomService(chatRoomId, senderId);
-    if (!isMember) {
-        throw new ForbiddenError("User is not a member of the chat room");
-    }
+  const chatRoom = await prisma.chatRoom.findUnique({
+    where: { id: chatRoomId, isDeleted: false },
+  });
 
-    const newMessage = await prisma.message.create({
-        data: {
-            roomId: chatRoomId,
-            senderId,
-            content
-        },
-        include: messageInclude
-    });
+  if (!chatRoom) {
+    throw new NotFoundError("Chat room not found");
+  }
 
-    return newMessage;
-}
+  // Check if the user is a member of the chat room
+  const isMember = await checkUserMembershipInChatRoomService(
+    Number(chatRoomId),
+    senderId,
+  );
+  if (!isMember) {
+    throw new ForbiddenError("User is not a member of the chat room");
+  }
 
-export const getMessagesByChatRoomIdService = async (chatRoomId, requesterId) => {
-    const chatRoom = await prisma.chatRoom.findUnique({
-        where: { id: chatRoomId, isDeleted: false },
-    });
+  const newMessage = await prisma.message.create({
+    data: {
+      roomId: Number(chatRoomId),
+      senderId,
+      content,
+    },
+    include: messageInclude,
+  });
 
-    if (!chatRoom) {
-        throw new NotFoundError("Chat room not found");
-    }
+  // Emit the new message to all members of the chat room
+  emitToChatRoom(Number(chatRoomId), SOCKET_EVENTS.CHAT_MESSAGE_RECEIVE, {
+    message: newMessage,
+  });
 
-    const isMember = await checkUserMembershipInChatRoomService(chatRoomId, requesterId);
-    if (!isMember) {
-        throw new ForbiddenError("You are not a member of this chat room");
-    }
+  return newMessage;
+};
 
-    const messages = await prisma.message.findMany({
-        where: { roomId: chatRoomId, isDeleted: false },
-        include: messageInclude,
-        orderBy: { createdAt: 'asc' }
-    });
+export const getMessagesByChatRoomIdService = async (
+  chatRoomId,
+  requesterId,
+) => {
+  const chatRoom = await prisma.chatRoom.findUnique({
+    where: { id: chatRoomId, isDeleted: false },
+  });
 
-    return messages;
-}
+  if (!chatRoom) {
+    throw new NotFoundError("Chat room not found");
+  }
 
-export const updateMessageService = async (messageId, messageData, requesterId) => {
-    const message = await prisma.message.findUnique({
-        where: { id: messageId, isDeleted: false },
-    });
+  const isMember = await checkUserMembershipInChatRoomService(
+    chatRoomId,
+    requesterId,
+  );
+  if (!isMember) {
+    throw new ForbiddenError("You are not a member of this chat room");
+  }
 
-    if (!message) {
-        throw new NotFoundError("Message not found");
-    }
+  const messages = await prisma.message.findMany({
+    where: { roomId: Number(chatRoomId), isDeleted: false },
+    include: messageInclude,
+    orderBy: { createdAt: "asc" },
+  });
 
-    // Check if the requester is the sender of the message
-    if (message.senderId !== requesterId) {
-        throw new ForbiddenError("You are not the owner of this message");
-    }
+  return messages;
+};
 
-    const updatedMessage = await prisma.message.update({
-        where: { id: messageId },
-        data: { content: messageData.content },
-        include: messageInclude
-    });
+export const updateMessageService = async (
+  messageId,
+  messageData,
+  requesterId,
+) => {
+  const message = await prisma.message.findUnique({
+    where: { id: Number(messageId), isDeleted: false },
+  });
 
-    return updatedMessage;
-}
+  if (!message) {
+    throw new NotFoundError("Message not found");
+  }
+
+  // Check if the requester is the sender of the message
+  if (message.senderId !== requesterId) {
+    throw new ForbiddenError("You are not the owner of this message");
+  }
+
+  const updatedMessage = await prisma.message.update({
+    where: { id: Number(messageId) },
+    data: { content: messageData.content },
+    include: messageInclude,
+  });
+
+  return updatedMessage;
+};
 
 export const softDeleteMessageService = async (messageId, requesterId) => {
-    const message = await prisma.message.findUnique({
-        where: { id: messageId, isDeleted: false },
-    });
+  const message = await prisma.message.findUnique({
+    where: { id: Number(messageId), isDeleted: false },
+  });
 
-    if (!message) {
-        throw new NotFoundError("Message not found");
-    }
+  if (!message) {
+    throw new NotFoundError("Message not found");
+  }
 
-    // Check if the requester is the sender of the message
-    if (message.senderId !== requesterId) {
-        throw new ForbiddenError("You are not the owner of this message");
-    }
+  // Check if the requester is the sender of the message
+  if (message.senderId !== requesterId) {
+    throw new ForbiddenError("You are not the owner of this message");
+  }
 
-    const deletedMessage = await prisma.message.update({
-        where: { id: messageId },
-        data: { isDeleted: true }
-    });
+  const deletedMessage = await prisma.message.update({
+    where: { id: Number(messageId) },
+    data: { isDeleted: true },
+  });
 
-    return deletedMessage;
-}
+  return deletedMessage;
+};
 
 export const hardDeleteMessageService = async (messageId, requesterId) => {
-    const message = await prisma.message.findUnique({
-        where: { id: messageId, isDeleted: false },
-    });
+  const message = await prisma.message.findUnique({
+    where: { id: Number(messageId), isDeleted: false },
+  });
 
-    if (!message) {
-        throw new NotFoundError("Message not found");
-    }
+  if (!message) {
+    throw new NotFoundError("Message not found");
+  }
 
-    // Check if the requester is the sender of the message
-    if (message.senderId !== requesterId) {
-        throw new ForbiddenError("You are not the owner of this message");
-    }
+  // Check if the requester is the sender of the message
+  if (message.senderId !== requesterId) {
+    throw new ForbiddenError("You are not the owner of this message");
+  }
 
-    const hardDeletedMessage = await prisma.message.delete({
-        where: { id: messageId }
-    });
+  const hardDeletedMessage = await prisma.message.delete({
+    where: { id: Number(messageId) },
+  });
 
-    return hardDeletedMessage;
-}
+  return hardDeletedMessage;
+};

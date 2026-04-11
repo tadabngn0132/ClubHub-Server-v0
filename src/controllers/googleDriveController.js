@@ -10,7 +10,7 @@ import {
 
 export const createGoogleDriveFolder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { folderName } = req.body;
     const folder = await createFolder(userId, folderName);
     res.status(201).json({
@@ -29,7 +29,7 @@ export const createGoogleDriveFolder = async (req, res) => {
 
 export const listGoogleDriveFolders = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const folders = await listFolders(userId);
     res.json({
       success: true,
@@ -47,7 +47,7 @@ export const listGoogleDriveFolders = async (req, res) => {
 
 export const listGoogleDriveFilesInFolder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { folderId } = req.params;
     const files = await listFilesInFolder(userId, folderId);
     res.json({
@@ -66,7 +66,7 @@ export const listGoogleDriveFilesInFolder = async (req, res) => {
 
 export const getGoogleDriveFileMetadata = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { fileId } = req.params;
     const metadata = await getFileMetadata(userId, fileId);
     res.json({
@@ -85,7 +85,7 @@ export const getGoogleDriveFileMetadata = async (req, res) => {
 
 export const uploadFileToGoogleDriveFolder = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { folderId } = req.params;
     const fileName = req.file.originalname;
     const fileContent = req.file.buffer;
@@ -111,7 +111,7 @@ export const uploadFileToGoogleDriveFolder = async (req, res) => {
 
 export const listGoogleDocsTemplatesInDrive = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const templates = await listGoogleDocsTemplates(userId);
     res.status(200).json({
       success: true,
@@ -129,7 +129,7 @@ export const listGoogleDocsTemplatesInDrive = async (req, res) => {
 
 export const listGoogleSheetsTemplatesInDrive = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const templates = await listGoogleSheetsTemplates(userId);
     res.status(200).json({
       success: true,

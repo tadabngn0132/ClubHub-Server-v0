@@ -50,7 +50,7 @@ export const createNewGoogleDocTemplate = async (req, res) => {
 
 export const getGoogleDocEmbedLink = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { documentId } = req.params;
     const embedLink = await getEmbeddableLinkForGoogleDoc(userId, documentId);
 

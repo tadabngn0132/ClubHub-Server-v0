@@ -120,7 +120,7 @@ export const createActivity = async (req, res) => {
 
 export const getActivities = async (req, res) => {
   try {
-    const {page = 1, limit = 10} = req.query;
+    const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
     const activities = await prisma.activity.findMany({
       skip: offset,
@@ -585,7 +585,7 @@ export const deleteActivityVideo = async (req, res) => {
 
 export const getICSFile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
     const { activityId } = req.params;
 
     const storedActivity = await prisma.activity.findUnique({
@@ -599,7 +599,11 @@ export const getICSFile = async (req, res) => {
       });
     }
 
-    const icsFileData = await exportICSFile(userId, storedActivity.id, storedActivity.googleCalendarEventId);
+    const icsFileData = await exportICSFile(
+      userId,
+      storedActivity.id,
+      storedActivity.googleCalendarEventId,
+    );
 
     res.setHeader("Content-Type", "text/calendar");
     res.setHeader(

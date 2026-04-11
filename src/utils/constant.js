@@ -1,3 +1,5 @@
+import { chat } from "googleapis/build/src/apis/chat";
+
 export const USER_STATUS = {
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
@@ -162,6 +164,13 @@ export const ROLE_PERMISSIONS = {
     dashboard: {
       read: true,
     },
+    chatRooms: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: true,
+    },
   },
   MODERATOR: {
     users: {
@@ -247,6 +256,13 @@ export const ROLE_PERMISSIONS = {
     },
     dashboard: {
       read: true,
+    },
+    chatRooms: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: false,
     },
   },
   MEMBER: {
@@ -334,6 +350,13 @@ export const ROLE_PERMISSIONS = {
     dashboard: {
       read: false,
     },
+    chatRooms: {
+      create: true,
+      read: true,
+      update: true,
+      softDelete: true,
+      hardDelete: false,
+    },
   },
   GUEST: {
     users: {
@@ -420,6 +443,13 @@ export const ROLE_PERMISSIONS = {
     dashboard: {
       read: false,
     },
+    chatRooms: {
+      create: false,
+      read: true,
+      update: false,
+      softDelete: false,
+      hardDelete: false,
+    },
   },
 };
 
@@ -483,4 +513,5 @@ export const SOCKET_EVENTS = {
   CHAT_MESSAGE_UPDATE: "chatMessage:update",
   CHAT_MESSAGE_SOFT_DELETE: "chatMessage:softDelete",
   CHAT_MESSAGE_HARD_DELETE: "chatMessage:hardDelete",
-}
+  USERS_ONLINE_STATUS_UPDATE: "usersOnlineStatus:update",
+};

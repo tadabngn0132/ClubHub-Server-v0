@@ -797,3 +797,37 @@ export const validateNotificationUpdate = (req, res, next) => {
 
   next();
 };
+
+export const validateChatRoomCreation = (req, res, next) => {
+  const payload = req.body;
+
+  if (isEmpty(payload.name) || String(payload.name).trim().length < 3) {
+    return failValidation(
+      res,
+      "Chat room name must contain at least 3 characters",
+    );
+  }
+
+  next();
+};
+
+export const validateChatRoomUpdate = (req, res, next) => {
+  const { id } = req.params;
+  const payload = req.body;
+
+  if (isEmpty(payload.name) || String(payload.name).trim().length < 3) {
+    return failValidation(
+      res,
+      "Chat room name must contain at least 3 characters",
+    );
+  }
+
+  if (!id) {
+    return res.status(400).json({
+      success: false,
+      message: "Chat room ID is required",
+    });
+  }
+
+  next();
+};
