@@ -27,12 +27,6 @@ router.get(
   requirePermission("notifications", "read"),
   getNotifications,
 );
-router.delete(
-  "/:id/hard",
-  verifyAccessToken,
-  requirePermission("notifications", "hardDelete"),
-  hardDeleteNotification,
-);
 router.get(
   "/user/:userId",
   verifyAccessToken,
@@ -68,6 +62,12 @@ router.put(
   verifyAccessToken,
   requirePermission("notifications", "softDelete"),
   softDeleteNotification,
+);
+router.delete(
+  "/:id/hard",
+  verifyAccessToken,
+  requirePermission("notifications", "hardDelete"),
+  hardDeleteNotification,
 );
 
 export default router;

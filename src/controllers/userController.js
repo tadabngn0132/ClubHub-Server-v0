@@ -402,7 +402,7 @@ export const updateUserProfile = async (req, res) => {
     if (!storedUser) {
       return res.status(404).json({
         success: false,
-        message: "Not found user to update",
+        message: "User not found",
       });
     }
 
@@ -487,7 +487,7 @@ export const softDeleteUser = async (req, res) => {
     if (!storedUser) {
       return res.status(404).json({
         success: false,
-        message: "Not found user to delete",
+        message: "User not found",
       });
     }
 
@@ -530,7 +530,7 @@ export const hardDeleteUser = async (req, res) => {
     if (!storedUser) {
       return res.status(404).json({
         success: false,
-        message: "Not found user to delete",
+        message: "User not found",
       });
     }
 
@@ -571,18 +571,18 @@ export const hardDeleteUser = async (req, res) => {
 
 export const unlockAccount = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { id } = req.params;
 
     const storedUser = await prisma.user.findUnique({
       where: {
-        email: email,
+        id: Number(id),
       },
     });
 
     if (!storedUser) {
       return res.status(404).json({
         success: false,
-        message: "User with this email does not exist",
+        message: "User not found",
       });
     }
 
