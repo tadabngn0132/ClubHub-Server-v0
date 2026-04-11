@@ -1,8 +1,8 @@
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 const getKey = (req) => {
   const email = req.body.email || "anonymous";
-  return req.ip + "_" + email;
+  return `${ipKeyGenerator(req)}_${email}`;
 };
 
 export const limiter = rateLimit({
