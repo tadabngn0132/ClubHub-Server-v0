@@ -35,7 +35,7 @@ export const createMessageService = async (messageData) => {
 
   // Check if the user is a member of the chat room
   const isMember = await checkUserMembershipInChatRoomService(
-    Number(chatRoomId),
+    chatRoomId,
     senderId,
   );
   if (!isMember) {
@@ -44,7 +44,7 @@ export const createMessageService = async (messageData) => {
 
   const newMessage = await prisma.message.create({
     data: {
-      roomId: Number(chatRoomId),
+      roomId: chatRoomId,
       senderId,
       content,
     },
@@ -52,7 +52,7 @@ export const createMessageService = async (messageData) => {
   });
 
   // Emit the new message to all members of the chat room
-  emitToChatRoom(Number(chatRoomId), SOCKET_EVENTS.CHAT_MESSAGE_RECEIVE, {
+  emitToChatRoom(chatRoomId, SOCKET_EVENTS.CHAT_MESSAGE_RECEIVE, {
     message: newMessage,
   });
 
@@ -80,7 +80,7 @@ export const getMessagesByChatRoomIdService = async (
   }
 
   const messages = await prisma.message.findMany({
-    where: { roomId: Number(chatRoomId), isDeleted: false },
+    where: { roomId: chatRoomId, isDeleted: false },
     include: messageInclude,
     orderBy: { createdAt: "asc" },
   });

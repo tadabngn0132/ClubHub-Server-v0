@@ -1,5 +1,3 @@
-import { chat } from "googleapis/build/src/apis/chat";
-
 export const USER_STATUS = {
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
@@ -514,4 +512,8 @@ export const SOCKET_EVENTS = {
   CHAT_MESSAGE_SOFT_DELETE: "chatMessage:softDelete",
   CHAT_MESSAGE_HARD_DELETE: "chatMessage:hardDelete",
   USERS_ONLINE_STATUS_UPDATE: "usersOnlineStatus:update",
+  CHAT_ROOM_JOIN: "chatRoom:join",
+  USER_TYPING: "user:typing",
+  USER_STOP_TYPING: "user:stopTyping",
+  USER_ONLINE: "user:online",
 };

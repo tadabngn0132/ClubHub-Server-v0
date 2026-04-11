@@ -1,4 +1,4 @@
-let ioInstance = io;
+let ioInstance = null;
 
 export const setSocketIO = (io) => {
   // Logic to set the Socket.IO instance for use in other parts of the application
@@ -21,7 +21,7 @@ export const emitToChatRoom = (chatRoomId, event, data) => {
   // Logic to emit an event to all members of a specific chat room using the chatRoomId
   const io = getSocketIO();
   if (!io || !chatRoomId) return false; // Ensure io and chatRoomId are defined
-  io.to(`room:${chatRoomId}`).emit(event, data); // Emit the event to the specific chat room
+  io.to(`room_${chatRoomId}`).emit(event, data); // Emit the event to the specific chat room
   return true; // Indicate that the event was emitted successfully
 };
 

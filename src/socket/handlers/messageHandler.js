@@ -30,6 +30,31 @@ export const setupMessageHandler = (io, socket) => {
    * -> Emit to room
    */
 
+  socket.on(SOCKET_EVENTS.CHAT_ROOM_JOIN, async (data = {}, ack) => {
+    const userId = Number(socket.data.userId);
+    const { chatRoomId } = data;
+
+    if (!chatRoomId)
+      return safeAck(ack, {
+        success: false,
+        message: "Chat room ID is required",
+      });
+
+    try {
+      const isMember = await checkUserMembershipInChatRoomService(
+        chatRoomId,
+        userId,
+      );
+      if (!isMember)
+        return safeAck(ack, { success: false, message: "Not a member" });
+
+      socket.join(`room_${chatRoomId}`);
+      safeAck(ack, { success: true });
+    } catch (error) {
+      safeAck(ack, { success: false, message: error.message });
+    }
+  });
+
   socket.on(SOCKET_EVENTS.CHAT_MESSAGE_SEND, async (data = {}, ack) => {
     const senderId = Number(socket.data.userId);
     const { chatRoomId, content } = data;

@@ -80,6 +80,13 @@ export const setupNotificationHandler = (io, socket) => {
     const userId = Number(socket.data.userId);
     const { notificationId } = data;
 
+    if (!notificationId) {
+      return safeAck(ack, {
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
+
     try {
       const notification = await getNotificationByIdService(notificationId);
       if (notification.userId !== userId) {
