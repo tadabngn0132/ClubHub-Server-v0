@@ -33,6 +33,13 @@ export const setupNotificationHandler = (io, socket) => {
   socket.on(SOCKET_EVENTS.NOTIFICATION_SEND, async (data = {}, ack) => {
     const { userId, type, message } = data;
 
+    if (!userId || !type || !message) {
+      return safeAck(ack, {
+        success: false,
+        message: "User ID, type, and message are required",
+      });
+    }
+
     try {
       const notification = await createNotificationService({
         userId,
@@ -66,10 +73,6 @@ export const setupNotificationHandler = (io, socket) => {
         notificationId,
         { isRead: true },
       );
-      io.to(`user:${userId}`).emit(
-        SOCKET_EVENTS.NOTIFICATION_READ,
-        updatedNotification,
-      );
       safeAck(ack, { success: true, data: updatedNotification });
     } catch (error) {
       safeAck(ack, { success: false, message: error.message });
@@ -94,10 +97,6 @@ export const setupNotificationHandler = (io, socket) => {
       }
       const deletedNotification =
         await softDeleteNotificationService(notificationId);
-      io.to(`user:${userId}`).emit(
-        SOCKET_EVENTS.NOTIFICATION_SOFT_DELETE,
-        deletedNotification,
-      );
       safeAck(ack, { success: true, data: deletedNotification });
     } catch (error) {
       safeAck(ack, { success: false, message: error.message });

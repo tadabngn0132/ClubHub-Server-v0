@@ -168,6 +168,7 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: true,
+      manageMembers: true,
     },
   },
   MODERATOR: {
@@ -261,6 +262,7 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: false,
+      manageMembers: true,
     },
   },
   MEMBER: {
@@ -354,6 +356,7 @@ export const ROLE_PERMISSIONS = {
       update: true,
       softDelete: true,
       hardDelete: false,
+      manageMembers: false,
     },
   },
   GUEST: {
@@ -447,6 +450,7 @@ export const ROLE_PERMISSIONS = {
       update: false,
       softDelete: false,
       hardDelete: false,
+      manageMembers: false,
     },
   },
 };
@@ -513,6 +517,7 @@ export const SOCKET_EVENTS = {
   CHAT_MESSAGE_HARD_DELETE: "chatMessage:hardDelete",
   USERS_ONLINE_STATUS_UPDATE: "usersOnlineStatus:update",
   CHAT_ROOM_JOIN: "chatRoom:join",
+  CHAT_ROOM_LEAVE: "chatRoom:leave",
   USER_TYPING: "user:typing",
   USER_STOP_TYPING: "user:stopTyping",
   USER_ONLINE: "user:online",

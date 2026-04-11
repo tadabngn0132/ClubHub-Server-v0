@@ -4,6 +4,7 @@ import {
   updateMessageService,
   softDeleteMessageService,
 } from "../../services/messageService.js";
+import { checkUserMembershipInChatRoomService } from "../../services/chatRoomService.js";
 
 const safeAck = (ack, response) => {
   if (typeof ack === "function") {
@@ -49,6 +50,30 @@ export const setupMessageHandler = (io, socket) => {
         return safeAck(ack, { success: false, message: "Not a member" });
 
       socket.join(`room_${chatRoomId}`);
+      safeAck(ack, { success: true });
+    } catch (error) {
+      safeAck(ack, { success: false, message: error.message });
+    }
+  });
+
+  socket.on(SOCKET_EVENTS.CHAT_ROOM_LEAVE, async (data = {}, ack) => {
+    const userId = Number(socket.data.userId);
+    const { chatRoomId } = data;
+    if (!chatRoomId)
+      return safeAck(ack, {
+        success: false,
+        message: "Chat room ID is required",
+      });
+
+    try {
+      const isMember = await checkUserMembershipInChatRoomService(
+        chatRoomId,
+        userId,
+      );
+      if (!isMember)
+        return safeAck(ack, { success: false, message: "Not a member" });
+
+      socket.leave(`room_${chatRoomId}`);
       safeAck(ack, { success: true });
     } catch (error) {
       safeAck(ack, { success: false, message: error.message });
@@ -107,10 +132,6 @@ export const setupMessageHandler = (io, socket) => {
         { content },
         requesterId,
       );
-      io.to(`room_${updatedMessage.roomId}`).emit(
-        SOCKET_EVENTS.CHAT_MESSAGE_UPDATE,
-        updatedMessage,
-      );
       safeAck(ack, {
         success: true,
         message: "Message updated successfully",
@@ -145,10 +166,6 @@ export const setupMessageHandler = (io, socket) => {
         message: "Message deleted successfully",
         data: deletedMessage,
       });
-      io.to(`room_${deletedMessage.roomId}`).emit(
-        SOCKET_EVENTS.CHAT_MESSAGE_SOFT_DELETE,
-        deletedMessage,
-      );
     } catch (error) {
       console.error("Error deleting message:", error);
       safeAck(ack, {

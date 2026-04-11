@@ -25,14 +25,6 @@ export const createMessageService = async (messageData) => {
     throw new BadRequestError("Message content cannot be empty");
   }
 
-  const chatRoom = await prisma.chatRoom.findUnique({
-    where: { id: chatRoomId, isDeleted: false },
-  });
-
-  if (!chatRoom) {
-    throw new NotFoundError("Chat room not found");
-  }
-
   // Check if the user is a member of the chat room
   const isMember = await checkUserMembershipInChatRoomService(
     chatRoomId,
@@ -63,14 +55,6 @@ export const getMessagesByChatRoomIdService = async (
   chatRoomId,
   requesterId,
 ) => {
-  const chatRoom = await prisma.chatRoom.findUnique({
-    where: { id: chatRoomId, isDeleted: false },
-  });
-
-  if (!chatRoom) {
-    throw new NotFoundError("Chat room not found");
-  }
-
   const isMember = await checkUserMembershipInChatRoomService(
     chatRoomId,
     requesterId,
@@ -112,6 +96,11 @@ export const updateMessageService = async (
     include: messageInclude,
   });
 
+  // Emit the updated message to all members of the chat room
+  emitToChatRoom(updatedMessage.roomId, SOCKET_EVENTS.CHAT_MESSAGE_UPDATE, {
+    message: updatedMessage,
+  });
+
   return updatedMessage;
 };
 
@@ -133,6 +122,15 @@ export const softDeleteMessageService = async (messageId, requesterId) => {
     where: { id: Number(messageId) },
     data: { isDeleted: true },
   });
+
+  // Emit the soft-deleted message to all members of the chat room
+  emitToChatRoom(
+    deletedMessage.roomId,
+    SOCKET_EVENTS.CHAT_MESSAGE_SOFT_DELETE,
+    {
+      message: deletedMessage,
+    },
+  );
 
   return deletedMessage;
 };
