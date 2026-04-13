@@ -21,14 +21,20 @@ export const createActivityParticipation = async (req, res) => {
       });
     }
 
-    if (activity.maxParticipants && activity.activityParticipations.length >= activity.maxParticipants) {
+    if (
+      activity.maxParticipants &&
+      activity.activityParticipations.length >= activity.maxParticipants
+    ) {
       return res.status(400).json({
         success: false,
         message: "Activity has reached maximum participant limit",
       });
     }
 
-    if (activity.registrationDeadline && new Date() > activity.registrationDeadline) {
+    if (
+      activity.registrationDeadline &&
+      new Date() > activity.registrationDeadline
+    ) {
       return res.status(400).json({
         success: false,
         message: "Registration deadline has passed",
@@ -52,11 +58,16 @@ export const createActivityParticipation = async (req, res) => {
 
     const participation = await prisma.activityParticipation.create({
       data: {
-        userId: Number(participationData.userId),
+        userId: participationData.userId
+          ? Number(participationData.userId)
+          : null,
         activityId: Number(participationData.activityId),
         status: getParticipationStatus(
           participationData.status.trim().toLowerCase(),
         ),
+        guestName: participationData.guestName || null,
+        guestEmail: participationData.guestEmail || null,
+        guestPhoneNumber: participationData.guestPhoneNumber || null,
       },
     });
 
