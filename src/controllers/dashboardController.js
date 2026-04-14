@@ -49,31 +49,9 @@ export const getDashboardStats = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        totalUsers: totalUsers,
-        activeUsers: totalActiveUsers,
-        memberGrowth: memberGrowth,
-        activitiesThisMonth: activitiesThisMonth,
+        userCount: totalUsers,
         upcomingEvents: upcomingEvents,
-        activityGrowth: activityGrowth,
         pendingTasks: pendingTasks,
-        overdueTasks: overdueTasks,
-        cfCompletionRate: {
-          completed: completedCFs, // percentage of CFs (e.g. 75)
-          pending: pendingCFs, // percentage of CFs (e.g. 20)
-          rejected: rejectedCFs, // percentage of CFs (e.g. 5)
-        },
-        /**
-         * monthlyAttendance: [
-         *  { month: "Jan", registered: 20, checkedIn: 15 }, ...
-         * ]
-         */
-        monthlyAttendance: monthlyAttendance,
-        /**
-         * membersByMonth: [
-         *  { month: "Jan", new: 3, total: 45 }, ...
-         * ]
-         */
-        membersByMonth: membersByMonth,
         pendingMemberApplications: pendingMemberApplications,
       },
     });
