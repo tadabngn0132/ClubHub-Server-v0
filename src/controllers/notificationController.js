@@ -8,6 +8,7 @@ import {
     hardDeleteNotificationService,
     softDeleteNotificationsByUserIdService,
     hardDeleteNotificationsByUserIdService,
+    markAllNotificationsAsReadService
 } from '../services/notificationService.js';
 
 const handleError = (res, err, context) => {
@@ -86,6 +87,21 @@ export const updateNotification = async (req, res) => {
         });
     } catch (err) {
         handleError(res, err, "updateNotification");
+    }
+}
+
+export const markAllNotificationsAsRead = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const result = await markAllNotificationsAsReadService(Number(userId));
+        res.status(200).json({
+            success: true,
+            message: "All notifications marked as read successfully",
+            data: result
+        });
+    } catch (err) {
+        handleError(res, err, "markAllNotificationsAsRead");
     }
 }
 

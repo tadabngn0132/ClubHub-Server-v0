@@ -9,6 +9,7 @@ import {
   hardDeleteNotification,
   softDeleteNotificationsByUserId,
   hardDeleteNotificationsByUserId,
+  markAllNotificationsAsRead
 } from "../controllers/notificationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -45,6 +46,12 @@ router.delete(
   requirePermission("notifications", "hardDelete"),
   hardDeleteNotificationsByUserId,
 );
+router.put(
+  "/user/:userId/mark-all-read",
+  verifyAccessToken,
+  requirePermission("notifications", "update"),
+  markAllNotificationsAsRead,
+);
 router.get(
   "/:id",
   verifyAccessToken,
@@ -69,5 +76,4 @@ router.delete(
   requirePermission("notifications", "hardDelete"),
   hardDeleteNotification,
 );
-
 export default router;

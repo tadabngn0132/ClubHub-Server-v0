@@ -626,11 +626,21 @@ export const getUserDashboardStats = async (req, res) => {
       });
     }
 
-    const incompleteTasks = await prisma.assigneeTask.count({
+    const incompleteTasks = await prisma.assigneeTask.findMany({
       where: {
         assigneeId: Number(id),
         status: {
           in: [ASSIGNEE_TASK_STATUS.PENDING, ASSIGNEE_TASK_STATUS.REJECTED],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        task: {
+          select: {
+            id: true,
+            title: true,
+          },
         },
       },
     });
@@ -677,7 +687,7 @@ export const getUserDashboardStats = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        taskCount: incompleteTasks,
+        incompleteTasks: incompleteTasks,
         upcomingEvents: upcomingEvents,
         recentActivities: recentActivities,
       },

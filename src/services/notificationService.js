@@ -78,6 +78,28 @@ export const updateNotificationService = async (
   });
 };
 
+export const markAllNotificationsAsReadService = async (userId) => {
+  const result = await prisma.notification.updateMany({
+    where: { userId, isDeleted: false, isRead: false },
+    data: { isRead: true },
+  });
+
+  const updatedNotifications = await prisma.notification.findMany({
+    where: { userId, isDeleted: false },
+    orderBy: { createdAt: "desc" },
+  });
+
+  updatedNotifications.forEach((notification) => {
+    emitToUser(
+      notification.userId,
+      SOCKET_EVENTS.NOTIFICATION_READ,
+      notification,
+    );
+  });
+
+  return result;
+}
+
 export const softDeleteNotificationService = async (notificationId) => {
   const notification = await prisma.notification.findUnique({
     where: { id: notificationId, isDeleted: false },
