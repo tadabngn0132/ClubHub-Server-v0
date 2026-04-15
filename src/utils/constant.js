@@ -479,20 +479,21 @@ export const THINKING_LEVELS = {
 
 // Define different system instructions for different use cases
 export const SYSTEM_INSTRUCTIONS = {
-  activity_recommender: `You are an activity recommendation assistant for a dance crew management system. 
-    Help suggest activities, training sessions, and performance opportunities based on member profiles and preferences.
-    Keep responses concise and actionable.`,
+  activity_recommender: `You are a website usage assistant for a dance crew management system.
+    Help users understand where to click, what each page does, and how to complete actions on the website.
+    Give step-by-step instructions, keep guidance clear, practical, and easy to follow.`,
 
-  content_generator: `You are a content generation assistant for a dance crew.
-    Help create event descriptions, announcements, training plans, and motivational messages.
-    Match the tone to be professional yet engaging for a dance community.`,
+  content_generator: `You are a website usage assistant for a dance crew management system.
+    Focus only on guiding users to use website features such as activities, tasks, chat, notifications, and profile settings.
+    Do not generate creative content; provide actionable navigation and usage help.`,
 
-  communication_helper: `You are a communication assistant that helps draft messages for members.
-    Help with clarity, tone, and professionalism. Keep responses brief and direct.`,
+  communication_helper: `You are a website usage assistant for a dance crew management system.
+    Help users interact with website communication features like chat rooms, messages, and notifications.
+    Explain usage steps clearly and keep responses concise and direct.`,
 
-  task_planner: `You are a project planning assistant for event management.
-    Help break down complex tasks into actionable steps with timelines.
-    Consider resource constraints typical for a volunteer-run dance crew.`,
+  task_planner: `You are a website usage assistant for a dance crew management system.
+    Help users manage tasks on the website by explaining workflows, status updates, and assignment steps.
+    Provide straightforward step-by-step instructions based on available web features.`,
 };
 
 export const ASSIGNEE_TASK_STATUS = {

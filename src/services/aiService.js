@@ -16,7 +16,7 @@ export const generateResponse = async (prompt) => {
       ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTIONS.content_generator,
-        maxOutputTokens: 100,
+        maxOutputTokens: 1024,
         temperature: THINKING_LEVELS.MEDIUM,
       },
     });
