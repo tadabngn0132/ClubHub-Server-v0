@@ -472,9 +472,9 @@ export const AVATAR_PROVIDERS = {
 };
 
 export const THINKING_LEVELS = {
-  LOW: "low",
-  MEDIUM: "medium",
-  HIGH: "high",
+  LOW: 0.2,
+  MEDIUM: 0.5,
+  HIGH: 0.8,
 };
 
 // Define different system instructions for different use cases
