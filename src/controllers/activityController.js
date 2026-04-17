@@ -81,33 +81,34 @@ export const createActivity = async (req, res) => {
       },
     });
 
-    const calendarPayload = {
-      summary: newActivity.title,
-      description: newActivity.description,
-      startDateTime: newActivity.startDate.toISOString(),
-      endDateTime: newActivity.endDate.toISOString(),
-      timeZone: "Asia/Ho_Chi_Minh",
-      locationType: newActivity.locationType,
-    };
+    // const calendarPayload = {
+    //   summary: newActivity.title,
+    //   description: newActivity.description,
+    //   startDateTime: newActivity.startDate.toISOString(),
+    //   endDateTime: newActivity.endDate.toISOString(),
+    //   timeZone: "Asia/Ho_Chi_Minh",
+    //   locationType: newActivity.locationType,
+    // };
 
-    const calendarEventData = await createCalendarEventAndMeetingLink(
-      calendarOwnerUserId,
-      calendarPayload,
-    );
+    // const calendarEventData = await createCalendarEventAndMeetingLink(
+    //   calendarOwnerUserId,
+    //   calendarPayload,
+    // );
 
-    const updatedActivity = await prisma.activity.update({
-      where: { id: newActivity.id },
-      data: {
-        googleCalendarEventId: calendarEventData.id,
-        meetingLink:
-          calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
-      },
-    });
+    // const updatedActivity = await prisma.activity.update({
+    //   where: { id: newActivity.id },
+    //   data: {
+    //     googleCalendarEventId: calendarEventData.id,
+    //     meetingLink:
+    //       calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+    //   },
+    // });
 
     res.status(201).json({
       success: true,
       message: "Activity created successfully",
-      data: updatedActivity,
+      // data: updatedActivity,
+      data: newActivity,
     });
   } catch (err) {
     console.log("Error create activity function: ", err.message);
