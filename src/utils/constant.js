@@ -170,6 +170,13 @@ export const ROLE_PERMISSIONS = {
       hardDelete: true,
       manageMembers: true,
     },
+    notificationPreferences: {
+      read: true,
+      update: true,
+    },
+    systemLogs: {
+      read: true,
+    },
   },
   MODERATOR: {
     users: {
@@ -263,6 +270,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: true,
       hardDelete: false,
       manageMembers: true,
+    },
+    notificationPreferences: {
+      read: true,
+      update: true,
+    },
+    systemLogs: {
+      read: false,
     },
   },
   MEMBER: {
@@ -358,6 +372,13 @@ export const ROLE_PERMISSIONS = {
       hardDelete: false,
       manageMembers: false,
     },
+    notificationPreferences: {
+      read: true,
+      update: true,
+    },
+    systemLogs: {
+      read: false,
+    },
   },
   GUEST: {
     users: {
@@ -451,6 +472,13 @@ export const ROLE_PERMISSIONS = {
       softDelete: false,
       hardDelete: false,
       manageMembers: false,
+    },
+    notificationPreferences: {
+      read: false,
+      update: false,
+    },
+    systemLogs: {
+      read: false,
     },
   },
 };

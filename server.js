@@ -35,6 +35,7 @@ import sheetsRoute from "./src/routes/googleSheetsRoute.js";
 import dashboardRoute from "./src/routes/dashboardRoute.js";
 import { startTaskReminderJob } from "./src/jobs/taskReminderJob.js";
 import notificationPreferenceRoute from "./src/routes/notificationPreferenceRoute.js";
+import systemLogRoute from "./src/routes/systemLogRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +89,7 @@ app.use("/api/docs", docsRoute);
 app.use("/api/sheets", sheetsRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/notification-preferences", notificationPreferenceRoute);
+app.use("/api/system-logs", systemLogRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
