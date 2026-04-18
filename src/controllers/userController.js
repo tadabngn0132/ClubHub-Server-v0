@@ -6,12 +6,26 @@ import {
   DEFAULT_PASSWORD,
   ASSIGNEE_TASK_STATUS,
 } from "../utils/constant.js";
-import {
-  hashedDefaultPassword,
-  userIncludeOptions,
-} from "../utils/userUtil.js";
+import { userIncludeOptions } from "../utils/userUtil.js";
 import cloudinary from "../libs/cloudinary.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
+import {
+  createUserWithPositionsService,
+  updateUserWithPositionsService,
+} from "../services/userService.js";
+
+const normalizePositionIds = (raw) => {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 
 export const createUser = async (req, res) => {
   try {
@@ -28,19 +42,6 @@ export const createUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "User with this email already exists",
-      });
-    }
-
-    const position = await prisma.position.findUnique({
-      where: {
-        id: Number(payload.positionId),
-      },
-    });
-
-    if (!position) {
-      return res.status(400).json({
-        success: false,
-        message: "Position not found",
       });
     }
 
@@ -79,49 +80,9 @@ export const createUser = async (req, res) => {
       }
     }
 
-    const createdUser = await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.create({
-        data: {
-          email: payload.email,
-          hashedPassword: await hashedDefaultPassword(),
-          fullname: payload.fullname,
-          phoneNumber: payload.phoneNumber,
-          dateOfBirth: payload.dateOfBirth
-            ? new Date(payload.dateOfBirth)
-            : null,
-          gender: payload.gender,
-          major: payload.major,
-          generation: Number(payload.generation),
-          joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
-          status:
-            payload.status.trim().toLowerCase() === "active"
-              ? USER_STATUS.ACTIVE
-              : USER_STATUS.INACTIVE,
-          studentId: payload.studentId,
-          avatarUrl: payload.avatarUrl,
-          avatarPublicId: payload.avatarPublicId,
-          avatarProvider: payload.avatarProvider,
-          bio: payload.bio,
-          rootDepartmentId:
-            payload.rootDepartmentId !== ""
-              ? Number(payload.rootDepartmentId)
-              : null,
-        },
-      });
-
-      await prisma.userPosition.create({
-        data: {
-          userId: user.id,
-          positionId:
-            payload.positionId !== "" ? Number(payload.positionId) : null,
-          isPrimary: true,
-        },
-      });
-
-      return prisma.user.findUnique({
-        where: { id: user.id },
-        include: userIncludeOptions,
-      });
+    const createdUser = await createUserWithPositionsService({
+      ...payload,
+      positionIds: normalizePositionIds(payload.positionIds),
     });
 
     const necessaryUserData = removeSensitiveUserData(createdUser);
@@ -247,19 +208,6 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    const position = await prisma.position.findUnique({
-      where: {
-        id: Number(payload.positionId),
-      },
-    });
-
-    if (!position) {
-      return res.status(400).json({
-        success: false,
-        message: "Position not found",
-      });
-    }
-
     if (payload.rootDepartmentId !== null && payload.rootDepartmentId !== "") {
       const department = await prisma.department.findUnique({
         where: { id: Number(payload.rootDepartmentId) },
@@ -308,68 +256,9 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    const updatedUser = await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.update({
-        where: {
-          id: Number(id),
-        },
-        data: {
-          email: payload.email,
-          fullname: payload.fullname,
-          phoneNumber: payload.phoneNumber,
-          dateOfBirth: payload.dateOfBirth
-            ? new Date(payload.dateOfBirth)
-            : null,
-          gender: payload.gender,
-          major: payload.major,
-          generation: Number(payload.generation),
-          joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
-          status:
-            payload.status.trim().toLowerCase() === "active"
-              ? USER_STATUS.ACTIVE
-              : USER_STATUS.INACTIVE,
-          studentId: payload.studentId,
-          avatarUrl: payload.avatarUrl,
-          avatarPublicId: payload.avatarPublicId,
-          avatarProvider: payload.avatarProvider,
-          bio: payload.bio,
-          rootDepartmentId:
-            payload.rootDepartmentId !== ""
-              ? Number(payload.rootDepartmentId)
-              : null,
-        },
-        include: {
-          userPosition: {
-            where: { isPrimary: true },
-            include: {
-              position: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      await prisma.userPosition.update({
-        where: {
-          userId_positionId: {
-            userId: user.id,
-            positionId: user.userPosition.find((up) => up.isPrimary)?.position
-              .id,
-          },
-        },
-        data: {
-          positionId:
-            payload.positionId !== "" ? Number(payload.positionId) : null,
-        },
-      });
-
-      return prisma.user.findUnique({
-        where: { id: user.id },
-        include: userIncludeOptions,
-      });
+    const updatedUser = await updateUserWithPositionsService(id, {
+      ...payload,
+      positionIds: normalizePositionIds(payload.positionIds),
     });
 
     const necessaryUserData = removeSensitiveUserData(updatedUser);

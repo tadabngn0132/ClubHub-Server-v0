@@ -15,12 +15,14 @@ import {
   validateMemberApplicationCVReviewUpdate,
   validateMemberApplicationFinalReviewUpdate,
 } from "../middlewares/validationMiddleware.js";
+import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
 router.post(
   "/",
   requirePermission("memberApplications", "create"),
+  uploadImage.single("avatar"),
   validateMemberApplicationCreation,
   createMemberApplication,
 );

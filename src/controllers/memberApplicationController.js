@@ -1,20 +1,38 @@
 import { prisma } from "../libs/prisma.js";
 import {
-  hashedDefaultPassword,
-  userIncludeOptions,
-} from "../utils/userUtil.js";
-import {
   CV_STATUS,
   FINAL_STATUS,
-  PROVIDER,
   DEFAULT_PASSWORD,
 } from "../utils/constant.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
+import { createUserWithPositionsService } from "../services/userService.js";
 
 export const createMemberApplication = async (req, res) => {
-  // TODO: Implement file upload handling for CV and avatar, and save the file URLs in the database
   try {
     const applicationData = req.body;
+    const file = req.file;
+
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+      try {
+        const uploadResult = await cloudinary.uploader.upload(base64, {
+          folder: "clubhub/users/avatars",
+          public_id: `${applicationData.email}_avatar_${Date.now()}`,
+          resource_type: "image",
+        });
+        applicationData.avatarUrl = uploadResult.secure_url;
+        applicationData.avatarPublicId = uploadResult.public_id;
+        applicationData.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
+      } catch (err) {
+        console.error("Error uploading image to Cloudinary:", err);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to upload avatar image: ${err.message}`,
+        });
+      }
+    }
+
     const application = await prisma.memberApplication.create({
       data: {
         fullname: applicationData.fullname,
@@ -25,6 +43,8 @@ export const createMemberApplication = async (req, res) => {
         major: applicationData.major,
         studentId: applicationData.studentId,
         avatarUrl: applicationData.avatarUrl,
+        avatarPublicId: applicationData.avatarPublicId,
+        avatarProvider: applicationData.avatarProvider,
         bio: applicationData.bio,
         appliedAt: new Date(),
         cvStatus: CV_STATUS.PENDING,
@@ -226,47 +246,9 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       });
     }
 
-    const createdUser = await prisma.$transaction(async (prisma) => {
-      const newUser = await prisma.user.create({
-        data: {
-          fullname: finalReviewData.fullname,
-          email: finalReviewData.email,
-          hashedPassword: await hashedDefaultPassword(),
-          provider: PROVIDER.LOCAL,
-          phoneNumber: finalReviewData.phoneNumber,
-          dateOfBirth: finalReviewData.dateOfBirth,
-          gender: finalReviewData.gender,
-          major: finalReviewData.major,
-          studentId: finalReviewData.studentId,
-          avatarUrl: finalReviewData.avatarUrl,
-          bio: finalReviewData.bio,
-          rootDepartmentId: finalReviewData.rootDepartmentId,
-        },
-      });
-      await prisma.memberApplication.update({
-        where: { id: Number(id) },
-        data: {
-          finalStatus:
-            finalReviewData.status.trim().toLowerCase() === "passed"
-              ? FINAL_STATUS.PASSED
-              : FINAL_STATUS.FAILED,
-          finalReviewedAt: new Date(),
-          finalReviewComment: finalReviewData.finalReviewComment || "",
-          finalReviewerId: finalReviewData.finalReviewerId,
-        },
-      });
-      await prisma.userPosition.create({
-        data: {
-          userId: newUser.id,
-          positionId: Number(finalReviewData.positionId),
-          isPrimary: true,
-        },
-      });
-      return prisma.user.findUnique({
-        where: { id: newUser.id },
-        include: userIncludeOptions,
-      });
-    });
+    const createdUser = await createUserWithPositionsService(finalReviewData);
+
+    const necessaryUserData = removeSensitiveUserData(createdUser);
 
     await sendWelcomeEmail(
       createdUser.email,
@@ -277,7 +259,7 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Member application final review detail updated successfully",
-      data: createdUser,
+      data: necessaryUserData,
     });
   } catch (err) {
     console.error(
