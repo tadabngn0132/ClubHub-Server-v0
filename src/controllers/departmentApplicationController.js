@@ -1,6 +1,8 @@
 import { prisma } from "../libs/prisma.js";
 import { getInterviewStatus } from "../utils/applicationUtil.js";
 
+// TODO: Investigate if we need to handle department application actions in a transaction with member application actions to handle root department when user applies to multiple departments and ensure data consistency
+
 export const createDepartmentApplication = async (req, res) => {
   try {
     const deptApplicationData = req.body;
