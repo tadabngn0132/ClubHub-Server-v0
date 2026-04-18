@@ -3,7 +3,12 @@ import {
   CV_STATUS,
   FINAL_STATUS,
   DEFAULT_PASSWORD,
+  POSITION_LEVEL,
+  INTERVIEW_STATUS,
+  AVATAR_PROVIDERS,
 } from "../utils/constant.js";
+import { cloudinary } from "../libs/cloudinary.js";
+import { removeSensitiveUserData } from "../utils/userUtil.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
 import { createUserWithPositionsService } from "../services/userService.js";
 
@@ -238,7 +243,20 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
 
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
+      include: {
+        departmentApplications: {
+          where: {
+            interviewStatus: INTERVIEW_STATUS.PASSED,
+            isDeleted: false,
+          },
+          select: {
+            departmentId: true,
+            priority: true,
+          },
+        },
+      },
     });
+
     if (!application) {
       return res.status(404).json({
         success: false,
@@ -246,7 +264,31 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       });
     }
 
-    const createdUser = await createUserWithPositionsService(finalReviewData);
+    const passedDeptIds = application.departmentApplications.map(
+      (deptApp) => deptApp.departmentId,
+    );
+
+    const memberPositions = await prisma.position.findMany({
+      where: {
+        departmentId: {
+          in: passedDeptIds,
+        },
+        level: POSITION_LEVEL.MEMBER,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        level: true,
+        departmentId: true,
+      },
+    });
+
+    const positionIds = memberPositions.map((pos) => pos.id);
+
+    const createdUser = await createUserWithPositionsService({
+      ...finalReviewData,
+      positionIds,
+    });
 
     const necessaryUserData = removeSensitiveUserData(createdUser);
 
