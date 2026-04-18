@@ -48,7 +48,8 @@ export const userIncludeOptions = {
 
 export const userIncludeSystemRoleOptions = {
   userPosition: {
-    include: {
+    select: {
+      isPrimary: true,
       position: {
         select: {
           systemRole: true,

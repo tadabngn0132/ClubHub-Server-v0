@@ -356,7 +356,8 @@ export const updateUser = async (req, res) => {
         where: {
           userId_positionId: {
             userId: user.id,
-            positionId: user.userPosition[0].position.id,
+            positionId: user.userPosition.find((up) => up.isPrimary)?.position
+              .id,
           },
         },
         data: {

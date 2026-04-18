@@ -53,6 +53,11 @@ const hasAllScopes = (grantedScopeString, requiredScopes = []) => {
   return requiredScopes.every((scope) => grantedScopes.has(scope));
 };
 
+const userRole = (user) => {
+  const primaryPosition = user.userPosition?.find((up) => up.isPrimary);
+  return primaryPosition?.position?.systemRole || null;
+};
+
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
 export const refreshAccessToken = async (req, res) => {
   const { refreshToken } = req.cookies;
@@ -88,10 +93,14 @@ export const refreshAccessToken = async (req, res) => {
       });
     }
 
-    const newAccessToken = await createAccessToken(
-      userId,
-      user.userPosition[0].position.systemRole,
-    );
+    if (userRole(user) === null) {
+      return res.status(403).json({
+        success: false,
+        message: "User does not have an assigned role",
+      });
+    }
+
+    const newAccessToken = await createAccessToken(userId, userRole(user));
 
     res.status(200).json({
       success: true,
@@ -175,13 +184,20 @@ export const login = async (req, res) => {
       include: userIncludeSystemRoleOptions,
     });
 
+    if (userRole(updatedUser) === null) {
+      return res.status(403).json({
+        success: false,
+        message: "User does not have an assigned role",
+      });
+    }
+
     const accessToken = await createAccessToken(
       updatedUser.id,
-      updatedUser.userPosition[0].position.systemRole,
+      userRole(updatedUser),
     );
     const refreshToken = await createRefreshToken(
       updatedUser.id,
-      updatedUser.userPosition[0].position.systemRole,
+      userRole(updatedUser),
     );
 
     const parsedRememberDays = Number(rememberForDays);
@@ -611,7 +627,14 @@ export const googleAuthCallback = async (req, res) => {
       });
     }
 
-    const userSystemRole = user.userPosition?.[0]?.position?.systemRole;
+    if (userRole(user) === null) {
+      return res.status(403).json({
+        success: false,
+        message: "User does not have an assigned role",
+      });
+    }
+
+    const userSystemRole = userRole(user);
     const scopeKey = getScopeKeyBySystemRole(userSystemRole);
     const requiredScopes = roleBasedScopes[scopeKey] || roleBasedScopes.member;
     const grantedScopeString = tokens.scope || "";
@@ -653,14 +676,8 @@ export const googleAuthCallback = async (req, res) => {
       console.warn("Warning: Failed to upsert Google credential:", err.message);
     }
 
-    const accessToken = await createAccessToken(
-      user.id,
-      user.userPosition[0].position.systemRole,
-    );
-    const refreshToken = await createRefreshToken(
-      user.id,
-      user.userPosition[0].position.systemRole,
-    );
+    const accessToken = await createAccessToken(user.id, userRole(user));
+    const refreshToken = await createRefreshToken(user.id, userRole(user));
 
     const necessaryUserData = removeSensitiveUserData(user);
 
