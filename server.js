@@ -38,6 +38,7 @@ import notificationPreferenceRoute from "./src/routes/notificationPreferenceRout
 import systemLogRoute from "./src/routes/systemLogRoute.js";
 import ragRoute from "./src/routes/ragRoute.js";
 import { reindexAll } from "./src/services/knowledgeIndexerService.js";
+import aiChatRoute from "./src/routes/aiChatRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -93,6 +94,7 @@ app.use("/api/dashboard", dashboardRoute);
 app.use("/api/notification-preferences", notificationPreferenceRoute);
 app.use("/api/system-logs", systemLogRoute);
 app.use("/api/rag", ragRoute);
+app.use("/api/ai-chat", aiChatRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
