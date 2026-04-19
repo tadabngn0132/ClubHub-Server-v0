@@ -7,6 +7,8 @@ import {
 } from "../utils/taskUtil.js";
 import { TASK_STATUS, ASSIGNEE_TASK_STATUS } from "../utils/constant.js";
 import { sendTaskAssignmentEmail } from "../utils/emailUtil.js";
+import { indexTask } from "../services/knowledgeIndexerService.js";
+import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 export const createTask = async (req, res) => {
   try {
@@ -66,6 +68,11 @@ export const createTask = async (req, res) => {
       message: "Task created successfully",
       data: createdTask,
     });
+
+    // Index task mới tạo vào hệ thống RAG
+    indexTask(createdTask.id).catch((err) =>
+      console.error(`[RAG] Indexing task ${createdTask.id} failed:`, err),
+    );
   } catch (err) {
     if (err.message === "No valid assignees found for the specified target") {
       return res.status(400).json({
@@ -197,6 +204,11 @@ export const updateTask = async (req, res) => {
       message: "Task updated successfully",
       data: updatedTask,
     });
+
+    // Index task mới tạo vào hệ thống RAG
+    indexTask(updatedTask.id).catch((err) =>
+      console.error(`[RAG] Indexing task ${updatedTask.id} failed:`, err),
+    );
   } catch (err) {
     if (err.message === "No valid assignees found for the specified target") {
       return res.status(400).json({
@@ -232,6 +244,11 @@ export const softDeleteTask = async (req, res) => {
       success: true,
       message: "Task deleted successfully",
     });
+
+    // Xóa chunks liên quan đến task này trong hệ thống RAG
+    deleteChunksBySource("task", task.id).catch((err) =>
+      console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
+    );
   } catch (err) {
     console.error("Error in softDeleteTask function:", err);
     res.status(500).json({
@@ -257,6 +274,11 @@ export const hardDeleteTask = async (req, res) => {
       success: true,
       message: "Task deleted successfully",
     });
+
+    // Xóa chunks liên quan đến task này trong hệ thống RAG
+    deleteChunksBySource("task", task.id).catch((err) =>
+      console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
+    );
   } catch (err) {
     console.error("Error in hardDeleteTask function:", err);
     res.status(500).json({

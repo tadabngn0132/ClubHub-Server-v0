@@ -11,6 +11,7 @@ import { cloudinary } from "../libs/cloudinary.js";
 import { removeSensitiveUserData } from "../utils/userUtil.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
 import { createUserWithPositionsService } from "../services/userService.js";
+import { indexMember } from "../services/knowledgeIndexerService.js";
 
 export const createMemberApplication = async (req, res) => {
   try {
@@ -303,6 +304,14 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       message: "Member application final review detail updated successfully",
       data: necessaryUserData,
     });
+
+    // Index the new member into the RAG system
+    indexMember(createdUser.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing member ${createdUser.id} after application approval failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.error(
       "Error in updateMemberApplicationFinalReviewDetail function:",

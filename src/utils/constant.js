@@ -177,6 +177,11 @@ export const ROLE_PERMISSIONS = {
     systemLogs: {
       read: true,
     },
+    rag: {
+      query: true,
+      reindex: true,
+      viewHealth: true,
+    },
   },
   MODERATOR: {
     users: {
@@ -277,6 +282,11 @@ export const ROLE_PERMISSIONS = {
     },
     systemLogs: {
       read: false,
+    },
+    rag: {
+      query: true,
+      reindex: false,
+      viewHealth: true,
     },
   },
   MEMBER: {
@@ -379,6 +389,11 @@ export const ROLE_PERMISSIONS = {
     systemLogs: {
       read: false,
     },
+    rag: {
+      query: true,
+      reindex: false,
+      viewHealth: false,
+    },
   },
   GUEST: {
     users: {
@@ -479,6 +494,11 @@ export const ROLE_PERMISSIONS = {
     },
     systemLogs: {
       read: false,
+    },
+    rag: {
+      query: false,
+      reindex: false,
+      viewHealth: false,
     },
   },
 };

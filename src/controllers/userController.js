@@ -13,6 +13,8 @@ import {
   createUserWithPositionsService,
   updateUserWithPositionsService,
 } from "../services/userService.js";
+import { indexMember } from "../services/knowledgeIndexerService.js";
+import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 const normalizePositionIds = (raw) => {
   if (Array.isArray(raw)) return raw;
@@ -98,6 +100,11 @@ export const createUser = async (req, res) => {
       message: "User created successfully",
       data: necessaryUserData,
     });
+
+    // Index member into the RAG system
+    indexMember(createdUser.id).catch((err) =>
+      console.error(`[RAG] Indexing member ${createdUser.id} failed:`, err),
+    );
   } catch (err) {
     console.log("Error in createUser function:", err);
     res.status(500).json({
@@ -268,6 +275,11 @@ export const updateUser = async (req, res) => {
       message: "User updated successfully",
       data: necessaryUserData,
     });
+
+    // Index member into the RAG system
+    indexMember(updatedUser.id).catch((err) =>
+      console.error(`[RAG] Indexing member ${updatedUser.id} failed:`, err),
+    );
   } catch (err) {
     console.log("Error in updateUser function:", err);
     res.status(500).json({
@@ -355,6 +367,11 @@ export const updateUserProfile = async (req, res) => {
       message: "User updated successfully",
       data: necessaryUserData,
     });
+
+    // Index member into the RAG system
+    indexMember(updatedUser.id).catch((err) =>
+      console.error(`[RAG] Indexing member ${updatedUser.id} failed:`, err),
+    );
   } catch (err) {
     console.log("Error in updateUser function:", err);
     res.status(500).json({
@@ -398,6 +415,14 @@ export const softDeleteUser = async (req, res) => {
       message: "User deleted successfully",
       data: necessaryUserData,
     });
+
+    // Xóa chunks liên quan đến user này trong hệ thống RAG
+    deleteChunksBySource("member", deletedUser.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for member ${deletedUser.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.log("Error in softDeleteUser function:", err);
     res.status(500).json({
@@ -450,6 +475,14 @@ export const hardDeleteUser = async (req, res) => {
       message: "User deleted successfully",
       data: necessaryUserData,
     });
+
+    // Xóa chunks liên quan đến user này trong hệ thống RAG
+    deleteChunksBySource("member", deletedUser.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for member ${deletedUser.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.log("Error in hardDeleteUser function:", err);
     res.status(500).json({

@@ -1,4 +1,6 @@
 import { prisma } from "../libs/prisma.js";
+import { indexDepartment } from "../services/knowledgeIndexerService.js";
+import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 export const createDepartment = async (req, res) => {
   try {
@@ -17,6 +19,14 @@ export const createDepartment = async (req, res) => {
       message: "Department created successfully",
       data: newDepartment,
     });
+
+    // Index department into the RAG system
+    indexDepartment(newDepartment.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing department ${newDepartment.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.error("Error in createDepartment function:", err);
     res.status(500).json({
@@ -110,6 +120,14 @@ export const updateDepartment = async (req, res) => {
       message: "Department updated successfully",
       data: updatedDepartment,
     });
+
+    // Index department into the RAG system
+    indexDepartment(updatedDepartment.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing department ${updatedDepartment.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.error("Error in updateDepartment function:", err);
     res.status(500).json({
@@ -151,6 +169,14 @@ export const softDeleteDepartment = async (req, res) => {
       message: "Department soft deleted successfully",
       data: softDeletedDepartment,
     });
+
+    // Xóa chunks liên quan đến department này trong hệ thống RAG
+    deleteChunksBySource("department", softDeletedDepartment.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for department ${softDeletedDepartment.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.error("Error in softDeleteDepartment function:", err);
     res.status(500).json({
@@ -187,6 +213,14 @@ export const hardDeleteDepartment = async (req, res) => {
       success: true,
       message: "Department deleted successfully",
     });
+
+    // Xóa chunks liên quan đến department này trong hệ thống RAG
+    deleteChunksBySource("department", Number(id)).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for department ${Number(id)} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.error("Error in hardDeleteDepartment function:", err);
     res.status(500).json({

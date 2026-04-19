@@ -8,6 +8,8 @@ import {
   deleteGoogleCalendarEvent,
   exportICSFile,
 } from "../services/googleCalendarService.js";
+import { indexActivity } from "../services/knowledgeIndexerService.js";
+import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 export const createActivity = async (req, res) => {
   try {
@@ -110,6 +112,11 @@ export const createActivity = async (req, res) => {
       // data: updatedActivity,
       data: newActivity,
     });
+
+    // Index hoạt động mới tạo vào hệ thống RAG
+    indexActivity(newActivity.id).catch((err) =>
+      console.error(`[RAG] Indexing activity ${newActivity.id} failed:`, err),
+    );
   } catch (err) {
     console.log("Error create activity function: ", err.message);
     res.status(500).json({
@@ -298,6 +305,14 @@ export const updateActivity = async (req, res) => {
       message: "Activity updated successfully",
       data: finalUpdatedActivity,
     });
+
+    // Cập nhật lại index của hoạt động trong hệ thống RAG
+    indexActivity(finalUpdatedActivity.id).catch((err) =>
+      console.error(
+        `[RAG] Re-indexing activity ${finalUpdatedActivity.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.log("Error update activity function: ", err.message);
     res.status(500).json({
@@ -335,6 +350,14 @@ export const softDeleteActivity = async (req, res) => {
       message: "Activity soft deleted successfully",
       data: deletedActivity,
     });
+
+    // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
+    deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for activity ${deletedActivity.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.log("Error soft delete activity function: ", err.message);
     res.status(500).json({
@@ -386,6 +409,14 @@ export const hardDeleteActivity = async (req, res) => {
       message: "Activity deleted successfully",
       data: deletedActivity,
     });
+
+    // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
+    deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting chunks for activity ${deletedActivity.id} failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     console.log("Error hard delete activity function: ", err.message);
     res.status(500).json({

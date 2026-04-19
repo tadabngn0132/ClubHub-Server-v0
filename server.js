@@ -36,6 +36,8 @@ import dashboardRoute from "./src/routes/dashboardRoute.js";
 import { startTaskReminderJob } from "./src/jobs/taskReminderJob.js";
 import notificationPreferenceRoute from "./src/routes/notificationPreferenceRoute.js";
 import systemLogRoute from "./src/routes/systemLogRoute.js";
+import ragRoute from "./src/routes/ragRoute.js";
+import { reindexAll } from "./src/services/knowledgeIndexerService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -90,6 +92,7 @@ app.use("/api/sheets", sheetsRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/notification-preferences", notificationPreferenceRoute);
 app.use("/api/system-logs", systemLogRoute);
+app.use("/api/rag", ragRoute);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
@@ -101,6 +104,9 @@ async function startServer() {
     await testDatabaseConnection();
     await ensureClubStructure();
     startTaskReminderJob();
+    reindexAll().catch((err) =>
+      console.error("[RAG] Initial reindex failed:", err.message),
+    );
 
     httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
