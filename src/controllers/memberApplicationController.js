@@ -209,7 +209,7 @@ export const updateMemberApplicationCVReviewDetail = async (req, res) => {
         message: "Member application not found",
       });
     }
-    await prisma.memberApplication.update({
+    const updatedApplication = await prisma.memberApplication.update({
       where: { id: Number(id) },
       data: {
         cvStatus:
@@ -224,6 +224,7 @@ export const updateMemberApplicationCVReviewDetail = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Member application CV review detail updated successfully",
+      data: updatedApplication,
     });
   } catch (err) {
     console.error(
@@ -265,44 +266,59 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       });
     }
 
-    const passedDeptIds = application.departmentApplications.map(
-      (deptApp) => deptApp.departmentId,
-    );
+    const finalApplicationResult = await prisma.$transaction(async (tx) => {
+      const passedDeptIds = application.departmentApplications.map(
+        (deptApp) => deptApp.departmentId,
+      );
 
-    const memberPositions = await prisma.position.findMany({
-      where: {
-        departmentId: {
-          in: passedDeptIds,
+      const memberPositions = await tx.position.findMany({
+        where: {
+          departmentId: {
+            in: passedDeptIds,
+          },
+          level: POSITION_LEVEL.MEMBER,
+          isDeleted: false,
         },
-        level: POSITION_LEVEL.MEMBER,
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        level: true,
-        departmentId: true,
-      },
+        select: {
+          id: true,
+          level: true,
+          departmentId: true,
+        },
+      });
+
+      const positionIds = memberPositions.map((pos) => pos.id);
+
+      const createdUser = await createUserWithPositionsService({
+        ...finalReviewData,
+        positionIds,
+      });
+
+      await sendWelcomeEmail(
+        createdUser.email,
+        createdUser.fullname,
+        DEFAULT_PASSWORD,
+      );
+
+      const updatedApplication = await tx.memberApplication.update({
+        where: { id: Number(id) },
+        data: {
+          finalStatus:
+            finalReviewData.status.trim().toLowerCase() === "passed"
+              ? FINAL_STATUS.PASSED
+              : FINAL_STATUS.FAILED,
+          finalReviewedAt: new Date(),
+          finalReviewComment: finalReviewData.finalReviewComment || "",
+          finalReviewerId: finalReviewData.finalReviewerId,
+        },
+      });
+
+      return updatedApplication;
     });
-
-    const positionIds = memberPositions.map((pos) => pos.id);
-
-    const createdUser = await createUserWithPositionsService({
-      ...finalReviewData,
-      positionIds,
-    });
-
-    const necessaryUserData = removeSensitiveUserData(createdUser);
-
-    await sendWelcomeEmail(
-      createdUser.email,
-      createdUser.fullname,
-      DEFAULT_PASSWORD,
-    );
 
     res.status(200).json({
       success: true,
       message: "Member application final review detail updated successfully",
-      data: necessaryUserData,
+      data: finalApplicationResult,
     });
 
     // Index the new member into the RAG system
