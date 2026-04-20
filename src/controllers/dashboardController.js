@@ -6,7 +6,7 @@ import {
   CV_STATUS,
 } from "../utils/constant.js";
 
-export const getDashboardStats = async (req, res) => {
+export const getDashboardStats = async (req, res, next) => {
   // 4 aggregate queries to get the counts of total active users, upcoming events, incomplete tasks, and pending member applications
   try {
     const [
@@ -56,10 +56,6 @@ export const getDashboardStats = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error in getDashboardStats function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get dashboard stats error: ${err.message}`,
-    });
+    return next(err);
   }
 };

@@ -11,15 +11,9 @@ import {
     markAllNotificationsAsReadService
 } from '../services/notificationService.js';
 
-const handleError = (res, err, context) => {
-    if (err.isOperational) {
-        return res.status(err.statusCode).json({ success: false, message: err.message });
-    }
-    console.error(`Unexpected error in ${context}:`, err);
-    res.status(500).json({ success: false, message: `Internal server error / ${context} error: ${err.message}` });
-}
+const handleError = (next, err) => next(err);
 
-export const createNotification = async (req, res) => {
+export const createNotification = async (req, res, next) => {
     try {
         const notificationData = req.body;
 
@@ -30,11 +24,11 @@ export const createNotification = async (req, res) => {
             data: newNotification
         });
     } catch (err) {
-        handleError(res, err, "createNotification");
+        handleError(next, err);
     }
 }
 
-export const getNotifications = async (req, res) => {
+export const getNotifications = async (req, res, next) => {
     try {
         const notifications = await getNotificationsService();
         res.status(200).json({
@@ -43,11 +37,11 @@ export const getNotifications = async (req, res) => {
             data: notifications
         });
     } catch (err) {
-        handleError(res, err, "getNotifications");
+        handleError(next, err);
     }
 }
 
-export const getNotificationByUserId = async (req, res) => {
+export const getNotificationByUserId = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const notifications = await getNotificationByUserIdService(Number(userId));
@@ -57,11 +51,11 @@ export const getNotificationByUserId = async (req, res) => {
             data: notifications
         });
     } catch (err) {
-        handleError(res, err, "getNotificationByUserId");
+        handleError(next, err);
     }
 }
 
-export const getNotificationById = async (req, res) => {
+export const getNotificationById = async (req, res, next) => {
     try {
         const { id } = req.params;
         const notification = await getNotificationByIdService(Number(id));
@@ -71,11 +65,11 @@ export const getNotificationById = async (req, res) => {
             data: notification
         });
     } catch (err) {
-        handleError(res, err, "getNotificationById");
+        handleError(next, err);
     }
 }
 
-export const updateNotification = async (req, res) => {
+export const updateNotification = async (req, res, next) => {
     try {
         const { id } = req.params;
         const notificationData = req.body;
@@ -86,11 +80,11 @@ export const updateNotification = async (req, res) => {
             data: updatedNotification
         });
     } catch (err) {
-        handleError(res, err, "updateNotification");
+        handleError(next, err);
     }
 }
 
-export const markAllNotificationsAsRead = async (req, res) => {
+export const markAllNotificationsAsRead = async (req, res, next) => {
     try {
         const { userId } = req.params;
 
@@ -101,11 +95,11 @@ export const markAllNotificationsAsRead = async (req, res) => {
             data: result
         });
     } catch (err) {
-        handleError(res, err, "markAllNotificationsAsRead");
+        handleError(next, err);
     }
 }
 
-export const softDeleteNotification = async (req, res) => {
+export const softDeleteNotification = async (req, res, next) => {
     try {
         const { id } = req.params;
         const deletedNotification = await softDeleteNotificationService(Number(id));
@@ -115,11 +109,11 @@ export const softDeleteNotification = async (req, res) => {
             data: deletedNotification
         });
     } catch (err) {
-        handleError(res, err, "softDeleteNotification");
+        handleError(next, err);
     }
 }
 
-export const hardDeleteNotification = async (req, res) => {
+export const hardDeleteNotification = async (req, res, next) => {
     try {
         const { id } = req.params;
         const deletedNotification = await hardDeleteNotificationService(Number(id));
@@ -129,11 +123,11 @@ export const hardDeleteNotification = async (req, res) => {
             data: deletedNotification
         });
     } catch (err) {
-        handleError(res, err, "hardDeleteNotification");
+        handleError(next, err);
     }
 }
 
-export const softDeleteNotificationsByUserId = async (req, res) => {
+export const softDeleteNotificationsByUserId = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const result = await softDeleteNotificationsByUserIdService(Number(userId));
@@ -143,11 +137,11 @@ export const softDeleteNotificationsByUserId = async (req, res) => {
             data: result
         });
     } catch (err) {
-        handleError(res, err, "softDeleteNotificationsByUserId");
+        handleError(next, err);
     }
 }
 
-export const hardDeleteNotificationsByUserId = async (req, res) => {
+export const hardDeleteNotificationsByUserId = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const result = await hardDeleteNotificationsByUserIdService(Number(userId));
@@ -157,6 +151,6 @@ export const hardDeleteNotificationsByUserId = async (req, res) => {
             data: result
         });
     } catch (err) {
-        handleError(res, err, "hardDeleteNotificationsByUserId");
+        handleError(next, err);
     }
 }

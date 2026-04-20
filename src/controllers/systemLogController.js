@@ -1,6 +1,6 @@
 import { getSystemLogsService } from "../services/systemLogService.js";
 
-export const getAllSystemLogs = async (req, res) => {
+export const getAllSystemLogs = async (req, res, next) => {
   try {
     const { limit, page } = req.query;
 
@@ -15,10 +15,6 @@ export const getAllSystemLogs = async (req, res) => {
       data: logs,
     });
   } catch (err) {
-    console.error("Error retrieving system logs:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get system logs error: ${err.message}`,
-    });
+    return next(err);
   }
 };

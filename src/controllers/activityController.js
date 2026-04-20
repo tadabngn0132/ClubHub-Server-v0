@@ -10,8 +10,10 @@ import {
 } from "../services/googleCalendarService.js";
 import { indexActivity } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
+import { logSystemAction } from "../services/auditLogService.js";
+import { AppError } from "../utils/AppError.js";
 
-export const createActivity = async (req, res) => {
+export const createActivity = async (req, res, next) => {
   try {
     const payload = req.body;
     const file = req.file;
@@ -47,11 +49,7 @@ export const createActivity = async (req, res) => {
         payload.thumbnailUrl = uploadResult.secure_url;
         payload.thumbnailPublicId = uploadResult.public_id;
       } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({
-          success: false,
-          message: `Cloudinary upload error: ${error.message}`,
-        });
+        throw new AppError(`Cloudinary upload error: ${error.message}`, 500);
       }
     }
 
@@ -113,20 +111,21 @@ export const createActivity = async (req, res) => {
       data: newActivity,
     });
 
+    void logSystemAction(req.userId ?? newActivity.organizerId ?? null, "activity.create", {
+      activityId: newActivity.id,
+      title: newActivity.title,
+    });
+
     // Index hoạt động mới tạo vào hệ thống RAG
     indexActivity(newActivity.id).catch((err) =>
       console.error(`[RAG] Indexing activity ${newActivity.id} failed:`, err),
     );
   } catch (err) {
-    console.log("Error create activity function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create activity error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getActivities = async (req, res) => {
+export const getActivities = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -141,15 +140,11 @@ export const getActivities = async (req, res) => {
       data: activities,
     });
   } catch (err) {
-    console.log("Error get activities function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get activities error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getActivityById = async (req, res) => {
+export const getActivityById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -179,15 +174,11 @@ export const getActivityById = async (req, res) => {
       data: storedActivity,
     });
   } catch (err) {
-    console.log("Error get activity by ID function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get activity by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getActivitiesBySlug = async (req, res) => {
+export const getActivitiesBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
 
@@ -208,15 +199,11 @@ export const getActivitiesBySlug = async (req, res) => {
       data: activity,
     });
   } catch (err) {
-    console.log("Error get activities by slug function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get activities by slug error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateActivity = async (req, res) => {
+export const updateActivity = async (req, res, next) => {
   try {
     const { id } = req.params;
     const payload = req.body;
@@ -258,11 +245,7 @@ export const updateActivity = async (req, res) => {
           );
         }
       } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({
-          success: false,
-          message: `Cloudinary upload error: ${error.message}`,
-        });
+        throw new AppError(`Cloudinary upload error: ${error.message}`, 500);
       }
     }
 
@@ -306,6 +289,11 @@ export const updateActivity = async (req, res) => {
       data: finalUpdatedActivity,
     });
 
+    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.update", {
+      activityId: finalUpdatedActivity.id,
+      title: finalUpdatedActivity.title,
+    });
+
     // Cập nhật lại index của hoạt động trong hệ thống RAG
     indexActivity(finalUpdatedActivity.id).catch((err) =>
       console.error(
@@ -314,15 +302,11 @@ export const updateActivity = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.log("Error update activity function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update activity error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeleteActivity = async (req, res) => {
+export const softDeleteActivity = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -351,6 +335,11 @@ export const softDeleteActivity = async (req, res) => {
       data: deletedActivity,
     });
 
+    void logSystemAction(req.userId ?? existingActivity.organizerId ?? null, "activity.soft_delete", {
+      activityId: deletedActivity.id,
+      title: deletedActivity.title,
+    });
+
     // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
     deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
       console.error(
@@ -359,15 +348,11 @@ export const softDeleteActivity = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.log("Error soft delete activity function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Soft delete activity error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeleteActivity = async (req, res) => {
+export const hardDeleteActivity = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -410,6 +395,11 @@ export const hardDeleteActivity = async (req, res) => {
       data: deletedActivity,
     });
 
+    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.hard_delete", {
+      activityId: deletedActivity.id,
+      title: storedActivity.title,
+    });
+
     // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
     deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
       console.error(
@@ -418,15 +408,11 @@ export const hardDeleteActivity = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.log("Error hard delete activity function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Hard delete activity error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getActivitiesByUserId = async (req, res) => {
+export const getActivitiesByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -440,15 +426,11 @@ export const getActivitiesByUserId = async (req, res) => {
       data: activities,
     });
   } catch (err) {
-    console.log("Error get activities by user ID function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get activities by user ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const createActivityImage = async (req, res) => {
+export const createActivityImage = async (req, res, next) => {
   try {
     const { activityId } = req.params;
     const payload = req.body;
@@ -477,16 +459,17 @@ export const createActivityImage = async (req, res) => {
       message: "Activity images uploaded and created successfully",
       data: createdImage,
     });
-  } catch (err) {
-    console.log("Error create activity image function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create activity image error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.image.create", {
+      activityId: Number(activityId),
+      imageId: createdImage.id,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const deleteActivityImage = async (req, res) => {
+export const deleteActivityImage = async (req, res, next) => {
   try {
     const { imageId } = req.params;
     const storedImage = await prisma.activityImage.findUnique({
@@ -522,16 +505,17 @@ export const deleteActivityImage = async (req, res) => {
       message: "Activity image deleted successfully",
       data: deletedImage,
     });
-  } catch (err) {
-    console.log("Error delete activity image function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete activity image error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? storedImage.activityId ?? null, "activity.image.delete", {
+      activityId: storedImage.activityId,
+      imageId: deletedImage.id,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const createActivityVideo = async (req, res) => {
+export const createActivityVideo = async (req, res, next) => {
   try {
     const { activityId } = req.params;
     const payload = req.body;
@@ -560,16 +544,17 @@ export const createActivityVideo = async (req, res) => {
       message: "Activity video created successfully",
       data: createdVideo,
     });
-  } catch (err) {
-    console.log("Error create activity video function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create activity video error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.video.create", {
+      activityId: Number(activityId),
+      videoId: createdVideo.id,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const deleteActivityVideo = async (req, res) => {
+export const deleteActivityVideo = async (req, res, next) => {
   try {
     const { videoId } = req.params;
     const storedVideo = await prisma.activityVideo.findUnique({
@@ -606,16 +591,17 @@ export const deleteActivityVideo = async (req, res) => {
       message: "Activity video deleted successfully",
       data: deletedVideo,
     });
-  } catch (err) {
-    console.log("Error delete activity video function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete activity video error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? storedVideo.activityId ?? null, "activity.video.delete", {
+      activityId: storedVideo.activityId,
+      videoId: deletedVideo.id,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const getICSFile = async (req, res) => {
+export const getICSFile = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { activityId } = req.params;
@@ -644,10 +630,6 @@ export const getICSFile = async (req, res) => {
     );
     res.status(200).send(icsFileData);
   } catch (err) {
-    console.log("Error get ICS file function: ", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get ICS file error: ${err.message}`,
-    });
+    return next(err);
   }
 };

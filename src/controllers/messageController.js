@@ -6,20 +6,9 @@ import {
   hardDeleteMessageService,
 } from "../services/messageService.js";
 
-const handleError = (res, err, context) => {
-  if (err.isOperational) {
-    return res
-      .status(err.statusCode)
-      .json({ success: false, message: err.message });
-  }
-  console.error(`Unexpected error in ${context}:`, err);
-  res.status(500).json({
-    success: false,
-    message: `Internal server error / ${context} error: ${err.message}`,
-  });
-};
+const handleError = (next, err) => next(err);
 
-export const createMessage = async (req, res) => {
+export const createMessage = async (req, res, next) => {
   try {
     const messageData = req.body;
 
@@ -30,11 +19,11 @@ export const createMessage = async (req, res) => {
       data: newMessage,
     });
   } catch (error) {
-    handleError(res, error, "createMessage");
+    handleError(next, error);
   }
 };
 
-export const getMessagesByChatRoomId = async (req, res) => {
+export const getMessagesByChatRoomId = async (req, res, next) => {
   try {
     const { chatRoomId } = req.params;
     const requesterId = req.userId;
@@ -49,11 +38,11 @@ export const getMessagesByChatRoomId = async (req, res) => {
       data: messages,
     });
   } catch (error) {
-    handleError(res, error, "getMessagesByChatRoomId");
+    handleError(next, error);
   }
 };
 
-export const updateMessage = async (req, res) => {
+export const updateMessage = async (req, res, next) => {
   try {
     const { id } = req.params;
     const messageData = req.body;
@@ -70,11 +59,11 @@ export const updateMessage = async (req, res) => {
       data: updatedMessage,
     });
   } catch (error) {
-    handleError(res, error, "updateMessage");
+    handleError(next, error);
   }
 };
 
-export const softDeleteMessage = async (req, res) => {
+export const softDeleteMessage = async (req, res, next) => {
   try {
     const { id } = req.params;
     const requesterId = req.userId;
@@ -86,11 +75,11 @@ export const softDeleteMessage = async (req, res) => {
       data: deletedMessage,
     });
   } catch (error) {
-    handleError(res, error, "softDeleteMessage");
+    handleError(next, error);
   }
 };
 
-export const hardDeleteMessage = async (req, res) => {
+export const hardDeleteMessage = async (req, res, next) => {
   try {
     const { id } = req.params;
     const requesterId = req.userId;
@@ -102,6 +91,6 @@ export const hardDeleteMessage = async (req, res) => {
       data: hardDeletedMessage,
     });
   } catch (error) {
-    handleError(res, error, "hardDeleteMessage");
+    handleError(next, error);
   }
 };

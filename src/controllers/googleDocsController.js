@@ -4,7 +4,7 @@ import {
   getEmbeddableLinkForGoogleDoc,
 } from "../services/googleDocsService.js";
 
-export const createGoogleDocFromExistingTemplate = async (req, res) => {
+export const createGoogleDocFromExistingTemplate = async (req, res, next) => {
   try {
     const { userId, templateId, newDocTitle } = req.body;
 
@@ -20,15 +20,11 @@ export const createGoogleDocFromExistingTemplate = async (req, res) => {
       data: newDoc,
     });
   } catch (err) {
-    console.error("Error creating Google Doc from template:", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create Google Doc from template error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const createNewGoogleDocTemplate = async (req, res) => {
+export const createNewGoogleDocTemplate = async (req, res, next) => {
   try {
     const { userId, title } = req.body;
 
@@ -40,15 +36,11 @@ export const createNewGoogleDocTemplate = async (req, res) => {
       data: newDocTemplate,
     });
   } catch (err) {
-    console.error("Error creating Google Doc template:", err.message);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create Google Doc template error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getGoogleDocEmbedLink = async (req, res) => {
+export const getGoogleDocEmbedLink = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { documentId } = req.params;
@@ -60,13 +52,6 @@ export const getGoogleDocEmbedLink = async (req, res) => {
       data: { embedLink },
     });
   } catch (err) {
-    console.error(
-      "Error retrieving embeddable link for Google Doc:",
-      err.message,
-    );
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get embeddable link for Google Doc error: ${err.message}`,
-    });
+    return next(err);
   }
 };

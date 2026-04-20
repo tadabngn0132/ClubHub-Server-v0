@@ -3,7 +3,7 @@ import { getParticipationStatus } from "../utils/activityUtil.js";
 import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 import { PARTICIPATION_STATUS } from "../utils/constant.js";
 
-export const createActivityParticipation = async (req, res) => {
+export const createActivityParticipation = async (req, res, next) => {
   try {
     const participationData = req.body;
 
@@ -87,14 +87,11 @@ export const createActivityParticipation = async (req, res) => {
       data: participation,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create activity participation error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getParticipations = async (req, res) => {
+export const getParticipations = async (req, res, next) => {
   try {
     const participations = await prisma.activityParticipation.findMany();
     res.status(200).json({
@@ -103,14 +100,11 @@ export const getParticipations = async (req, res) => {
       data: participations,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get participations error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getParticipationById = async (req, res) => {
+export const getParticipationById = async (req, res, next) => {
   try {
     const { participationId } = req.params;
     const participation = await prisma.activityParticipation.findUnique({
@@ -128,14 +122,11 @@ export const getParticipationById = async (req, res) => {
       data: participation,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get participation by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getParticipationsByActivityId = async (req, res) => {
+export const getParticipationsByActivityId = async (req, res, next) => {
   try {
     const { activityId } = req.params;
     const participations = await prisma.activityParticipation.findMany({
@@ -147,14 +138,11 @@ export const getParticipationsByActivityId = async (req, res) => {
       data: participations,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get participations by activity ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getParticipationsByUserId = async (req, res) => {
+export const getParticipationsByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const participations = await prisma.activityParticipation.findMany({
@@ -166,14 +154,11 @@ export const getParticipationsByUserId = async (req, res) => {
       data: participations,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get participations by user ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateParticipationById = async (req, res) => {
+export const updateParticipationById = async (req, res, next) => {
   try {
     const { participationId } = req.params;
     const participationData = req.body;
@@ -200,14 +185,11 @@ export const updateParticipationById = async (req, res) => {
       data: updatedparticipation,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update participation status error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const deleteParticipation = async (req, res) => {
+export const deleteParticipation = async (req, res, next) => {
   try {
     const { participationId } = req.params;
     const participation = await prisma.activityParticipation.findUnique({
@@ -227,14 +209,11 @@ export const deleteParticipation = async (req, res) => {
       message: "participation deleted successfully",
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete participation error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const checkInParticipant = async (req, res) => {
+export const checkInParticipant = async (req, res, next) => {
   try {
     const { participationId } = req.params;
 
@@ -269,15 +248,11 @@ export const checkInParticipant = async (req, res) => {
       data: updatedParticipation,
     });
   } catch (err) {
-    console.error("Error in checkInParticipant function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Check in participant error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const markParticipantNoShow = async (req, res) => {
+export const markParticipantNoShow = async (req, res, next) => {
   try {
     const { activityId } = req.params;
 
@@ -297,10 +272,6 @@ export const markParticipantNoShow = async (req, res) => {
       data: updatedParticipations,
     });
   } catch (err) {
-    console.error("Error in markParticipantNoShow function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Mark participant no-show error: ${err.message}`,
-    });
+    return next(err);
   }
 };

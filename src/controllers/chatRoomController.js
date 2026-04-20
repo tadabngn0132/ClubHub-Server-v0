@@ -11,15 +11,9 @@ import {
     removeMemberFromChatRoomService,
 } from "../services/chatRoomService.js";
 
-const handleError = (res, err, context) => {
-    if (err.isOperational) {
-        return res.status(err.statusCode).json({ success: false, message: err.message });
-    }
-    console.error(`Unexpected error in ${context}:`, err);
-    res.status(500).json({ success: false, message: `Internal server error / ${context} error: ${err.message}` });
-}
+const handleError = (next, err) => next(err);
 
-export const createChatRoom = async (req, res) => {
+export const createChatRoom = async (req, res, next) => {
     try {
         const chatRoomData = req.body;
         const newChatRoom = await createChatRoomService(chatRoomData);
@@ -29,11 +23,11 @@ export const createChatRoom = async (req, res) => {
             data: newChatRoom
         });
     } catch (err) {
-        handleError(res, err, "createChatRoom");
+        handleError(next, err);
     }
 }
 
-export const getChatRooms = async (req, res) => {
+export const getChatRooms = async (req, res, next) => {
     try {
         const chatRooms = await getChatRoomsService();
         res.status(200).json({
@@ -42,11 +36,11 @@ export const getChatRooms = async (req, res) => {
             data: chatRooms
         });
     } catch (err) {
-        handleError(res, err, "getChatRooms");
+        handleError(next, err);
     }
 }
 
-export const getChatRoomById = async (req, res) => {
+export const getChatRoomById = async (req, res, next) => {
     try {
         const { id } = req.params;
         const chatRoom = await getChatRoomByIdService(id);
@@ -56,11 +50,11 @@ export const getChatRoomById = async (req, res) => {
             data: chatRoom
         });
     } catch (err) {
-        handleError(res, err, "getChatRoomById");
+        handleError(next, err);
     }
 }
 
-export const getChatRoomByUserId = async (req, res) => {
+export const getChatRoomByUserId = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const chatRooms = await getChatRoomByUserIdService(Number(userId));
@@ -70,11 +64,11 @@ export const getChatRoomByUserId = async (req, res) => {
             data: chatRooms
         });
     } catch (err) {
-        handleError(res, err, "getChatRoomByUserId");
+        handleError(next, err);
     }
 }
 
-export const updateChatRoom = async (req, res) => {
+export const updateChatRoom = async (req, res, next) => {
     try {
         const { id } = req.params;
         const chatRoomData = req.body;
@@ -85,11 +79,11 @@ export const updateChatRoom = async (req, res) => {
             data: updatedChatRoom
         });
     } catch (err) {
-        handleError(res, err, "updateChatRoom");
+        handleError(next, err);
     }
 }
 
-export const softDeleteChatRoom = async (req, res) => {
+export const softDeleteChatRoom = async (req, res, next) => {
     try {
         const { id } = req.params;
         const deletedChatRoom = await softDeleteChatRoomService(id);
@@ -99,11 +93,11 @@ export const softDeleteChatRoom = async (req, res) => {
             data: deletedChatRoom
         });
     } catch (err) {
-        handleError(res, err, "softDeleteChatRoom");
+        handleError(next, err);
     }
 }
 
-export const hardDeleteChatRoom = async (req, res) => {
+export const hardDeleteChatRoom = async (req, res, next) => {
     try {
         const { id } = req.params;
         const deletedChatRoom = await hardDeleteChatRoomService(id);
@@ -113,11 +107,11 @@ export const hardDeleteChatRoom = async (req, res) => {
             data: deletedChatRoom
         });
     } catch (err) {
-        handleError(res, err, "hardDeleteChatRoom");
+        handleError(next, err);
     }
 }
 
-export const getChatRoomMembers = async (req, res) => {
+export const getChatRoomMembers = async (req, res, next) => {
     try {
         const { id } = req.params;
         const members = await getChatRoomMembersService(id);
@@ -127,11 +121,11 @@ export const getChatRoomMembers = async (req, res) => {
             data: members
         });
     } catch (err) {
-        handleError(res, err, "getChatRoomMembers");
+        handleError(next, err);
     }
 }
 
-export const addMemberToChatRoom = async (req, res) => {
+export const addMemberToChatRoom = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { userId } = req.body;
@@ -142,11 +136,11 @@ export const addMemberToChatRoom = async (req, res) => {
             data: addedMember
         });
     } catch (err) {
-        handleError(res, err, "addMemberToChatRoom");
+        handleError(next, err);
     }
 }
 
-export const removeMemberFromChatRoom = async (req, res) => {
+export const removeMemberFromChatRoom = async (req, res, next) => {
     try {
         const { id, userId } = req.params;
         const removedMember = await removeMemberFromChatRoomService(id, Number(userId));
@@ -156,6 +150,6 @@ export const removeMemberFromChatRoom = async (req, res) => {
             data: removedMember
         });
     } catch (err) {
-        handleError(res, err, "removeMemberFromChatRoom");
+        handleError(next, err);
     }
 }

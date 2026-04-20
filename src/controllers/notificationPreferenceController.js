@@ -1,6 +1,6 @@
 import { prisma } from "../libs/prisma.js";
 
-export const getNotificationPreferencesByUserId = async (req, res) => {
+export const getNotificationPreferencesByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -16,15 +16,11 @@ export const getNotificationPreferencesByUserId = async (req, res) => {
       data: preferences,
     });
   } catch (err) {
-    console.error("Error retrieving notification preferences:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get notification preferences error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateNotificationPreferencesByUserId = async (req, res) => {
+export const updateNotificationPreferencesByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { emailNotifications, pushNotifications } = req.body;
@@ -49,10 +45,6 @@ export const updateNotificationPreferencesByUserId = async (req, res) => {
       data: updatedPreferences,
     });
   } catch (err) {
-    console.error("Error updating notification preferences:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update notification preferences error: ${err.message}`,
-    });
+    return next(err);
   }
 };

@@ -1,7 +1,7 @@
 import { prisma } from "../libs/prisma.js";
 import { getPositionLevel } from "../utils/positionUtil.js";
 
-export const createPosition = async (req, res) => {
+export const createPosition = async (req, res, next) => {
   try {
     const positionData = req.body;
 
@@ -20,15 +20,11 @@ export const createPosition = async (req, res) => {
       data: newPosition,
     });
   } catch (err) {
-    console.error("Error in createPosition function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create position error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getAllPositions = async (req, res) => {
+export const getAllPositions = async (req, res, next) => {
   try {
     const positions = await prisma.position.findMany();
 
@@ -38,15 +34,11 @@ export const getAllPositions = async (req, res) => {
       data: positions,
     });
   } catch (err) {
-    console.error("Error in getAllPositions function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get all positions error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getPositionById = async (req, res) => {
+export const getPositionById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -69,15 +61,11 @@ export const getPositionById = async (req, res) => {
       data: position,
     });
   } catch (err) {
-    console.error("Error in getPositionById function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get position by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updatePosition = async (req, res) => {
+export const updatePosition = async (req, res, next) => {
   try {
     const { id } = req.params;
     const positionData = req.body;
@@ -113,15 +101,11 @@ export const updatePosition = async (req, res) => {
       data: updatedPosition,
     });
   } catch (err) {
-    console.error("Error in updatePosition function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update position error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeletePosition = async (req, res) => {
+export const softDeletePosition = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -152,15 +136,11 @@ export const softDeletePosition = async (req, res) => {
       message: "Position soft deleted successfully",
     });
   } catch (err) {
-    console.error("Error in softDeletePosition function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Soft delete position error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeletePosition = async (req, res) => {
+export const hardDeletePosition = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -188,10 +168,6 @@ export const hardDeletePosition = async (req, res) => {
       message: "Position deleted successfully",
     });
   } catch (err) {
-    console.error("Error in hardDeletePosition function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Hard delete position error: ${err.message}`,
-    });
+    return next(err);
   }
 };

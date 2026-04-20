@@ -12,8 +12,10 @@ import { removeSensitiveUserData } from "../utils/userUtil.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
 import { createUserWithPositionsService } from "../services/userService.js";
 import { indexMember } from "../services/knowledgeIndexerService.js";
+import { logSystemAction } from "../services/auditLogService.js";
+import { AppError } from "../utils/AppError.js";
 
-export const createMemberApplication = async (req, res) => {
+export const createMemberApplication = async (req, res, next) => {
   try {
     const applicationData = req.body;
     const file = req.file;
@@ -31,11 +33,7 @@ export const createMemberApplication = async (req, res) => {
         applicationData.avatarPublicId = uploadResult.public_id;
         applicationData.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
       } catch (err) {
-        console.error("Error uploading image to Cloudinary:", err);
-        return res.status(500).json({
-          success: false,
-          message: `Failed to upload avatar image: ${err.message}`,
-        });
+        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
       }
     }
 
@@ -62,16 +60,17 @@ export const createMemberApplication = async (req, res) => {
       message: "Member application created successfully",
       data: application,
     });
-  } catch (err) {
-    console.error("Error in createMemberApplication function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create member application error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? null, "member_application.create", {
+      applicationId: application.id,
+      email: application.email,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const getMemberApplications = async (req, res) => {
+export const getMemberApplications = async (req, res, next) => {
   try {
     const applications = await prisma.memberApplication.findMany({
       include: {
@@ -91,15 +90,11 @@ export const getMemberApplications = async (req, res) => {
       data: applications,
     });
   } catch (err) {
-    console.error("Error in getMemberApplications function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get member applications error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getMemberApplicationById = async (req, res) => {
+export const getMemberApplicationById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
@@ -127,15 +122,11 @@ export const getMemberApplicationById = async (req, res) => {
       data: application,
     });
   } catch (err) {
-    console.error("Error in getMemberApplicationById function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get member application by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeleteMemberApplication = async (req, res) => {
+export const softDeleteMemberApplication = async (req, res, next) => {
   try {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
@@ -160,15 +151,11 @@ export const softDeleteMemberApplication = async (req, res) => {
       message: "Member application deleted successfully",
     });
   } catch (err) {
-    console.error("Error in softDeleteMemberApplication function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete member application error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeleteMemberApplication = async (req, res) => {
+export const hardDeleteMemberApplication = async (req, res, next) => {
   try {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
@@ -188,15 +175,11 @@ export const hardDeleteMemberApplication = async (req, res) => {
       message: "Member application deleted successfully",
     });
   } catch (err) {
-    console.error("Error in hardDeleteMemberApplication function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete member application error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateMemberApplicationCVReviewDetail = async (req, res) => {
+export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
     const cvReviewData = req.body;
@@ -226,19 +209,17 @@ export const updateMemberApplicationCVReviewDetail = async (req, res) => {
       message: "Member application CV review detail updated successfully",
       data: updatedApplication,
     });
-  } catch (err) {
-    console.error(
-      "Error in updateMemberApplicationCVReviewDetail function:",
-      err,
-    );
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update member application CV review detail error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? cvReviewData.cvReviewerId ?? null, "member_application.cv_review", {
+      applicationId: updatedApplication.id,
+      status: updatedApplication.cvStatus,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
+export const updateMemberApplicationFinalReviewDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
     const finalReviewData = req.body;
@@ -266,6 +247,8 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       });
     }
 
+    let createdUser = null;
+
     const finalApplicationResult = await prisma.$transaction(async (tx) => {
       const passedDeptIds = application.departmentApplications.map(
         (deptApp) => deptApp.departmentId,
@@ -288,7 +271,7 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
 
       const positionIds = memberPositions.map((pos) => pos.id);
 
-      const createdUser = await createUserWithPositionsService({
+      createdUser = await createUserWithPositionsService({
         ...finalReviewData,
         positionIds,
       });
@@ -321,21 +304,22 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res) => {
       data: finalApplicationResult,
     });
 
-    // Index the new member into the RAG system
-    indexMember(createdUser.id).catch((err) =>
-      console.error(
-        `[RAG] Indexing member ${createdUser.id} after application approval failed:`,
-        err,
-      ),
-    );
-  } catch (err) {
-    console.error(
-      "Error in updateMemberApplicationFinalReviewDetail function:",
-      err,
-    );
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update member application final review detail error: ${err.message}`,
+    void logSystemAction(req.userId ?? finalReviewData.finalReviewerId ?? null, "member_application.final_review", {
+      applicationId: finalApplicationResult.id,
+      status: finalApplicationResult.finalStatus,
+      createdUserId: createdUser?.id ?? null,
     });
+
+    // Index the new member into the RAG system
+    if (createdUser?.id) {
+      indexMember(createdUser.id).catch((err) =>
+        console.error(
+          `[RAG] Indexing member ${createdUser.id} after application approval failed:`,
+          err,
+        ),
+      );
+    }
+  } catch (err) {
+    return next(err);
   }
 };

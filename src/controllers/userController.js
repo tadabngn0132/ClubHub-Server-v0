@@ -15,6 +15,8 @@ import {
 } from "../services/userService.js";
 import { indexMember } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
+import { logSystemAction } from "../services/auditLogService.js";
+import { AppError } from "../utils/AppError.js";
 
 const normalizePositionIds = (raw) => {
   if (Array.isArray(raw)) return raw;
@@ -29,7 +31,7 @@ const normalizePositionIds = (raw) => {
   return [];
 };
 
-export const createUser = async (req, res) => {
+export const createUser = async (req, res, next) => {
   try {
     const payload = req.body;
     const file = req.file;
@@ -74,11 +76,7 @@ export const createUser = async (req, res) => {
         payload.avatarPublicId = uploadResult.public_id;
         payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
       } catch (err) {
-        console.error("Error uploading image to Cloudinary:", err);
-        return res.status(500).json({
-          success: false,
-          message: `Failed to upload avatar image: ${err.message}`,
-        });
+        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
       }
     }
 
@@ -101,20 +99,21 @@ export const createUser = async (req, res) => {
       data: necessaryUserData,
     });
 
+    void logSystemAction(createdUser.id, "user.create", {
+      targetUserId: createdUser.id,
+      email: createdUser.email,
+    });
+
     // Index member into the RAG system
     indexMember(createdUser.id).catch((err) =>
       console.error(`[RAG] Indexing member ${createdUser.id} failed:`, err),
     );
   } catch (err) {
-    console.log("Error in createUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getUser = async (req, res) => {
+export const getUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -140,15 +139,11 @@ export const getUser = async (req, res) => {
       data: necessaryUserData,
     });
   } catch (err) {
-    console.log("Error in getUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getUsers = async (req, res) => {
+export const getUsers = async (req, res, next) => {
   try {
     const storedUsers = await prisma.user.findMany({
       include: {
@@ -188,15 +183,11 @@ export const getUsers = async (req, res) => {
       data: users,
     });
   } catch (err) {
-    console.log("Error in getUsers function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get users error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateUser = async (req, res) => {
+export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const payload = req.body;
@@ -255,11 +246,7 @@ export const updateUser = async (req, res) => {
           );
         }
       } catch (err) {
-        console.error("Error uploading image to Cloudinary:", err);
-        return res.status(500).json({
-          success: false,
-          message: `Failed to upload avatar image: ${err.message}`,
-        });
+        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
       }
     }
 
@@ -276,20 +263,21 @@ export const updateUser = async (req, res) => {
       data: necessaryUserData,
     });
 
+    void logSystemAction(updatedUser.id, "user.update", {
+      targetUserId: updatedUser.id,
+      email: updatedUser.email,
+    });
+
     // Index member into the RAG system
     indexMember(updatedUser.id).catch((err) =>
       console.error(`[RAG] Indexing member ${updatedUser.id} failed:`, err),
     );
   } catch (err) {
-    console.log("Error in updateUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateUserProfile = async (req, res) => {
+export const updateUserProfile = async (req, res, next) => {
   const { id } = req.params;
   const payload = req.body;
   const file = req.file;
@@ -334,11 +322,7 @@ export const updateUserProfile = async (req, res) => {
           );
         }
       } catch (err) {
-        console.error("Error uploading image to Cloudinary:", err);
-        return res.status(500).json({
-          success: false,
-          message: `Failed to upload avatar image: ${err.message}`,
-        });
+        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
       }
     }
 
@@ -368,20 +352,21 @@ export const updateUserProfile = async (req, res) => {
       data: necessaryUserData,
     });
 
+    void logSystemAction(updatedUser.id, "user.update_profile", {
+      targetUserId: updatedUser.id,
+      email: updatedUser.email,
+    });
+
     // Index member into the RAG system
     indexMember(updatedUser.id).catch((err) =>
       console.error(`[RAG] Indexing member ${updatedUser.id} failed:`, err),
     );
   } catch (err) {
-    console.log("Error in updateUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeleteUser = async (req, res) => {
+export const softDeleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -416,6 +401,10 @@ export const softDeleteUser = async (req, res) => {
       data: necessaryUserData,
     });
 
+    void logSystemAction(req.userId ?? Number(id), "user.soft_delete", {
+      targetUserId: Number(id),
+    });
+
     // Xóa chunks liên quan đến user này trong hệ thống RAG
     deleteChunksBySource("member", deletedUser.id).catch((err) =>
       console.error(
@@ -424,15 +413,11 @@ export const softDeleteUser = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.log("Error in softDeleteUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Soft delete user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeleteUser = async (req, res) => {
+export const hardDeleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -476,6 +461,10 @@ export const hardDeleteUser = async (req, res) => {
       data: necessaryUserData,
     });
 
+    void logSystemAction(req.userId ?? Number(id), "user.hard_delete", {
+      targetUserId: Number(id),
+    });
+
     // Xóa chunks liên quan đến user này trong hệ thống RAG
     deleteChunksBySource("member", deletedUser.id).catch((err) =>
       console.error(
@@ -484,15 +473,11 @@ export const hardDeleteUser = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.log("Error in hardDeleteUser function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Hard delete user error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const unlockAccount = async (req, res) => {
+export const unlockAccount = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -523,16 +508,16 @@ export const unlockAccount = async (req, res) => {
       success: true,
       message: "Account unlocked successfully",
     });
-  } catch (err) {
-    console.log("Error in unlockAccount function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Unlock account error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? Number(id), "user.unlock_account", {
+      targetUserId: Number(id),
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const getUserDashboardStats = async (req, res) => {
+export const getUserDashboardStats = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -616,10 +601,6 @@ export const getUserDashboardStats = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error in getUserDashboardStats function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get user dashboard stats error: ${err.message}`,
-    });
+    return next(err);
   }
 };

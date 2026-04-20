@@ -39,6 +39,7 @@ import systemLogRoute from "./src/routes/systemLogRoute.js";
 import ragRoute from "./src/routes/ragRoute.js";
 import { reindexAll } from "./src/services/knowledgeIndexerService.js";
 import aiChatRoute from "./src/routes/aiChatRoute.js";
+import { errorHandler, notFoundHandler } from "./src/middlewares/errorHandlerMiddleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -95,6 +96,9 @@ app.use("/api/notification-preferences", notificationPreferenceRoute);
 app.use("/api/system-logs", systemLogRoute);
 app.use("/api/rag", ragRoute);
 app.use("/api/ai-chat", aiChatRoute);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 async function testDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;

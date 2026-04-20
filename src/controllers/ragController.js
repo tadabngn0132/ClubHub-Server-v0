@@ -9,7 +9,7 @@ const VALID_SOURCE_TYPES = ["activity", "task", "member", "department"];
  * POST /api/rag/query
  * Body: { query: string, sourceType?: 'activity'|'task'|'member'|'department' }
  */
-export const queryRAG = async (req, res) => {
+export const queryRAG = async (req, res, next) => {
   try {
     const { query, sourceType } = req.body;
 
@@ -40,11 +40,7 @@ export const queryRAG = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    console.error("[RAG] queryRAG error:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / RAG query error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
@@ -53,7 +49,7 @@ export const queryRAG = async (req, res) => {
  * ADMIN only — trigger full reindex thủ công.
  * Chạy async nền, không block response.
  */
-export const triggerReindex = async (req, res) => {
+export const triggerReindex = async (req, res, next) => {
   try {
     reindexAll().catch((err) =>
       console.error("[RAG] Background reindex failed:", err.message),
@@ -64,11 +60,7 @@ export const triggerReindex = async (req, res) => {
       message: "Reindex triggered successfully.",
     });
   } catch (err) {
-    console.error("[RAG] triggerReindex error:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / RAG reindex error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
@@ -76,7 +68,7 @@ export const triggerReindex = async (req, res) => {
  * GET /api/rag/health
  * Kiểm tra Chroma có bao nhiêu chunks — dùng để verify reindex thành công.
  */
-export const getRAGHealth = async (req, res) => {
+export const getRAGHealth = async (req, res, next) => {
   try {
     const total = await countChunks();
     res.status(200).json({
@@ -89,10 +81,6 @@ export const getRAGHealth = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("[RAG] getRAGHealth error:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / RAG health check error: ${err.message}`,
-    });
+    return next(err);
   }
 };

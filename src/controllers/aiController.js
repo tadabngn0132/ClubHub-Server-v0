@@ -1,6 +1,6 @@
 import { generateResponse } from '../services/aiService.js';
 
-export const generateAIResponse = async (req, res) => {
+export const generateAIResponse = async (req, res, next) => {
   try {
     const { prompt } = req.body;
     const aiResponse = await generateResponse(prompt);
@@ -11,10 +11,6 @@ export const generateAIResponse = async (req, res) => {
       data: { response: aiResponse },
     });
   } catch (error) {
-    console.error("Error generating AI response:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Generate AI Response Error: ${error.message}`,
-    });
+    return next(error);
   }
 };

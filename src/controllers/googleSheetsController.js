@@ -6,7 +6,7 @@ import {
   getEmbedableLinkForGoogleSheet,
 } from "../services/googleSheetsService.js";
 
-export const createGoogleSheetFromExistingTemplate = async (req, res) => {
+export const createGoogleSheetFromExistingTemplate = async (req, res, next) => {
   try {
     const { userId, templateId, newSheetTitle } = req.body;
     const result = await createGoogleSheetFromTemplate(
@@ -20,15 +20,11 @@ export const createGoogleSheetFromExistingTemplate = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error creating Google Sheet from template:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Create Google Sheet from Template Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const createNewGoogleSheetTemplate = async (req, res) => {
+export const createNewGoogleSheetTemplate = async (req, res, next) => {
   try {
     const { userId, title } = req.body;
     const result = await createGoogleSheetTemplate(userId, title);
@@ -38,15 +34,11 @@ export const createNewGoogleSheetTemplate = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error creating Google Sheet template:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Create Google Sheet Template Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const exportMemberListToSheet = async (req, res) => {
+export const exportMemberListToSheet = async (req, res, next) => {
   try {
     const { userId, sheetTitle, memberList } = req.body;
 
@@ -62,15 +54,11 @@ export const exportMemberListToSheet = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error exporting member list to Google Sheet:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Export Member List to Google Sheet Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const exportAttendanceReportToSheet = async (req, res) => {
+export const exportAttendanceReportToSheet = async (req, res, next) => {
   try {
     const { userId, sheetTitle, attendanceData } = req.body;
     const result = await exportAttendanceReportToGoogleSheet(
@@ -84,15 +72,11 @@ export const exportAttendanceReportToSheet = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error exporting attendance report to Google Sheet:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Export Attendance Report to Google Sheet Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const fetchGoogleSheetEmbedLink = async (req, res) => {
+export const fetchGoogleSheetEmbedLink = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { sheetId } = req.params;
@@ -105,10 +89,6 @@ export const fetchGoogleSheetEmbedLink = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error fetching embeddable link for Google Sheet:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Fetch Embeddable Link for Google Sheet Error: ${error.message}`,
-    });
+    return next(error);
   }
 };

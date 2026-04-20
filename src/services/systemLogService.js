@@ -23,7 +23,7 @@ export const getSystemLogsService = async (limit = 100, page = 1) => {
     take: limit,
     skip: offset,
     orderBy: {
-      timestamp: "desc",
+      createdAt: "desc",
     },
   });
   return logs;

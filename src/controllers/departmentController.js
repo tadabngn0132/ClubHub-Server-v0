@@ -2,7 +2,7 @@ import { prisma } from "../libs/prisma.js";
 import { indexDepartment } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
 
-export const createDepartment = async (req, res) => {
+export const createDepartment = async (req, res, next) => {
   try {
     const departmentData = req.body;
 
@@ -28,15 +28,11 @@ export const createDepartment = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.error("Error in createDepartment function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create department error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getAllDepartments = async (req, res) => {
+export const getAllDepartments = async (req, res, next) => {
   try {
     const departments = await prisma.department.findMany();
 
@@ -46,15 +42,11 @@ export const getAllDepartments = async (req, res) => {
       data: departments,
     });
   } catch (err) {
-    console.error("Error in getAllDepartments function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get all departments error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getDepartmentById = async (req, res) => {
+export const getDepartmentById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -77,15 +69,11 @@ export const getDepartmentById = async (req, res) => {
       data: department,
     });
   } catch (err) {
-    console.error("Error in getDepartmentById function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get department by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateDepartment = async (req, res) => {
+export const updateDepartment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const departmentData = req.body;
@@ -129,15 +117,11 @@ export const updateDepartment = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.error("Error in updateDepartment function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update department error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeleteDepartment = async (req, res) => {
+export const softDeleteDepartment = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -178,15 +162,11 @@ export const softDeleteDepartment = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.error("Error in softDeleteDepartment function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Soft delete department error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeleteDepartment = async (req, res) => {
+export const hardDeleteDepartment = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -222,10 +202,6 @@ export const hardDeleteDepartment = async (req, res) => {
       ),
     );
   } catch (err) {
-    console.error("Error in hardDeleteDepartment function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Hard delete department error: ${err.message}`,
-    });
+    return next(err);
   }
 };

@@ -24,6 +24,8 @@ import {
   userIncludeOptions,
 } from "../utils/userUtil.js";
 import { PROVIDER, ROLE, USER_STATUS } from "../utils/constant.js";
+import { logSystemAction } from "../services/auditLogService.js";
+import { BadRequestError } from "../utils/AppError.js";
 
 const GOOGLE_SCOPE_UPGRADE_ATTEMPTED = "googleScopeUpgradeAttempted";
 
@@ -59,7 +61,7 @@ const userRole = (user) => {
 };
 
 // Xử lý logic cơ chế cấp lại access token để duy trì đăng nhập
-export const refreshAccessToken = async (req, res) => {
+export const refreshAccessToken = async (req, res, next) => {
   const { refreshToken } = req.cookies;
 
   if (!refreshToken) {
@@ -110,16 +112,12 @@ export const refreshAccessToken = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Error in refreshAccessToken function", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Refresh token error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
 // Xử lý logic đăng nhập kiểm tra, xác thực email, mật khẩu, trả về thông tin và token
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password, rememberMe, rememberForDays } = req.body;
 
@@ -227,18 +225,19 @@ export const login = async (req, res) => {
         necessaryUserData,
       },
     });
-  } catch (err) {
-    console.log("Error in login function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Login error: ${err.message}`,
+
+    void logSystemAction(updatedUser.id, "auth.login", {
+      email: updatedUser.email,
+      rememberMe: shouldRemember,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
 // Tạm thời giữ lại trong quá trình dev để test authController
 // Khi nào test xong hoạt triển khai được phần CRUD cho user thì loại bỏ
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
     const userData = req.body;
 
@@ -292,15 +291,11 @@ export const register = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log("Error in register function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Register error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
   try {
     // TODO: Add logout logic here
     const { refreshToken } = req.cookies;
@@ -336,16 +331,16 @@ export const logout = async (req, res) => {
       success: true,
       message: "Logout successful",
     });
-  } catch (err) {
-    console.log("Error in logout function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Logout error: ${err.message}`,
+
+    void logSystemAction(req.userId ?? null, "auth.logout", {
+      hasRefreshToken: Boolean(refreshToken),
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -373,16 +368,16 @@ export const forgotPassword = async (req, res) => {
       message:
         "Password reset link sent. Please check your email to reset password",
     });
-  } catch (err) {
-    console.log("Error in forgotPassword function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Reset password error: ${err.message}`,
+
+    void logSystemAction(storedUser.id, "auth.forgot_password", {
+      email: storedUser.email,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res, next) => {
   try {
     const { newPassword } = req.body;
     const { token, email } = req.query;
@@ -413,28 +408,24 @@ export const resetPassword = async (req, res) => {
       },
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Reset password successfully",
     });
-  } catch (err) {
-    console.log("Error in resetPassword function", err);
 
+    void logSystemAction(storedUser.id, "auth.reset_password", {
+      email: storedUser.email,
+    });
+  } catch (err) {
     if (err.message === "Reset token is used or has expired") {
-      return res.status(400).json({
-        success: false,
-        message: err.message,
-      });
+      return next(new BadRequestError(err.message));
     }
 
-    return res.status(500).json({
-      success: false,
-      message: `Internal server error / Reset password error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const changePassword = async (req, res) => {
+export const changePassword = async (req, res, next) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
 
@@ -482,16 +473,16 @@ export const changePassword = async (req, res) => {
       success: true,
       message: "Password changed successfully",
     });
-  } catch (err) {
-    console.log("Error in changePassword function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Change password error: ${err.message}`,
+
+    void logSystemAction(storedUser.id, "auth.change_password", {
+      email: storedUser.email,
     });
+  } catch (err) {
+    return next(err);
   }
 };
 
-export const googleAuth = async (req, res) => {
+export const googleAuth = async (req, res, next) => {
   try {
     // TODO: Implement Google authentication logic
     const state = crypto.randomBytes(32).toString("hex");
@@ -508,15 +499,11 @@ export const googleAuth = async (req, res) => {
 
     res.redirect(authorizationUrl);
   } catch (err) {
-    console.log("Error in googleAuth function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Google auth error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const googleAuthCallback = async (req, res) => {
+export const googleAuthCallback = async (req, res, next) => {
   const { code, state, error } = req.query;
 
   try {
@@ -695,10 +682,6 @@ export const googleAuthCallback = async (req, res) => {
       `${frontendUrl}/auth/callback?success=true&user=${encodeURIComponent(JSON.stringify(necessaryUserData))}&accessToken=${accessToken}`,
     );
   } catch (err) {
-    console.log("Error in googleAuthCallback function", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Google auth callback error: ${err.message}`,
-    });
+    return next(err);
   }
 };

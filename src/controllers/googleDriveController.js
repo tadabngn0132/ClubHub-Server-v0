@@ -8,7 +8,7 @@ import {
   listGoogleSheetsTemplates,
 } from "../services/googleDriveService.js";
 
-export const createGoogleDriveFolder = async (req, res) => {
+export const createGoogleDriveFolder = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { folderName } = req.body;
@@ -19,15 +19,11 @@ export const createGoogleDriveFolder = async (req, res) => {
       data: folder,
     });
   } catch (error) {
-    console.error("Error creating Google Drive folder:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Create Google Drive Folder Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const listGoogleDriveFolders = async (req, res) => {
+export const listGoogleDriveFolders = async (req, res, next) => {
   try {
     const userId = req.userId;
     const folders = await listFolders(userId);
@@ -37,15 +33,11 @@ export const listGoogleDriveFolders = async (req, res) => {
       data: folders,
     });
   } catch (error) {
-    console.error("Error listing Google Drive folders:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / List Google Drive Folders Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const listGoogleDriveFilesInFolder = async (req, res) => {
+export const listGoogleDriveFilesInFolder = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { folderId } = req.params;
@@ -56,15 +48,11 @@ export const listGoogleDriveFilesInFolder = async (req, res) => {
       data: files,
     });
   } catch (error) {
-    console.error("Error listing files in Google Drive folder:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / List Files in Google Drive Folder Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const getGoogleDriveFileMetadata = async (req, res) => {
+export const getGoogleDriveFileMetadata = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { fileId } = req.params;
@@ -75,15 +63,11 @@ export const getGoogleDriveFileMetadata = async (req, res) => {
       data: metadata,
     });
   } catch (error) {
-    console.error("Error getting Google Drive file metadata:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Get Google Drive File Metadata Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const uploadFileToGoogleDriveFolder = async (req, res) => {
+export const uploadFileToGoogleDriveFolder = async (req, res, next) => {
   try {
     const userId = req.userId;
     const { folderId } = req.params;
@@ -101,15 +85,11 @@ export const uploadFileToGoogleDriveFolder = async (req, res) => {
       data: file,
     });
   } catch (error) {
-    console.error("Error uploading file to Google Drive folder:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / Upload File to Google Drive Folder Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const listGoogleDocsTemplatesInDrive = async (req, res) => {
+export const listGoogleDocsTemplatesInDrive = async (req, res, next) => {
   try {
     const userId = req.userId;
     const templates = await listGoogleDocsTemplates(userId);
@@ -119,15 +99,11 @@ export const listGoogleDocsTemplatesInDrive = async (req, res) => {
       data: templates,
     });
   } catch (error) {
-    console.error("Error listing Google Docs templates in Drive:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / List Google Docs Templates in Drive Error: ${error.message}`,
-    });
+    return next(error);
   }
 };
 
-export const listGoogleSheetsTemplatesInDrive = async (req, res) => {
+export const listGoogleSheetsTemplatesInDrive = async (req, res, next) => {
   try {
     const userId = req.userId;
     const templates = await listGoogleSheetsTemplates(userId);
@@ -137,10 +113,6 @@ export const listGoogleSheetsTemplatesInDrive = async (req, res) => {
       data: templates,
     });
   } catch (error) {
-    console.error("Error listing Google Sheets templates in Drive:", error);
-    res.status(500).json({
-      success: false,
-      message: `Internal Server Error / List Google Sheets Templates in Drive Error: ${error.message}`,
-    });
+    return next(error);
   }
 };

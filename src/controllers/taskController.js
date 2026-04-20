@@ -9,8 +9,10 @@ import { TASK_STATUS, ASSIGNEE_TASK_STATUS } from "../utils/constant.js";
 import { sendTaskAssignmentEmail } from "../utils/emailUtil.js";
 import { indexTask } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
+import { logSystemAction } from "../services/auditLogService.js";
+import { AppError, BadRequestError } from "../utils/AppError.js";
 
-export const createTask = async (req, res) => {
+export const createTask = async (req, res, next) => {
   try {
     const taskData = req.body;
 
@@ -69,26 +71,24 @@ export const createTask = async (req, res) => {
       data: createdTask,
     });
 
+    void logSystemAction(req.userId ?? createdTask.assignorId ?? null, "task.create", {
+      taskId: createdTask.id,
+      title: createdTask.title,
+    });
+
     // Index task mới tạo vào hệ thống RAG
     indexTask(createdTask.id).catch((err) =>
       console.error(`[RAG] Indexing task ${createdTask.id} failed:`, err),
     );
   } catch (err) {
     if (err.message === "No valid assignees found for the specified target") {
-      return res.status(400).json({
-        success: false,
-        message: err.message,
-      });
+      return next(new BadRequestError(err.message));
     }
-    console.error("Error in createTask function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Create task error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getTasks = async (req, res) => {
+export const getTasks = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -104,15 +104,11 @@ export const getTasks = async (req, res) => {
       data: tasks,
     });
   } catch (err) {
-    console.error("Error in getTasks function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get tasks error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getTaskById = async (req, res) => {
+export const getTaskById = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const task = await prisma.task.findUnique({
@@ -131,15 +127,11 @@ export const getTaskById = async (req, res) => {
       data: task,
     });
   } catch (err) {
-    console.error("Error in getTaskById function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get task by ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const updateTask = async (req, res) => {
+export const updateTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const taskData = req.body;
@@ -205,26 +197,24 @@ export const updateTask = async (req, res) => {
       data: updatedTask,
     });
 
+    void logSystemAction(req.userId ?? updatedTask.assignorId ?? null, "task.update", {
+      taskId: updatedTask.id,
+      title: updatedTask.title,
+    });
+
     // Index task mới tạo vào hệ thống RAG
     indexTask(updatedTask.id).catch((err) =>
       console.error(`[RAG] Indexing task ${updatedTask.id} failed:`, err),
     );
   } catch (err) {
     if (err.message === "No valid assignees found for the specified target") {
-      return res.status(400).json({
-        success: false,
-        message: err.message,
-      });
+      return next(new BadRequestError(err.message));
     }
-    console.error("Error in updateTask function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Update task error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const softDeleteTask = async (req, res) => {
+export const softDeleteTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const task = await prisma.task.update({
@@ -245,20 +235,21 @@ export const softDeleteTask = async (req, res) => {
       message: "Task deleted successfully",
     });
 
+    void logSystemAction(req.userId ?? task.assignorId ?? null, "task.soft_delete", {
+      taskId: task.id,
+      title: task.title,
+    });
+
     // Xóa chunks liên quan đến task này trong hệ thống RAG
     deleteChunksBySource("task", task.id).catch((err) =>
       console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
     );
   } catch (err) {
-    console.error("Error in softDeleteTask function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete task error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const hardDeleteTask = async (req, res) => {
+export const hardDeleteTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const task = await prisma.task.delete({
@@ -280,15 +271,11 @@ export const hardDeleteTask = async (req, res) => {
       console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
     );
   } catch (err) {
-    console.error("Error in hardDeleteTask function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Delete task error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const getTasksByUserId = async (req, res) => {
+export const getTasksByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const tasks = await prisma.assigneeTask.findMany({
@@ -303,15 +290,11 @@ export const getTasksByUserId = async (req, res) => {
       data: tasks,
     });
   } catch (err) {
-    console.error("Error in getTasksByUserId function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Get tasks by user ID error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const confirmTaskCompletion = async (req, res) => {
+export const confirmTaskCompletion = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const taskCfData = req.body;
@@ -344,11 +327,7 @@ export const confirmTaskCompletion = async (req, res) => {
         taskCfData.evidenceUrl = uploadResult.secure_url;
         taskCfData.evidencePublicId = uploadResult.public_id;
       } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({
-          success: false,
-          message: "Failed to upload evidence image",
-        });
+        throw new AppError("Failed to upload evidence image", 500);
       }
     }
 
@@ -369,15 +348,11 @@ export const confirmTaskCompletion = async (req, res) => {
       data: updatedAssigneeTask,
     });
   } catch (err) {
-    console.error("Error in confirmTaskCompletion function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Confirm task completion error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
-export const verifyTaskCompletion = async (req, res) => {
+export const verifyTaskCompletion = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const taskVerifyData = req.body;
@@ -411,10 +386,6 @@ export const verifyTaskCompletion = async (req, res) => {
       data: updatedAssigneeTask,
     });
   } catch (err) {
-    console.error("Error in verifyTaskCompletion function:", err);
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / Verify task completion error: ${err.message}`,
-    });
+    return next(err);
   }
 };

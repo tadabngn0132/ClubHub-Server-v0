@@ -59,7 +59,7 @@ const clearHistory = (userId) => {
  *     }
  *   }
  */
-export const unifiedChat = async (req, res) => {
+export const unifiedChat = async (req, res, next) => {
   try {
     const { query, sourceType } = req.body;
     const userId = req.userId;
@@ -121,11 +121,7 @@ export const unifiedChat = async (req, res) => {
       data: responseData,
     });
   } catch (err) {
-    console.error("[UnifiedChat] Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: `Internal server error / AI Chat error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
@@ -133,15 +129,12 @@ export const unifiedChat = async (req, res) => {
  * GET /api/ai-chat/history
  * Lấy lịch sử chat của user hiện tại
  */
-export const getChatHistory = async (req, res) => {
+export const getChatHistory = async (req, res, next) => {
   try {
     const history = getHistory(req.userId);
     res.json({ success: true, data: history });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / AI Chat error: ${err.message}`,
-    });
+    return next(err);
   }
 };
 
@@ -149,14 +142,11 @@ export const getChatHistory = async (req, res) => {
  * DELETE /api/ai-chat/history
  * Xóa lịch sử chat của user hiện tại
  */
-export const clearChatHistory = async (req, res) => {
+export const clearChatHistory = async (req, res, next) => {
   try {
     clearHistory(req.userId);
     res.json({ success: true, message: "Đã xóa lịch sử chat" });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: `Internal server error / AI Chat error: ${err.message}`,
-    });
+    return next(err);
   }
 };
