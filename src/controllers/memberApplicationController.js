@@ -7,7 +7,7 @@ import {
   INTERVIEW_STATUS,
   AVATAR_PROVIDERS,
 } from "../utils/constant.js";
-import { cloudinary } from "../libs/cloudinary.js";
+import cloudinary from "../libs/cloudinary.js";
 import { removeSensitiveUserData } from "../utils/userUtil.js";
 import { sendWelcomeEmail } from "../utils/emailUtil.js";
 import { createUserWithPositionsService } from "../services/userService.js";

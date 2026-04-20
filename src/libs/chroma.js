@@ -19,6 +19,7 @@ export const getCollection = async () => {
 
   _collection = await client.getOrCreateCollection({
     name: COLLECTION_NAME,
+    embeddingFunction: null,
     metadata: {
       description: "ClubHub RAG knowledge base",
       "hnsw:space": "cosine", // cosine similarity
