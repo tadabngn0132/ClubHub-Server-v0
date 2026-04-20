@@ -106,6 +106,19 @@ async function startServer() {
     await testDatabaseConnection();
     await ensureClubStructure();
     startTaskReminderJob();
+
+    // Ping Chroma mỗi 10 phút để tránh spin down
+    if (process.env.NODE_ENV === "production" && process.env.CHROMA_URL) {
+      setInterval(async () => {
+        try {
+          await fetch(`${process.env.CHROMA_URL}/api/v2/heartbeat`);
+          console.log("[Chroma] Ping OK");
+        } catch {
+          console.warn("[Chroma] Ping failed");
+        }
+      }, 10 * 60 * 1000); // 10 phút
+    }
+
     reindexAll().catch((err) =>
       console.error("[RAG] Initial reindex failed:", err.message),
     );
