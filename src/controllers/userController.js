@@ -8,7 +8,7 @@ import {
 } from "../utils/constant.js";
 import { userIncludeOptions } from "../utils/userUtil.js";
 import cloudinary from "../libs/cloudinary.js";
-import { sendWelcomeEmail } from "../utils/emailUtil.js";
+import { sendWelcomeEmail, sendAccountUnlockedEmail } from "../utils/emailUtil.js";
 import {
   createUserWithPositionsService,
   updateUserWithPositionsService,
@@ -16,6 +16,7 @@ import {
 import { indexMember } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
 import { logSystemAction } from "../services/auditLogService.js";
+import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError } from "../utils/AppError.js";
 
 const normalizePositionIds = (raw) => {
@@ -102,6 +103,12 @@ export const createUser = async (req, res, next) => {
     void logSystemAction(createdUser.id, "user.create", {
       targetUserId: createdUser.id,
       email: createdUser.email,
+    });
+
+    void createNotificationSafe({
+      userId: createdUser.id,
+      type: "SYSTEM",
+      message: "Your account has been created successfully.",
     });
 
     // Index member into the RAG system
@@ -512,6 +519,17 @@ export const unlockAccount = async (req, res, next) => {
     void logSystemAction(req.userId ?? Number(id), "user.unlock_account", {
       targetUserId: Number(id),
     });
+
+    void createNotificationSafe({
+      userId: Number(id),
+      type: "SYSTEM",
+      message: "Your account has been unlocked. You can sign in now.",
+    });
+
+    await sendAccountUnlockedEmail(
+      storedUser.email,
+      storedUser.fullname,
+    ).catch(console.error);
   } catch (err) {
     return next(err);
   }

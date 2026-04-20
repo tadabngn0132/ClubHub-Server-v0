@@ -6,10 +6,20 @@ import {
   resolveAssigneeIds,
 } from "../utils/taskUtil.js";
 import { TASK_STATUS, ASSIGNEE_TASK_STATUS } from "../utils/constant.js";
-import { sendTaskAssignmentEmail } from "../utils/emailUtil.js";
+import cloudinary from "../libs/cloudinary.js";
+import {
+  sendTaskAssignmentEmail,
+  sendTaskUpdatedEmail,
+  sendTaskCancelledEmail,
+  sendTaskCompletionReviewEmail,
+} from "../utils/emailUtil.js";
 import { indexTask } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
 import { logSystemAction } from "../services/auditLogService.js";
+import {
+  createNotificationSafe,
+  createNotificationsForUsersSafe,
+} from "../services/notificationService.js";
 import { AppError, BadRequestError } from "../utils/AppError.js";
 
 export const createTask = async (req, res, next) => {
@@ -75,6 +85,14 @@ export const createTask = async (req, res, next) => {
       taskId: createdTask.id,
       title: createdTask.title,
     });
+
+    void createNotificationsForUsersSafe(
+      createdTask.assignees.map((assignee) => assignee.assigneeId),
+      {
+        type: "TASK",
+        message: `You have been assigned a new task: ${createdTask.title}`,
+      },
+    );
 
     // Index task mới tạo vào hệ thống RAG
     indexTask(createdTask.id).catch((err) =>
@@ -202,6 +220,23 @@ export const updateTask = async (req, res, next) => {
       title: updatedTask.title,
     });
 
+    void createNotificationsForUsersSafe(
+      updatedTask.assignees.map((assignee) => assignee.assigneeId),
+      {
+        type: "TASK",
+        message: `Task has been updated: ${updatedTask.title}`,
+      },
+    );
+
+    for (const assignee of updatedTask.assignees) {
+      await sendTaskUpdatedEmail(
+        assignee.user.email,
+        assignee.user.fullname,
+        updatedTask.title,
+        updatedTask.assignedBy?.fullname ?? "Ad/Mod",
+      ).catch(console.error);
+    }
+
     // Index task mới tạo vào hệ thống RAG
     indexTask(updatedTask.id).catch((err) =>
       console.error(`[RAG] Indexing task ${updatedTask.id} failed:`, err),
@@ -240,6 +275,34 @@ export const softDeleteTask = async (req, res, next) => {
       title: task.title,
     });
 
+    const assignees = await prisma.assigneeTask.findMany({
+      where: { taskId: task.id },
+      include: {
+        user: {
+          select: {
+            email: true,
+            fullname: true,
+          },
+        },
+      },
+    });
+
+    void createNotificationsForUsersSafe(
+      assignees.map((item) => item.assigneeId),
+      {
+        type: "TASK",
+        message: `Task has been cancelled: ${task.title}`,
+      },
+    );
+
+    for (const assignee of assignees) {
+      await sendTaskCancelledEmail(
+        assignee.user.email,
+        assignee.user.fullname,
+        task.title,
+      ).catch(console.error);
+    }
+
     // Xóa chunks liên quan đến task này trong hệ thống RAG
     deleteChunksBySource("task", task.id).catch((err) =>
       console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
@@ -252,6 +315,12 @@ export const softDeleteTask = async (req, res, next) => {
 export const hardDeleteTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
+
+    const assignees = await prisma.assigneeTask.findMany({
+      where: { taskId: Number(taskId) },
+      select: { assigneeId: true },
+    });
+
     const task = await prisma.task.delete({
       where: { id: Number(taskId) },
     });
@@ -265,6 +334,14 @@ export const hardDeleteTask = async (req, res, next) => {
       success: true,
       message: "Task deleted successfully",
     });
+
+    void createNotificationsForUsersSafe(
+      assignees.map((item) => item.assigneeId),
+      {
+        type: "TASK",
+        message: `Task has been removed: ${task.title}`,
+      },
+    );
 
     // Xóa chunks liên quan đến task này trong hệ thống RAG
     deleteChunksBySource("task", task.id).catch((err) =>
@@ -361,6 +438,19 @@ export const verifyTaskCompletion = async (req, res, next) => {
       where: {
         taskId: Number(taskId),
       },
+      include: {
+        user: {
+          select: {
+            email: true,
+            fullname: true,
+          },
+        },
+        task: {
+          select: {
+            title: true,
+          },
+        },
+      },
     });
 
     if (!assigneeTask) {
@@ -385,6 +475,22 @@ export const verifyTaskCompletion = async (req, res, next) => {
       message: "Task completion verified successfully",
       data: updatedAssigneeTask,
     });
+
+    void createNotificationSafe({
+      userId: assigneeTask.assigneeId,
+      type: "TASK",
+      message: taskVerifyData.isVerified
+        ? `Your task completion has been approved (Task #${taskId}).`
+        : `Your task completion needs revision (Task #${taskId}).`,
+    });
+
+    await sendTaskCompletionReviewEmail(
+      assigneeTask.user.email,
+      assigneeTask.user.fullname,
+      assigneeTask.task?.title ?? `Task #${taskId}`,
+      Boolean(taskVerifyData.isVerified),
+      taskVerifyData.reviewerComments || "",
+    ).catch(console.error);
   } catch (err) {
     return next(err);
   }

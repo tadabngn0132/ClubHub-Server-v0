@@ -413,6 +413,10 @@ export const resetPassword = async (req, res, next) => {
       message: "Reset password successfully",
     });
 
+    await sendChangePasswordConfirmationEmail(storedUser.email).catch(
+      console.error,
+    );
+
     void logSystemAction(storedUser.id, "auth.reset_password", {
       email: storedUser.email,
     });

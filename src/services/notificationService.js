@@ -23,6 +23,35 @@ export const createNotificationService = async (notificationData) => {
   return notification;
 };
 
+export const createNotificationSafe = async (notificationData) => {
+  try {
+    return await createNotificationService(notificationData);
+  } catch (error) {
+    console.error("[Notification] Failed to create notification:", error);
+    return null;
+  }
+};
+
+export const createNotificationsForUsersSafe = async (
+  userIds,
+  notificationData,
+) => {
+  const uniqueUserIds = [...new Set((userIds || []).map(Number).filter(Boolean))];
+
+  if (uniqueUserIds.length === 0) {
+    return [];
+  }
+
+  const tasks = uniqueUserIds.map((userId) =>
+    createNotificationSafe({
+      userId,
+      ...notificationData,
+    }),
+  );
+
+  return Promise.all(tasks);
+};
+
 export const getNotificationsService = async () => {
   return prisma.notification.findMany({
     where: { isDeleted: false },
@@ -98,7 +127,7 @@ export const markAllNotificationsAsReadService = async (userId) => {
   });
 
   return result;
-}
+};
 
 export const softDeleteNotificationService = async (notificationId) => {
   const notification = await prisma.notification.findUnique({

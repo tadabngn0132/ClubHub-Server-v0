@@ -9,10 +9,14 @@ import {
 } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
 import { removeSensitiveUserData } from "../utils/userUtil.js";
-import { sendWelcomeEmail } from "../utils/emailUtil.js";
+import {
+  sendWelcomeEmail,
+  sendApplicationReviewResultEmail,
+} from "../utils/emailUtil.js";
 import { createUserWithPositionsService } from "../services/userService.js";
 import { indexMember } from "../services/knowledgeIndexerService.js";
 import { logSystemAction } from "../services/auditLogService.js";
+import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError } from "../utils/AppError.js";
 
 export const createMemberApplication = async (req, res, next) => {
@@ -214,6 +218,25 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
       applicationId: updatedApplication.id,
       status: updatedApplication.cvStatus,
     });
+
+    if (
+      updatedApplication.cvStatus === CV_STATUS.PASSED &&
+      updatedApplication.finalReviewerId
+    ) {
+      void createNotificationSafe({
+        userId: updatedApplication.finalReviewerId,
+        type: "SYSTEM",
+        message: `A member application is ready for final review (Application #${updatedApplication.id}).`,
+      });
+    }
+
+    await sendApplicationReviewResultEmail(
+      updatedApplication.email,
+      updatedApplication.fullname,
+      "CV",
+      updatedApplication.cvStatus,
+      updatedApplication.cvReviewComment || "",
+    ).catch(console.error);
   } catch (err) {
     return next(err);
   }
@@ -309,6 +332,25 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res, next) =
       status: finalApplicationResult.finalStatus,
       createdUserId: createdUser?.id ?? null,
     });
+
+    if (createdUser?.id) {
+      void createNotificationSafe({
+        userId: createdUser.id,
+        type: "SYSTEM",
+        message:
+          finalApplicationResult.finalStatus === FINAL_STATUS.PASSED
+            ? "Congratulations! Your membership application has been approved."
+            : "Your membership application has been reviewed.",
+      });
+    }
+
+    await sendApplicationReviewResultEmail(
+      application.email,
+      application.fullname,
+      "FINAL",
+      finalApplicationResult.finalStatus,
+      finalApplicationResult.finalReviewComment || "",
+    ).catch(console.error);
 
     // Index the new member into the RAG system
     if (createdUser?.id) {

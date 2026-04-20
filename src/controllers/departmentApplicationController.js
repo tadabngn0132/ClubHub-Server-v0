@@ -3,6 +3,7 @@ import { getInterviewStatus } from "../utils/applicationUtil.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError, NotFoundError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { sendDepartmentInterviewResultEmail } from "../utils/emailUtil.js";
 
 // TODO: Investigate if we need to handle department application actions in a transaction with member application actions to handle root department when user applies to multiple departments and ensure data consistency
 
@@ -128,6 +129,19 @@ export const updateDepartmentApplication = asyncHandler(async (req, res) => {
         interviewerId: updateData.interviewerId,
         interviewComment: updateData.interviewComment,
       },
+      include: {
+        memberApplication: {
+          select: {
+            email: true,
+            fullname: true,
+          },
+        },
+        department: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
 
     res.status(200).json({
@@ -140,6 +154,14 @@ export const updateDepartmentApplication = asyncHandler(async (req, res) => {
       departmentApplicationId: updatedDeptApplication.id,
       interviewStatus: updatedDeptApplication.interviewStatus,
     });
+
+    await sendDepartmentInterviewResultEmail(
+      updatedDeptApplication.memberApplication.email,
+      updatedDeptApplication.memberApplication.fullname,
+      updatedDeptApplication.department.name,
+      updatedDeptApplication.interviewStatus,
+      updatedDeptApplication.interviewComment || "",
+    ).catch(console.error);
 });
 
 export const softDeleteDepartmentApplication = asyncHandler(async (req, res) => {
