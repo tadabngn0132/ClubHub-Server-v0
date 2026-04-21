@@ -23,9 +23,10 @@ import {
   userIncludeSystemRoleOptions,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import { PROVIDER, ROLE, USER_STATUS } from "../utils/constant.js";
+import { PROVIDER, ROLE, USER_STATUS, AVATAR_PROVIDERS } from "../utils/constant.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError } from "../utils/AppError.js";
+import store from "../../../ClubHub-v0/src/store/index.js";
 
 const GOOGLE_SCOPE_UPGRADE_ATTEMPTED = "googleScopeUpgradeAttempted";
 
@@ -598,6 +599,8 @@ export const googleAuthCallback = async (req, res, next) => {
             firstName: userInfo.given_name,
             lastName: userInfo.family_name,
             isEmailVerified: userInfo.verified_email,
+            avatarUrl: storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY ? userInfo.avatar_url : storedUser.avatarUrl,
+            avatarProvider: storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY ? AVATAR_PROVIDERS.GOOGLE : storedUser.avatarProvider,
             lastLogin: new Date(),
           },
           include: userIncludeSystemRoleOptions,
