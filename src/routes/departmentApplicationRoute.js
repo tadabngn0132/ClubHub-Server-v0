@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createDepartmentApplication,
   getDepartmentApplicationsByMemberApplicationId,
   getDepartmentApplicationById,
   getDepartmentApplications,
@@ -17,13 +16,6 @@ import {
 
 const router = express.Router();
 
-router.post(
-  "/",
-  verifyAccessToken,
-  requirePermission("departmentApplications", "create"),
-  validateDepartmentApplicationCreation,
-  createDepartmentApplication,
-);
 router.get(
   "/",
   verifyAccessToken,
