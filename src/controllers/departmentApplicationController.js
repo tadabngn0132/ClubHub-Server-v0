@@ -2,55 +2,9 @@ import { prisma } from "../libs/prisma.js";
 import { getInterviewStatus } from "../utils/applicationUtil.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError, NotFoundError } from "../utils/AppError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendDepartmentInterviewResultEmail } from "../utils/emailUtil.js";
 
-// TODO: Investigate if we need to handle department application actions in a transaction with member application actions to handle root department when user applies to multiple departments and ensure data consistency
-
-export const createDepartmentApplication = asyncHandler(async (req, res) => {
-    const deptApplicationData = req.body;
-
-    const existingApplication = await prisma.departmentMemberApplication.findFirst({
-      where: {
-        memberApplicationId: deptApplicationData.memberApplicationId,
-        departmentId: deptApplicationData.departmentId,
-      },
-    });
-
-    if (existingApplication) {
-      throw new BadRequestError("You have already applied to this department.");
-    }
-
-    const newDeptApplication = await prisma.departmentMemberApplication.create({
-      data: {
-        memberApplicationId: deptApplicationData.memberApplicationId,
-        departmentId: deptApplicationData.departmentId,
-        interviewStatus: getInterviewStatus(
-          deptApplicationData.interviewStatus.trim().toLowerCase(),
-        ),
-        priority: deptApplicationData.priority,
-        interviewedAt: deptApplicationData.interviewedAt
-          ? new Date(deptApplicationData.interviewedAt)
-          : null,
-        interviewerId: deptApplicationData.interviewerId,
-        interviewComment: deptApplicationData.interviewComment,
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Department application created successfully.",
-      data: newDeptApplication,
-    });
-
-    void logSystemAction(req.userId ?? newDeptApplication.interviewerId ?? null, "department_application.create", {
-      departmentApplicationId: newDeptApplication.id,
-      memberApplicationId: newDeptApplication.memberApplicationId,
-      departmentId: newDeptApplication.departmentId,
-    });
-});
-
-export const getDepartmentApplicationsByMemberApplicationId = asyncHandler(async (
+export const getDepartmentApplicationsByMemberApplicationId = async (
   req,
   res,
 ) => {
@@ -71,9 +25,9 @@ export const getDepartmentApplicationsByMemberApplicationId = asyncHandler(async
       message: "Department applications retrieved successfully.",
       data: deptApplications,
     });
-});
+};
 
-export const getDepartmentApplications = asyncHandler(async (req, res) => {
+export const getDepartmentApplications = async (req, res) => {
     const deptApplications = await prisma.departmentMemberApplication.findMany({
       include: {
         department: true,
@@ -85,9 +39,9 @@ export const getDepartmentApplications = asyncHandler(async (req, res) => {
       message: "All department applications retrieved successfully.",
       data: deptApplications,
     });
-});
+};
 
-export const getDepartmentApplicationById = asyncHandler(async (req, res) => {
+export const getDepartmentApplicationById = async (req, res) => {
     const { id } = req.params;
     const deptApplication = await prisma.departmentMemberApplication.findUnique({
       where: {
@@ -108,9 +62,9 @@ export const getDepartmentApplicationById = asyncHandler(async (req, res) => {
       message: "Department application retrieved successfully.",
       data: deptApplication,
     });
-});
+};
 
-export const updateDepartmentApplication = asyncHandler(async (req, res) => {
+export const updateDepartmentApplication = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
@@ -162,9 +116,9 @@ export const updateDepartmentApplication = asyncHandler(async (req, res) => {
       updatedDeptApplication.interviewStatus,
       updatedDeptApplication.interviewComment || "",
     ).catch(console.error);
-});
+};
 
-export const softDeleteDepartmentApplication = asyncHandler(async (req, res) => {
+export const softDeleteDepartmentApplication = async (req, res) => {
     const { id } = req.params;
 
     const deletedDeptApplication = await prisma.departmentMemberApplication.update({
@@ -187,9 +141,9 @@ export const softDeleteDepartmentApplication = asyncHandler(async (req, res) => 
     void logSystemAction(req.userId ?? deletedDeptApplication.interviewerId ?? null, "department_application.soft_delete", {
       departmentApplicationId: deletedDeptApplication.id,
     });
-});
+};
 
-export const hardDeleteDepartmentApplication = asyncHandler(async (req, res) => {
+export const hardDeleteDepartmentApplication = async (req, res) => {
     const { id } = req.params;
 
     await prisma.departmentMemberApplication.delete({
@@ -206,4 +160,4 @@ export const hardDeleteDepartmentApplication = asyncHandler(async (req, res) => 
     void logSystemAction(req.userId ?? null, "department_application.hard_delete", {
       departmentApplicationId: Number(id),
     });
-});
+};

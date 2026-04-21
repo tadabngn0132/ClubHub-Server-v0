@@ -19,6 +19,55 @@ import { logSystemAction } from "../services/auditLogService.js";
 import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError } from "../utils/AppError.js";
 
+const memberApplicationIncludeOptions = {
+  cvReviewer: {
+    select: {
+      id: true,
+      email: true,
+      fullname: true,
+    },
+  },
+  finalReviewer: {
+    select: {
+      id: true,
+      email: true,
+      fullname: true,
+    },
+  },
+  departmentApplications: {
+    where: {
+      isDeleted: false,
+    },
+    orderBy: {
+      priority: "asc",
+    },
+    select: {
+      id: true,
+      departmentId: true,
+      interviewStatus: true,
+      priority: true,
+      interviewedAt: true,
+      interviewerId: true,
+      interviewComment: true,
+      department: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+        },
+      },
+      interviewer: {
+        select: {
+          id: true,
+          email: true,
+          fullname: true,
+        },
+      },
+    },
+  },
+};
+
 export const createMemberApplication = async (req, res, next) => {
   try {
     const applicationData = req.body;
@@ -41,33 +90,49 @@ export const createMemberApplication = async (req, res, next) => {
       }
     }
 
-    const application = await prisma.memberApplication.create({
-      data: {
-        fullname: applicationData.fullname,
-        email: applicationData.email,
-        phoneNumber: applicationData.phoneNumber,
-        dateOfBirth: new Date(applicationData.dateOfBirth),
-        gender: applicationData.gender,
-        major: applicationData.major,
-        studentId: applicationData.studentId,
-        avatarUrl: applicationData.avatarUrl,
-        avatarPublicId: applicationData.avatarPublicId,
-        avatarProvider: applicationData.avatarProvider,
-        bio: applicationData.bio,
-        appliedAt: new Date(),
-        cvStatus: CV_STATUS.PENDING,
-        finalStatus: FINAL_STATUS.PENDING,
-      },
+    const newApplication = await prisma.$transaction(async (tx) => {
+      const application = await tx.memberApplication.create({
+        data: {
+          fullname: applicationData.fullname,
+          email: applicationData.email,
+          phoneNumber: applicationData.phoneNumber,
+          dateOfBirth: new Date(applicationData.dateOfBirth),
+          gender: applicationData.gender,
+          major: applicationData.major,
+          studentId: applicationData.studentId,
+          avatarUrl: applicationData.avatarUrl,
+          avatarPublicId: applicationData.avatarPublicId,
+          avatarProvider: applicationData.avatarProvider,
+          bio: applicationData.bio,
+          appliedAt: new Date(),
+          cvStatus: CV_STATUS.PENDING,
+          finalStatus: FINAL_STATUS.PENDING,
+        },
+      });
+
+      await tx.departmentMemberApplication.create({
+        data: applicationData.departmentIds.map((deptId, index) => ({
+          memberApplicationId: application.id,
+          departmentId: deptId,
+          interviewStatus: INTERVIEW_STATUS.PENDING,
+        })),
+      });
+
+      return await tx.memberApplication.findUnique({
+        where: { id: application.id },
+        include: memberApplicationIncludeOptions,
+      });
     });
+
     res.status(201).json({
       success: true,
       message: "Member application created successfully",
-      data: application,
+      data: newApplication,
     });
 
     void logSystemAction(req.userId ?? null, "member_application.create", {
-      applicationId: application.id,
-      email: application.email,
+      applicationId: newApplication.id,
+      email: newApplication.email,
     });
   } catch (err) {
     return next(err);
@@ -77,16 +142,7 @@ export const createMemberApplication = async (req, res, next) => {
 export const getMemberApplications = async (req, res, next) => {
   try {
     const applications = await prisma.memberApplication.findMany({
-      include: {
-        cvReviewer: true,
-        finalReviewer: true,
-        departmentApplications: {
-          include: {
-            department: true,
-            interviewer: true,
-          },
-        },
-      },
+      include: memberApplicationIncludeOptions,
     });
     res.status(200).json({
       success: true,
@@ -103,16 +159,7 @@ export const getMemberApplicationById = async (req, res, next) => {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
-      include: {
-        cvReviewer: true,
-        finalReviewer: true,
-        departmentApplications: {
-          include: {
-            department: true,
-            interviewer: true,
-          },
-        },
-      },
+      include: memberApplicationIncludeOptions,
     });
     if (!application) {
       return res.status(404).json({
@@ -135,6 +182,7 @@ export const softDeleteMemberApplication = async (req, res, next) => {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
+      include: memberApplicationIncludeOptions,
     });
     if (!application) {
       return res.status(404).json({
@@ -164,6 +212,7 @@ export const hardDeleteMemberApplication = async (req, res, next) => {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
+      include: memberApplicationIncludeOptions,
     });
     if (!application) {
       return res.status(404).json({
@@ -189,6 +238,7 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
     const cvReviewData = req.body;
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
+      include: memberApplicationIncludeOptions,
     });
     if (!application) {
       return res.status(404).json({
@@ -249,18 +299,7 @@ export const updateMemberApplicationFinalReviewDetail = async (req, res, next) =
 
     const application = await prisma.memberApplication.findUnique({
       where: { id: Number(id) },
-      include: {
-        departmentApplications: {
-          where: {
-            interviewStatus: INTERVIEW_STATUS.PASSED,
-            isDeleted: false,
-          },
-          select: {
-            departmentId: true,
-            priority: true,
-          },
-        },
-      },
+      include: memberApplicationIncludeOptions,
     });
 
     if (!application) {
