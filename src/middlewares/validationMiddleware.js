@@ -205,8 +205,6 @@ export const validateUserCreation = (req, res, next) => {
   if (!USER_STATUS_VALUES.includes(getNormalized(payload.status))) {
     return failValidation(res, "Status must be ACTIVE or INACTIVE");
   }
-  if (!isPositiveIntegerLike(payload.positionId))
-    return failValidation(res, "Position ID is required");
   if (
     !isEmpty(payload.phoneNumber) &&
     !PHONE_NUMBER_REGEX.test(String(payload.phoneNumber).trim())
@@ -242,8 +240,6 @@ export const validateUserUpdate = (req, res, next) => {
   if (!USER_STATUS_VALUES.includes(getNormalized(payload.status))) {
     return failValidation(res, "Status must be ACTIVE or INACTIVE");
   }
-  if (!isPositiveIntegerLike(payload.positionId))
-    return failValidation(res, "Position ID is required");
   if (
     !isEmpty(payload.phoneNumber) &&
     !PHONE_NUMBER_REGEX.test(String(payload.phoneNumber).trim())

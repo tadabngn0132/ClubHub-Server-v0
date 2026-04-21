@@ -2,8 +2,13 @@ import { ChromaClient } from "chromadb";
 
 // ChromaClient kết nối HTTP server (production)
 // hoặc fallback in-memory nếu không có server
+const chromaUrl = process.env.CHROMA_URL || "http://localhost:8000";
+const parsedChromaUrl = new URL(chromaUrl);
+
 const client = new ChromaClient({
-  path: process.env.CHROMA_URL || "http://localhost:8000",
+  host: parsedChromaUrl.hostname,
+  port: Number(parsedChromaUrl.port || (parsedChromaUrl.protocol === "https:" ? 443 : 80)),
+  ssl: parsedChromaUrl.protocol === "https:",
 });
 
 export const COLLECTION_NAME = "clubhub_knowledge";
