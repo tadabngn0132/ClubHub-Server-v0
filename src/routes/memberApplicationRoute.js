@@ -6,7 +6,9 @@ import {
   softDeleteMemberApplication,
   hardDeleteMemberApplication,
   updateMemberApplicationCVReviewDetail,
+  updateMemberApplicationDepartmentInterviewDetail,
   updateMemberApplicationFinalReviewDetail,
+  withdrawMemberApplication,
 } from "../controllers/memberApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -58,11 +60,23 @@ router.put(
   updateMemberApplicationCVReviewDetail,
 );
 router.put(
+  "/:id/department-interview",
+  verifyAccessToken,
+  requirePermission("memberApplications", "update"),
+  updateMemberApplicationDepartmentInterviewDetail,
+);
+router.put(
   "/:id/final-review",
   verifyAccessToken,
   requirePermission("memberApplications", "update"),
   validateMemberApplicationFinalReviewUpdate,
   updateMemberApplicationFinalReviewDetail,
+);
+router.put(
+  "/:id/withdraw",
+  verifyAccessToken,
+  requirePermission("memberApplications", "update"),
+  withdrawMemberApplication,
 );
 
 export default router;
