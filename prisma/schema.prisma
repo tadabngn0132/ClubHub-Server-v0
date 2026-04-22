@@ -40,12 +40,9 @@ model User {
   resetToken                ResetPasswordToken[]
   userPosition              UserPosition[]
   activityParticipations    ActivityParticipation[]
-  activitiesOrganized       Activity[]     
-  cvReviewedApplications    MemberApplication[]        @relation("CVReviewer")
-  finalReviewedApplications MemberApplication[]        @relation("FinalReviewer")
+  activitiesOrganized       Activity[]
   notifications             Notification[]
   assigneeTasks             AssigneeTask[]
-  interviewedApplications   DepartmentMemberApplication[] @relation("Interviewer")
   assignedTasks             Task[]                       @relation("TaskAssigner")
   senderMessages            Message[]                    @relation("MessageSender")
   receiverMessages          Message[]                    @relation("MessageReceiver")
@@ -53,6 +50,9 @@ model User {
   googleCredentials         UserGoogleCredential?
   systemLogs                SystemLog[]
   notificationPreferences   NotificationPreference[]
+  cvReviews                  CVReview[]
+  departmentInterviews       DepartmentInterview[]       @relation("Interviewer")
+  finalReviews              FinalReview[]
 
   @@map("users")
   @@index([email])
@@ -115,7 +115,7 @@ model Department {
   updatedAt     DateTime      @updatedAt @map("updated_at")
   isDeleted     Boolean       @default(false) @map("is_deleted")
   positions     Position[]
-  memberApplications DepartmentMemberApplication[]
+  memberApplications DepartmentInterview[]
   rootUsers      User[]        @relation("RootDepartment")
 
   @@map("departments")
@@ -250,57 +250,86 @@ model AssigneeTask {
 }
 
 model MemberApplication {
-  id                        Int                         @id @default(autoincrement())
-  fullname                  String                      // lấy name từ Google
-  email                     String                      @map("email")
-  avatarUrl                 String?                     // picture URL từ Google hoặc avt tùy chọn
-  avatarPublicId            String?                     @map("avatar_public_id") // Cloudinary public ID
-  avatarProvider            AvatarProvider?             @map("avatar_provider") @default(CLOUDINARY)              
-  phoneNumber               String?                     @map("phone_number") @db.VarChar(15)
-  dateOfBirth               DateTime?                   @map("date_of_birth")
-  gender                    String                      @map("gender")
-  major                     String                      @map("major")
-  studentId                 String                      @map("student_id")
-  appliedAt                 DateTime                    @default(now()) @map("applied_at")
-  cvStatus                  CVStatus                    @default(PENDING) @map("cv_status")
-  finalStatus               FinalStatus                 @default(PENDING) @map("final_status")
-  cvReviewedAt              DateTime?                   @map("cv_reviewed_at")
-  finalReviewedAt           DateTime?                   @map("final_reviewed_at")
-  cvReviewerId              Int?                        @map("cv_reviewer_id")
-  finalReviewerId           Int?                        @map("final_reviewer_id")
-  cvReviewComment           String?                     @map("cv_review_comment")
-  finalReviewComment        String?                     @map("final_review_comment")
-  cvReviewer                User?                       @relation("CVReviewer", fields: [cvReviewerId], references: [id], onDelete: SetNull)
-  finalReviewer             User?                       @relation("FinalReviewer", fields: [finalReviewerId], references: [id], onDelete: SetNull)
-  isDeleted                 Boolean                     @default(false) @map("is_deleted")
-  departmentApplications     DepartmentMemberApplication[]
-  
-  @@index([cvReviewerId])
-  @@index([finalReviewerId])
+  id             Int      @id @default(autoincrement())
+  fullname       String
+  email          String   @map("email")
+  avatarUrl      String?
+  avatarPublicId String?  @map("avatar_public_id")
+  avatarProvider AvatarProvider? @map("avatar_provider") @default(CLOUDINARY)
+  phoneNumber    String?  @map("phone_number") @db.VarChar(15)
+  dateOfBirth    DateTime? @map("date_of_birth")
+  gender         String   @map("gender")
+  major          String   @map("major")
+  studentId      String   @map("student_id")
+  appliedAt      DateTime @default(now()) @map("applied_at")
+  state          MemberApplicationState @default(SUBMITTED) @map("state")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+
+  cvReview        CVReview?
+  departmentInterviews DepartmentInterview[]
+  finalReview     FinalReview?
+
   @@map("memberApplications")
+  @@index([email])
+  @@index([state])
 }
 
-model DepartmentMemberApplication {
-  id                      Int                         @id @default(autoincrement())
-  memberApplicationId     Int                         @map("member_application_id")
-  departmentId            Int                         @map("department_id")
-  interviewStatus         InterviewStatus             @default(PENDING) @map("interview_status")
-  priority                Int                         @default(1) @map("priority")
-  interviewedAt           DateTime?                   @map("interviewed_at")
-  interviewerId           Int?                        @map("interviewer_id")
-  interviewComment        String?                     @map("interview_comment")
-  createdAt               DateTime                    @default(now()) @map("created_at")
-  updatedAt               DateTime                    @updatedAt
-  memberApplication       MemberApplication           @relation(fields: [memberApplicationId], references: [id], onDelete: Cascade)
-  department              Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  interviewer             User?                       @relation("Interviewer", fields: [interviewerId], references: [id], onDelete: SetNull)
-  isDeleted               Boolean                     @default(false) @map("is_deleted")
+model CVReview {
+  id            Int      @id @default(autoincrement())
+  memberApplicationId Int @unique @map("member_application_id")
+  reviewerId    Int?     @map("reviewer_id")
+  status        CVStatus @default(PENDING) @map("status")
+  reviewedAt    DateTime? @map("reviewed_at")
+  comment       String?  @map("comment")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt
+
+  memberApplication MemberApplication @relation(fields: [memberApplicationId], references: [id], onDelete: Cascade)
+  reviewer    User?    @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([reviewerId])
+  @@map("cvReviews")
+}
+
+model DepartmentInterview {
+  id            Int      @id @default(autoincrement())
+  memberApplicationId Int @map("member_application_id")
+  departmentId  Int      @map("department_id")
+  interviewerId Int?     @map("interviewer_id")
+  status        InterviewStatus @default(PENDING) @map("status")
+  priority      Int      @default(1) @map("priority")
+  interviewedAt DateTime? @map("interviewed_at")
+  comment       String?  @map("comment")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+
+  memberApplication MemberApplication @relation(fields: [memberApplicationId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  interviewer   User?     @relation("Interviewer", fields: [interviewerId], references: [id], onDelete: SetNull)
 
   @@unique([memberApplicationId, departmentId])
-  @@map("department_member_applications")
   @@index([memberApplicationId])
   @@index([departmentId])
   @@index([interviewerId])
+  @@map("departmentInterviews")
+}
+
+model FinalReview {
+  id            Int      @id @default(autoincrement())
+  memberApplicationId Int @unique @map("member_application_id")
+  reviewerId    Int?     @map("reviewer_id")
+  status        FinalStatus @default(PENDING) @map("status")
+  reviewedAt    DateTime? @map("reviewed_at")
+  comment       String?  @map("comment")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt
+
+  memberApplication MemberApplication @relation(fields: [memberApplicationId], references: [id], onDelete: Cascade)
+  reviewer    User?    @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([reviewerId])
+  @@map("finalReviews")
 }
 
 model Notification {
@@ -523,4 +552,16 @@ enum NotificationType {
   ACTIVITY
   TASK
   SYSTEM
+}
+
+enum MemberApplicationState {
+  SUBMITTED
+  CV_PENDING
+  CV_PASSED
+  CV_FAILED
+  DEPARTMENT_INTERVIEWING
+  FINAL_PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
 }
