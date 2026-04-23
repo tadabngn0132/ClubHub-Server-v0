@@ -18,7 +18,6 @@ import memberApplicationRouter from "./src/routes/memberApplicationRoute.js";
 import notificationRouter from "./src/routes/notificationRoute.js";
 import departmentRouter from "./src/routes/departmentRoute.js";
 import positionRouter from "./src/routes/positionRoute.js";
-import departmentApplicationRouter from "./src/routes/departmentApplicationRoute.js";
 import { ensureClubStructure } from "./src/bootstrap/seedClubStructure.js";
 
 import { corsOptions } from "./src/configs/corsConfig.js";
@@ -84,7 +83,6 @@ app.use("/api/member-applications", memberApplicationRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/departments", departmentRouter);
 app.use("/api/positions", positionRouter);
-app.use("/api/department-applications", departmentApplicationRouter);
 app.use("/api/messages", messageRoute);
 app.use("/api/chat-rooms", chatRoomRoute);
 app.use("/api/ai", aiRouter);
