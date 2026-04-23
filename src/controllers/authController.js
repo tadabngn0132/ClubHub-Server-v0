@@ -26,7 +26,6 @@ import {
 import { PROVIDER, ROLE, USER_STATUS, AVATAR_PROVIDERS } from "../utils/constant.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError } from "../utils/AppError.js";
-import store from "../../../ClubHub-v0/src/store/index.js";
 
 const GOOGLE_SCOPE_UPGRADE_ATTEMPTED = "googleScopeUpgradeAttempted";
 
