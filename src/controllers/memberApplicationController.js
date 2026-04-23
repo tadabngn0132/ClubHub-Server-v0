@@ -6,6 +6,7 @@ import {
   POSITION_LEVEL,
   INTERVIEW_STATUS,
   AVATAR_PROVIDERS,
+  MEMBER_APPLICATION_STATE,
 } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
 import {
@@ -61,20 +62,6 @@ const memberApplicationIncludeOptions = {
       },
     },
   },
-};
-
-const MEMBER_APPLICATION_STATE = {
-  SUBMITTED: "SUBMITTED",
-  CV_PENDING: "CV_PENDING",
-  CV_PASSED: "CV_PASSED",
-  CV_FAILED: "CV_FAILED",
-  DEPARTMENT_INTERVIEW_PENDING: "DEPARTMENT_INTERVIEW_PENDING",
-  DEPARTMENT_INTERVIEW_PASSED: "DEPARTMENT_INTERVIEW_PASSED",
-  DEPARTMENT_INTERVIEW_FAILED: "DEPARTMENT_INTERVIEW_FAILED",
-  FINAL_PENDING: "FINAL_PENDING",
-  FINAL_PASSED: "FINAL_PASSED",
-  FINAL_FAILED: "FINAL_FAILED",
-  WITHDRAWN: "WITHDRAWN",
 };
 
 export const createMemberApplication = async (req, res, next) => {

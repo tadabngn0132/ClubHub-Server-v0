@@ -4,6 +4,7 @@ import {
   ACTIVITY_STATUS,
   TASK_STATUS,
   CV_STATUS,
+  MEMBER_APPLICATION_STATE,
 } from "../utils/constant.js";
 
 export const getDashboardStats = async (req, res, next) => {
@@ -41,7 +42,9 @@ export const getDashboardStats = async (req, res, next) => {
       prisma.memberApplication.count({
         where: {
           isDeleted: false,
-          cvStatus: CV_STATUS.PENDING,
+          state: {
+            in: [MEMBER_APPLICATION_STATE.SUBMITTED, MEMBER_APPLICATION_STATE.CV_PENDING],
+          },
         },
       }),
     ]);
