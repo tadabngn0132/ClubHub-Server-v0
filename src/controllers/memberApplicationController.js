@@ -8,7 +8,6 @@ import {
   AVATAR_PROVIDERS,
 } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
-import { removeSensitiveUserData } from "../utils/userUtil.js";
 import {
   sendWelcomeEmail,
   sendApplicationReviewResultEmail,
@@ -32,7 +31,7 @@ const memberApplicationIncludeOptions = {
       },
     },
   },
-  departmentInterview: {
+  departmentInterviews: {
     include: {
       interviewer: {
         select: {
@@ -124,7 +123,7 @@ export const createMemberApplication = async (req, res, next) => {
       await tx.cvReview.create({
         data: {
           memberApplicationId: application.id,
-          reviewStatus: CV_STATUS.PENDING,
+          status: CV_STATUS.PENDING,
         },
       });
 
@@ -132,14 +131,14 @@ export const createMemberApplication = async (req, res, next) => {
         data: applicationData.departmentIds.map((deptId) => ({
           memberApplicationId: application.id,
           departmentId: deptId,
-          interviewStatus: INTERVIEW_STATUS.PENDING,
+          status: INTERVIEW_STATUS.PENDING,
         })),
       });
 
       await tx.finalReview.create({
         data: {
           memberApplicationId: application.id,
-          reviewStatus: FINAL_STATUS.PENDING,
+          status: FINAL_STATUS.PENDING,
         },
       });
 
@@ -219,8 +218,6 @@ export const softDeleteMemberApplication = async (req, res, next) => {
       where: { id: Number(id) },
       data: {
         isDeleted: true,
-        cvStatus: CV_STATUS.FAILED,
-        finalStatus: FINAL_STATUS.FAILED,
       },
     });
     res.status(200).json({
@@ -272,7 +269,7 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
       });
     }
     const updatedApplication = await prisma.$transaction(async (tx) => {
-      await prisma.memberApplication.update({
+      await tx.memberApplication.update({
         where: { id: Number(id) },
         data: {
           state:
@@ -312,13 +309,13 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
       "member_application.cv_review",
       {
         applicationId: updatedApplication.id,
-        status: updatedApplication.cvStatus,
+        status: updatedApplication.cvReview.status,
       },
     );
 
     if (updatedApplication.state === MEMBER_APPLICATION_STATE.CV_PASSED) {
       void createNotificationSafe({
-        userId: updatedApplication.finalReviewerId,
+        userId: updatedApplication.finalReview.reviewerId,
         type: "SYSTEM",
         message: `A member application is ready for department interview (Application #${updatedApplication.id}).`,
       });
@@ -366,7 +363,7 @@ export const updateMemberApplicationDepartmentInterviewDetail = async (
           },
         },
         data: {
-          interviewStatus:
+          status:
             interviewData.status.trim().toLowerCase() === "passed"
               ? INTERVIEW_STATUS.PASSED
               : INTERVIEW_STATUS.FAILED,
@@ -381,10 +378,10 @@ export const updateMemberApplicationDepartmentInterviewDetail = async (
       });
 
       const hasPassedInterview = allInterviews.some(
-        (interview) => interview.interviewStatus === INTERVIEW_STATUS.PASSED,
+        (interview) => interview.status === INTERVIEW_STATUS.PASSED,
       );
       const allFailedInterview = allInterviews.every(
-        (interview) => interview.interviewStatus === INTERVIEW_STATUS.FAILED,
+        (interview) => interview.status === INTERVIEW_STATUS.FAILED,
       );
 
       if (allFailedInterview) {
@@ -424,9 +421,9 @@ export const updateMemberApplicationDepartmentInterviewDetail = async (
       {
         applicationId: updatedApplication.id,
         departmentId: interviewData.departmentId,
-        status: updatedApplication.departmentInterview.find(
+        status: updatedApplication.departmentInterviews.find(
           (interview) => interview.departmentId === interviewData.departmentId,
-        )?.interviewStatus,
+        )?.status,
       },
     );
 
@@ -469,9 +466,9 @@ export const updateMemberApplicationFinalReviewDetail = async (
 
     const finalApplicationResult = await prisma.$transaction(async (tx) => {
       if (finalReviewData.status.trim().toLowerCase() === "passed") {
-        const passedDeptIds = application.departmentApplications.map(
-          (deptApp) => deptApp.departmentId,
-        );
+        const passedDeptIds = application.departmentInterviews
+          .filter((interview) => interview.status === INTERVIEW_STATUS.PASSED)
+          .map((interview) => interview.departmentId);
 
         const memberPositions = await tx.position.findMany({
           where: {
@@ -493,13 +490,7 @@ export const updateMemberApplicationFinalReviewDetail = async (
         createdUser = await createUserWithPositionsService({
           ...finalReviewData,
           positionIds,
-        });
-
-        await sendWelcomeEmail(
-          createdUser.email,
-          createdUser.fullname,
-          DEFAULT_PASSWORD,
-        );
+        }, tx);
       }
 
       await tx.memberApplication.update({
@@ -530,6 +521,14 @@ export const updateMemberApplicationFinalReviewDetail = async (
         include: memberApplicationIncludeOptions,
       });
     });
+
+    if (finalApplicationResult.finalReview.status === FINAL_STATUS.PASSED) {
+      void sendWelcomeEmail(
+        createdUser.email,
+        createdUser.fullname,
+        DEFAULT_PASSWORD,
+      ).catch(console.error);
+    }
 
     res.status(200).json({
       success: true,

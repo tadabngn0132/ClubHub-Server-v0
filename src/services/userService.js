@@ -7,7 +7,7 @@ import { USER_STATUS } from "../utils/constant.js";
 import { getHighestPositionLevel } from "../utils/positionUtil.js";
 import { BadRequestError } from "../utils/AppError.js";
 
-export const createUserWithPositionsService = async (payload) => {
+export const createUserWithPositionsService = async (payload, tx) => {
   if (!payload.positionIds || payload.positionIds.length === 0) {
     throw new BadRequestError(
       "At least one position must be assigned to the user.",
@@ -18,7 +18,7 @@ export const createUserWithPositionsService = async (payload) => {
     ...new Set(payload.positionIds.map((id) => Number(id))),
   ];
 
-  const userPositions = await prisma.position.findMany({
+  const userPositions = await tx.position.findMany({
     where: {
       id: {
         in: dedupedPositionIds,
@@ -36,54 +36,50 @@ export const createUserWithPositionsService = async (payload) => {
     throw new BadRequestError("Invalid position IDs provided.");
   }
 
-  const createdUser = await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        email: payload.email,
-        hashedPassword: await hashedDefaultPassword(),
-        fullname: payload.fullname,
-        phoneNumber: payload.phoneNumber,
-        dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
-        gender: payload.gender,
-        major: payload.major,
-        generation: payload.generation ? Number(payload.generation) : null,
-        joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
-        status:
-          String(payload.status || "ACTIVE")
-            .trim()
-            .toLowerCase() === "active"
-            ? USER_STATUS.ACTIVE
-            : USER_STATUS.INACTIVE,
-        studentId: payload.studentId,
-        avatarUrl: payload.avatarUrl,
-        avatarPublicId: payload.avatarPublicId,
-        avatarProvider: payload.avatarProvider,
-        bio: payload.bio,
-        rootDepartmentId:
-          payload.rootDepartmentId !== "" &&
-          payload.rootDepartmentId !== null &&
-          payload.rootDepartmentId !== undefined
-            ? Number(payload.rootDepartmentId)
-            : null,
-      },
-    });
-
-    await tx.userPosition.createMany({
-      data: userPositions.map((position) => ({
-        userId: user.id,
-        positionId: position.id,
-        isPrimary: position.id === primaryPositionId,
-      })),
-      skipDuplicates: true,
-    });
-
-    return tx.user.findUnique({
-      where: { id: user.id },
-      include: userIncludeOptions,
-    });
+  const user = await tx.user.create({
+    data: {
+      email: payload.email,
+      hashedPassword: await hashedDefaultPassword(),
+      fullname: payload.fullname,
+      phoneNumber: payload.phoneNumber,
+      dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : null,
+      gender: payload.gender,
+      major: payload.major,
+      generation: payload.generation ? Number(payload.generation) : null,
+      joinedAt: payload.joinedAt ? new Date(payload.joinedAt) : null,
+      status:
+        String(payload.status || "ACTIVE")
+          .trim()
+          .toLowerCase() === "active"
+          ? USER_STATUS.ACTIVE
+          : USER_STATUS.INACTIVE,
+      studentId: payload.studentId,
+      avatarUrl: payload.avatarUrl,
+      avatarPublicId: payload.avatarPublicId,
+      avatarProvider: payload.avatarProvider,
+      bio: payload.bio,
+      rootDepartmentId:
+        payload.rootDepartmentId !== "" &&
+        payload.rootDepartmentId !== null &&
+        payload.rootDepartmentId !== undefined
+          ? Number(payload.rootDepartmentId)
+          : null,
+    },
   });
 
-  return createdUser;
+  await tx.userPosition.createMany({
+    data: userPositions.map((position) => ({
+      userId: user.id,
+      positionId: position.id,
+      isPrimary: position.id === primaryPositionId,
+    })),
+    skipDuplicates: true,
+  });
+
+  return tx.user.findUnique({
+    where: { id: user.id },
+    include: userIncludeOptions,
+  });
 };
 
 export const updateUserWithPositionsService = async (userId, payload) => {
