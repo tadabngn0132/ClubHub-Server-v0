@@ -18,6 +18,8 @@ import memberApplicationRouter from "./src/routes/memberApplicationRoute.js";
 import notificationRouter from "./src/routes/notificationRoute.js";
 import departmentRouter from "./src/routes/departmentRoute.js";
 import positionRouter from "./src/routes/positionRoute.js";
+import publicRoute from "./src/routes/publicRoute.js";
+import publicActivityRoute from "./src/routes/publicActivityRoute.js";
 import { ensureClubStructure } from "./src/bootstrap/seedClubStructure.js";
 
 import { corsOptions } from "./src/configs/corsConfig.js";
@@ -94,6 +96,8 @@ app.use("/api/notification-preferences", notificationPreferenceRoute);
 app.use("/api/system-logs", systemLogRoute);
 app.use("/api/rag", ragRoute);
 app.use("/api/ai-chat", aiChatRoute);
+app.use("/api/public", publicRoute);
+app.use("/api/public", publicActivityRoute);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
