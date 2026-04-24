@@ -114,7 +114,7 @@ export const ROLE_PERMISSIONS = {
       hardDelete: true,
     },
     memberApplications: {
-      create: true,
+      create: false,
       read: true,
       update: true,
       cvReview: true,
