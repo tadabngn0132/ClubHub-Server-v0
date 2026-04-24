@@ -43,13 +43,13 @@ router.get(
 router.put(
   "/:id/soft",
   verifyAccessToken,
-  requirePermission("memberApplications", "update"),
+  requirePermission("memberApplications", "softDelete"),
   softDeleteMemberApplication,
 );
 router.delete(
   "/:id/hard",
   verifyAccessToken,
-  requirePermission("memberApplications", "delete"),
+  requirePermission("memberApplications", "hardDelete"),
   hardDeleteMemberApplication,
 );
 router.put(
