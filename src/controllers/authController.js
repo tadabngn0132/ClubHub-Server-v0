@@ -23,7 +23,12 @@ import {
   userIncludeSystemRoleOptions,
   userIncludeOptions,
 } from "../utils/userUtil.js";
-import { PROVIDER, ROLE, USER_STATUS, AVATAR_PROVIDERS } from "../utils/constant.js";
+import {
+  PROVIDER,
+  ROLE,
+  USER_STATUS,
+  AVATAR_PROVIDERS,
+} from "../utils/constant.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError } from "../utils/AppError.js";
 
@@ -554,15 +559,6 @@ export const googleAuthCallback = async (req, res, next) => {
       },
     });
 
-    const existingGoogleCredential =
-      await prisma.userGoogleCredential.findFirst({
-        where: {
-          googleId: userInfo.id,
-        },
-      });
-
-    let user;
-
     if (!storedUser) {
       res.redirect(
         `${process.env.CLIENT_URL}/auth/callback?success=false&message=${encodeURIComponent(
@@ -571,41 +567,44 @@ export const googleAuthCallback = async (req, res, next) => {
       );
 
       return;
-    } else if (
+    }
+
+    const existingGoogleCredential =
+      await prisma.userGoogleCredential.findFirst({
+        where: {
+          userId: storedUser ? storedUser.id : undefined,
+        },
+      });
+
+    let user;
+
+    if (
       !existingGoogleCredential ||
       existingGoogleCredential.googleId !== userInfo.id
     ) {
-      user = await prisma.$transaction(async (prisma) => {
-        await prisma.userGoogleCredential.create({
-          data: {
-            googleId: userInfo.id,
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token,
-            scope: tokens.scope,
-            userId: storedUser.id,
-          },
-        });
-
-        const updatedUser = await prisma.user.update({
-          where: {
-            id: storedUser.id,
-          },
-          data: {
-            fullname: userInfo.name,
-            hashedPassword: await hashedDefaultPassword(),
-            locale: userInfo.locale,
-            provider: PROVIDER.BOTH,
-            firstName: userInfo.given_name,
-            lastName: userInfo.family_name,
-            isEmailVerified: userInfo.verified_email,
-            avatarUrl: storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY ? userInfo.avatar_url : storedUser.avatarUrl,
-            avatarProvider: storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY ? AVATAR_PROVIDERS.GOOGLE : storedUser.avatarProvider,
-            lastLogin: new Date(),
-          },
-          include: userIncludeSystemRoleOptions,
-        });
-
-        return updatedUser;
+      user = await prisma.user.update({
+        where: {
+          id: storedUser.id,
+        },
+        data: {
+          fullname: storedUser.fullname || userInfo.name,
+          hashedPassword: await hashedDefaultPassword(),
+          locale: userInfo.locale,
+          provider: PROVIDER.BOTH,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name,
+          isEmailVerified: userInfo.verified_email,
+          avatarUrl:
+            storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY
+              ? userInfo.picture
+              : storedUser.avatarUrl,
+          avatarProvider:
+            storedUser.avatarProvider !== AVATAR_PROVIDERS.CLOUDINARY
+              ? AVATAR_PROVIDERS.GOOGLE
+              : storedUser.avatarProvider,
+          lastLogin: new Date(),
+        },
+        include: userIncludeSystemRoleOptions,
       });
     } else {
       user = await prisma.user.update({
@@ -666,7 +665,38 @@ export const googleAuthCallback = async (req, res, next) => {
         scopeString,
       );
     } catch (err) {
-      console.warn("Warning: Failed to upsert Google credential:", err.message);
+      const isMissingRefreshToken =
+        err instanceof Error &&
+        err.message.includes(
+          "Google refresh_token is required for first-time credential creation",
+        );
+
+      if (isMissingRefreshToken && !alreadyAttemptedScopeUpgrade) {
+        req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED] = true;
+
+        const reauthorizeState = crypto.randomBytes(32).toString("hex");
+        req.session.state = reauthorizeState;
+
+        const reauthorizeUrl = oauth2Client.generateAuthUrl({
+          access_type: "offline",
+          include_granted_scopes: true,
+          prompt: "consent",
+          scope: requiredScopes,
+          state: reauthorizeState,
+        });
+
+        return res.redirect(reauthorizeUrl);
+      }
+
+      if (isMissingRefreshToken) {
+        return res.redirect(
+          `${process.env.CLIENT_URL}/auth/callback?success=false&message=${encodeURIComponent(
+            "Google authentication failed: missing refresh token. Please remove Google app access and try again.",
+          )}`,
+        );
+      }
+
+      return next(err);
     }
 
     const accessToken = await createAccessToken(user.id, userRole(user));

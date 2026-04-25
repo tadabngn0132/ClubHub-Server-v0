@@ -8,7 +8,10 @@ import {
 } from "../utils/constant.js";
 import { userIncludeOptions } from "../utils/userUtil.js";
 import cloudinary from "../libs/cloudinary.js";
-import { sendWelcomeEmail, sendAccountUnlockedEmail } from "../utils/emailUtil.js";
+import {
+  sendWelcomeEmail,
+  sendAccountUnlockedEmail,
+} from "../utils/emailUtil.js";
 import {
   createUserWithPositionsService,
   updateUserWithPositionsService,
@@ -77,13 +80,23 @@ export const createUser = async (req, res, next) => {
         payload.avatarPublicId = uploadResult.public_id;
         payload.avatarProvider = AVATAR_PROVIDERS.CLOUDINARY;
       } catch (err) {
-        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
+        throw new AppError(
+          `Failed to upload avatar image: ${err.message}`,
+          500,
+        );
       }
     }
 
-    const createdUser = await createUserWithPositionsService({
-      ...payload,
-      positionIds: normalizePositionIds(payload.positionIds),
+    const createdUser = await prisma.$transaction(async (tx) => {
+      const user = await createUserWithPositionsService(
+        {
+          ...payload,
+          positionIds: normalizePositionIds(payload.positionIds),
+        },
+        tx,
+      );
+
+      return user;
     });
 
     const necessaryUserData = removeSensitiveUserData(createdUser);
@@ -253,7 +266,10 @@ export const updateUser = async (req, res, next) => {
           );
         }
       } catch (err) {
-        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
+        throw new AppError(
+          `Failed to upload avatar image: ${err.message}`,
+          500,
+        );
       }
     }
 
@@ -329,7 +345,10 @@ export const updateUserProfile = async (req, res, next) => {
           );
         }
       } catch (err) {
-        throw new AppError(`Failed to upload avatar image: ${err.message}`, 500);
+        throw new AppError(
+          `Failed to upload avatar image: ${err.message}`,
+          500,
+        );
       }
     }
 
@@ -526,10 +545,9 @@ export const unlockAccount = async (req, res, next) => {
       message: "Your account has been unlocked. You can sign in now.",
     });
 
-    await sendAccountUnlockedEmail(
-      storedUser.email,
-      storedUser.fullname,
-    ).catch(console.error);
+    await sendAccountUnlockedEmail(storedUser.email, storedUser.fullname).catch(
+      console.error,
+    );
   } catch (err) {
     return next(err);
   }
