@@ -545,10 +545,11 @@ export const googleAuthCallback = async (req, res, next) => {
     const { data: userInfo } = await oauth2.userinfo.get();
 
     if (!userInfo.email.endsWith("@fpt.edu.vn")) {
-      return res.status(403).json({
-        success: false,
-        message: "Only FPT email addresses are allowed",
-      });
+      return res.redirect(
+        `${process.env.CLIENT_URL}/auth/callback?success=false&message=${encodeURIComponent(
+          "Only FPT email addresses are allowed",
+        )}`,
+      );
     }
 
     console.log("Google user info:", userInfo);
