@@ -1,14 +1,51 @@
 import { prisma } from "../libs/prisma.js";
 import { getPositionLevel } from "../utils/positionUtil.js";
 
+const positionIncludes = {
+  department: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+};
+
 export const createPosition = async (req, res, next) => {
   try {
     const positionData = req.body;
 
+    const existingPosition = await prisma.position.findFirst({
+      where: {
+        title: positionData.title,
+        departmentId: Number(positionData.departmentId),
+        isDeleted: false,
+      },
+    });
+
+    if (existingPosition) {
+      return res.status(400).json({
+        success: false,
+        message: "Position already exists",
+      });
+    }
+
+    const department = await prisma.department.findUnique({
+      where: {
+        id: Number(positionData.departmentId),
+      },
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      });
+    }
+
     const newPosition = await prisma.position.create({
       data: {
         title: positionData.title,
-        departmentId: positionData.departmentId,
+        departmentId: Number(positionData.departmentId),
         level: getPositionLevel(positionData.level.trim().toLowerCase()),
         systemRole: positionData.systemRole,
       },
@@ -26,7 +63,9 @@ export const createPosition = async (req, res, next) => {
 
 export const getAllPositions = async (req, res, next) => {
   try {
-    const positions = await prisma.position.findMany();
+    const positions = await prisma.position.findMany({
+      include: positionIncludes,
+    });
 
     res.status(200).json({
       success: true,
@@ -46,6 +85,7 @@ export const getPositionById = async (req, res, next) => {
       where: {
         id: Number(id),
       },
+      include: positionIncludes,
     });
 
     if (!position) {
@@ -83,13 +123,44 @@ export const updatePosition = async (req, res, next) => {
       });
     }
 
+    const existingPosition = await prisma.position.findFirst({
+      where: {
+        title: positionData.title,
+        departmentId: Number(positionData.departmentId),
+        isDeleted: false,
+        NOT: {
+          id: Number(id),
+        },
+      },
+    });
+
+    if (existingPosition) {
+      return res.status(400).json({
+        success: false,
+        message: "Position already exists",
+      });
+    }
+
+    const department = await prisma.department.findUnique({
+      where: {
+        id: Number(positionData.departmentId),
+      },
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      });
+    }
+
     const updatedPosition = await prisma.position.update({
       where: {
         id: Number(id),
       },
       data: {
         title: positionData.title,
-        departmentId: positionData.departmentId,
+        departmentId: Number(positionData.departmentId),
         level: getPositionLevel(positionData.level.trim().toLowerCase()),
         systemRole: positionData.systemRole,
       },
