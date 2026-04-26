@@ -12,7 +12,7 @@ import {
 } from "../controllers/authController.js";
 import {
   loginLimiter,
-  resetPasswordLimiter,
+  forgotPasswordLimiter,
 } from "../middlewares/rateLimiting.js";
 import {
   validateLogin,
@@ -27,13 +27,13 @@ router.post("/refresh-access-token", refreshAccessToken);
 router.post("/login", loginLimiter, validateLogin, login);
 router.post("/register", register);
 router.post("/logout", logout);
-router.post("/forgot-password", validateForgotPassword, forgotPassword);
-router.put(
-  "/reset-password",
-  resetPasswordLimiter,
-  validateResetPassword,
-  resetPassword,
+router.post(
+  "/forgot-password",
+  forgotPasswordLimiter,
+  validateForgotPassword,
+  forgotPassword,
 );
+router.put("/reset-password", validateResetPassword, resetPassword);
 router.put("/change-password", validateChangePassword, changePassword);
 router.get("/google-auth", googleAuth);
 router.get("/google-auth/callback", googleAuthCallback);

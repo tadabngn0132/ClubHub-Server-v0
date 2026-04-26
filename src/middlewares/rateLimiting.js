@@ -23,7 +23,7 @@ export const loginLimiter = rateLimit({
   message: "Too many login attempts, please try again after 15 minutes",
 });
 
-export const resetPasswordLimiter = rateLimit({
+export const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
   delayAfter: 3,

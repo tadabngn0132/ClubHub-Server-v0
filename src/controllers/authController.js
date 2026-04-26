@@ -403,14 +403,27 @@ export const resetPassword = async (req, res, next) => {
     verifyResetPasswordToken(token, storedUser.id);
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: storedUser.id,
+        },
+        data: {
+          hashedPassword: hashedNewPassword,
+        },
+      });
 
-    await prisma.user.update({
-      where: {
-        id: storedUser.id,
-      },
-      data: {
-        hashedPassword: hashedNewPassword,
-      },
+      await tx.resetPasswordToken.updateMany({
+        where: {
+          userId: storedUser.id,
+          isUsed: false,
+        },
+        data: {
+          isUsed: true,
+          usedAt: new Date(),
+        },
+      });
     });
 
     res.status(200).json({
