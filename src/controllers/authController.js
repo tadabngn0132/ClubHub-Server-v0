@@ -103,7 +103,7 @@ export const refreshAccessToken = async (req, res, next) => {
     if (userRole(user) === null) {
       return res.status(403).json({
         success: false,
-        message: "User does not have an assigned role",
+        message: "User does not have an assigned role. Please contact admin.",
       });
     }
 
@@ -190,7 +190,7 @@ export const login = async (req, res, next) => {
     if (userRole(updatedUser) === null) {
       return res.status(403).json({
         success: false,
-        message: "User does not have an assigned role",
+        message: "User does not have an assigned role. Please contact admin.",
       });
     }
 
