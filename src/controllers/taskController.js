@@ -81,10 +81,14 @@ export const createTask = async (req, res, next) => {
       data: createdTask,
     });
 
-    void logSystemAction(req.userId ?? createdTask.assignorId ?? null, "task.create", {
-      taskId: createdTask.id,
-      title: createdTask.title,
-    });
+    void logSystemAction(
+      req.userId ?? createdTask.assignorId ?? null,
+      "task.create",
+      {
+        taskId: createdTask.id,
+        title: createdTask.title,
+      },
+    );
 
     void createNotificationsForUsersSafe(
       createdTask.assignees.map((assignee) => assignee.assigneeId),
@@ -215,10 +219,14 @@ export const updateTask = async (req, res, next) => {
       data: updatedTask,
     });
 
-    void logSystemAction(req.userId ?? updatedTask.assignorId ?? null, "task.update", {
-      taskId: updatedTask.id,
-      title: updatedTask.title,
-    });
+    void logSystemAction(
+      req.userId ?? updatedTask.assignorId ?? null,
+      "task.update",
+      {
+        taskId: updatedTask.id,
+        title: updatedTask.title,
+      },
+    );
 
     void createNotificationsForUsersSafe(
       updatedTask.assignees.map((assignee) => assignee.assigneeId),
@@ -270,10 +278,14 @@ export const softDeleteTask = async (req, res, next) => {
       message: "Task deleted successfully",
     });
 
-    void logSystemAction(req.userId ?? task.assignorId ?? null, "task.soft_delete", {
-      taskId: task.id,
-      title: task.title,
-    });
+    void logSystemAction(
+      req.userId ?? task.assignorId ?? null,
+      "task.soft_delete",
+      {
+        taskId: task.id,
+        title: task.title,
+      },
+    );
 
     const assignees = await prisma.assigneeTask.findMany({
       where: { taskId: task.id },
@@ -396,13 +408,26 @@ export const confirmTaskCompletion = async (req, res, next) => {
 
       try {
         const uploadResult = await cloudinary.uploader.upload(base64, {
-          folder: "task_evidence",
-          public_id: `task_${taskId}_assignee_${taskCfData.assigneeId}_${Date.now()}`,
+          folder: `clubhub/tasks/evidence/task_${taskId}`,
+          public_id: `assignee_${taskCfData.assigneeId}_${Date.now()}`,
           resource_type: "image",
         });
 
         taskCfData.evidenceUrl = uploadResult.secure_url;
         taskCfData.evidencePublicId = uploadResult.public_id;
+
+        if (assigneeTask.evidencePublicId) {
+          await cloudinary.uploader.destroy(
+            assigneeTask.evidencePublicId,
+            (error, result) => {
+              if (error) {
+                console.log("Cloudinary deletion error:", error);
+              } else {
+                console.log("Cloudinary deletion result:", result);
+              }
+            },
+          );
+        }
       } catch (error) {
         throw new AppError("Failed to upload evidence image", 500);
       }
