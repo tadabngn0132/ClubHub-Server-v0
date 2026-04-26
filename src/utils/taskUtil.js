@@ -20,6 +20,10 @@ export const getTaskStatus = (status) => {
 export const taskInclude = {
   assignees: {
     select: {
+      id: true,
+      evidenceUrl: true,
+      additionalComments: true,
+      reviewerComments: true,
       status: true,
       user: {
         select: {
