@@ -13,6 +13,15 @@ import { deleteChunksBySource } from "../services/documentChunkService.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { AppError } from "../utils/AppError.js";
 
+const formatalendarPayload = (activity) => ({
+  summary: activity.title,
+  description: activity.description,
+  startDateTime: activity.startDate.toISOString(),
+  endDateTime: activity.endDate.toISOString(),
+  timeZone: "Asia/Ho_Chi_Minh",
+  locationType: activity.locationType,
+});
+
 export const createActivity = async (req, res, next) => {
   try {
     const payload = req.body;
@@ -81,44 +90,44 @@ export const createActivity = async (req, res, next) => {
       },
     });
 
-    // const calendarPayload = {
-    //   summary: newActivity.title,
-    //   description: newActivity.description,
-    //   startDateTime: newActivity.startDate.toISOString(),
-    //   endDateTime: newActivity.endDate.toISOString(),
-    //   timeZone: "Asia/Ho_Chi_Minh",
-    //   locationType: newActivity.locationType,
-    // };
+    const calendarPayload = formatalendarPayload(newActivity);
 
-    // const calendarEventData = await createCalendarEventAndMeetingLink(
-    //   calendarOwnerUserId,
-    //   calendarPayload,
-    // );
+    const calendarEventData = await createCalendarEventAndMeetingLink(
+      calendarOwnerUserId,
+      calendarPayload,
+    );
 
-    // const updatedActivity = await prisma.activity.update({
-    //   where: { id: newActivity.id },
-    //   data: {
-    //     googleCalendarEventId: calendarEventData.id,
-    //     meetingLink:
-    //       calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
-    //   },
-    // });
+    const updatedActivity = await prisma.activity.update({
+      where: { id: newActivity.id },
+      data: {
+        googleCalendarEventId: calendarEventData.id,
+        meetingLink:
+          calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+      },
+    });
 
     res.status(201).json({
       success: true,
       message: "Activity created successfully",
-      // data: updatedActivity,
-      data: newActivity,
+      data: updatedActivity,
+      // data: newActivity,
     });
 
-    void logSystemAction(req.userId ?? newActivity.organizerId ?? null, "activity.create", {
-      activityId: newActivity.id,
-      title: newActivity.title,
-    });
+    void logSystemAction(
+      req.userId ?? updatedActivity.organizerId ?? null,
+      "activity.create",
+      {
+        activityId: updatedActivity.id,
+        title: updatedActivity.title,
+      },
+    );
 
     // Index hoạt động mới tạo vào hệ thống RAG
-    indexActivity(newActivity.id).catch((err) =>
-      console.error(`[RAG] Indexing activity ${newActivity.id} failed:`, err),
+    indexActivity(updatedActivity.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing activity ${updatedActivity.id} failed:`,
+        err,
+      ),
     );
   } catch (err) {
     return next(err);
@@ -268,10 +277,14 @@ export const updateActivity = async (req, res, next) => {
       },
     });
 
+    if (storedActivity.googleCalendarEventId) {
+      const calendarPayload = formatalendarPayload(updatedActivity);
+    }
+    
     const calendarEventData = await updateGoogleCalendarEvent(
       Number(payload.organizerId || req.userId),
       storedActivity.googleCalendarEventId,
-      updatedActivity,
+      calendarPayload,
     );
 
     const finalUpdatedActivity = await prisma.activity.update({
@@ -289,10 +302,14 @@ export const updateActivity = async (req, res, next) => {
       data: finalUpdatedActivity,
     });
 
-    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.update", {
-      activityId: finalUpdatedActivity.id,
-      title: finalUpdatedActivity.title,
-    });
+    void logSystemAction(
+      req.userId ?? storedActivity.organizerId ?? null,
+      "activity.update",
+      {
+        activityId: finalUpdatedActivity.id,
+        title: finalUpdatedActivity.title,
+      },
+    );
 
     // Cập nhật lại index của hoạt động trong hệ thống RAG
     indexActivity(finalUpdatedActivity.id).catch((err) =>
@@ -335,10 +352,14 @@ export const softDeleteActivity = async (req, res, next) => {
       data: deletedActivity,
     });
 
-    void logSystemAction(req.userId ?? existingActivity.organizerId ?? null, "activity.soft_delete", {
-      activityId: deletedActivity.id,
-      title: deletedActivity.title,
-    });
+    void logSystemAction(
+      req.userId ?? existingActivity.organizerId ?? null,
+      "activity.soft_delete",
+      {
+        activityId: deletedActivity.id,
+        title: deletedActivity.title,
+      },
+    );
 
     // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
     deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
@@ -395,10 +416,14 @@ export const hardDeleteActivity = async (req, res, next) => {
       data: deletedActivity,
     });
 
-    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.hard_delete", {
-      activityId: deletedActivity.id,
-      title: storedActivity.title,
-    });
+    void logSystemAction(
+      req.userId ?? storedActivity.organizerId ?? null,
+      "activity.hard_delete",
+      {
+        activityId: deletedActivity.id,
+        title: storedActivity.title,
+      },
+    );
 
     // Xóa chunks liên quan đến hoạt động này trong hệ thống RAG
     deleteChunksBySource("activity", deletedActivity.id).catch((err) =>
@@ -460,10 +485,14 @@ export const createActivityImage = async (req, res, next) => {
       data: createdImage,
     });
 
-    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.image.create", {
-      activityId: Number(activityId),
-      imageId: createdImage.id,
-    });
+    void logSystemAction(
+      req.userId ?? storedActivity.organizerId ?? null,
+      "activity.image.create",
+      {
+        activityId: Number(activityId),
+        imageId: createdImage.id,
+      },
+    );
   } catch (err) {
     return next(err);
   }
@@ -506,10 +535,14 @@ export const deleteActivityImage = async (req, res, next) => {
       data: deletedImage,
     });
 
-    void logSystemAction(req.userId ?? storedImage.activityId ?? null, "activity.image.delete", {
-      activityId: storedImage.activityId,
-      imageId: deletedImage.id,
-    });
+    void logSystemAction(
+      req.userId ?? storedImage.activityId ?? null,
+      "activity.image.delete",
+      {
+        activityId: storedImage.activityId,
+        imageId: deletedImage.id,
+      },
+    );
   } catch (err) {
     return next(err);
   }
@@ -545,10 +578,14 @@ export const createActivityVideo = async (req, res, next) => {
       data: createdVideo,
     });
 
-    void logSystemAction(req.userId ?? storedActivity.organizerId ?? null, "activity.video.create", {
-      activityId: Number(activityId),
-      videoId: createdVideo.id,
-    });
+    void logSystemAction(
+      req.userId ?? storedActivity.organizerId ?? null,
+      "activity.video.create",
+      {
+        activityId: Number(activityId),
+        videoId: createdVideo.id,
+      },
+    );
   } catch (err) {
     return next(err);
   }
@@ -592,10 +629,14 @@ export const deleteActivityVideo = async (req, res, next) => {
       data: deletedVideo,
     });
 
-    void logSystemAction(req.userId ?? storedVideo.activityId ?? null, "activity.video.delete", {
-      activityId: storedVideo.activityId,
-      videoId: deletedVideo.id,
-    });
+    void logSystemAction(
+      req.userId ?? storedVideo.activityId ?? null,
+      "activity.video.delete",
+      {
+        activityId: storedVideo.activityId,
+        videoId: deletedVideo.id,
+      },
+    );
   } catch (err) {
     return next(err);
   }
