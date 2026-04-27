@@ -25,6 +25,7 @@ export const taskInclude = {
       additionalComments: true,
       reviewerComments: true,
       status: true,
+      assigneeId: true,
       user: {
         select: {
           id: true,

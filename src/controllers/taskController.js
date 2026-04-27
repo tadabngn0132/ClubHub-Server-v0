@@ -462,6 +462,7 @@ export const verifyTaskCompletion = async (req, res, next) => {
     const assigneeTask = await prisma.assigneeTask.findFirst({
       where: {
         taskId: Number(taskId),
+        assigneeId: Number(taskVerifyData.assigneeId),
       },
       include: {
         user: {
