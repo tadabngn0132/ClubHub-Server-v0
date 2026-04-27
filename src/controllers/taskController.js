@@ -156,57 +156,58 @@ export const updateTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const taskData = req.body;
+
     const task = await prisma.task.findUnique({
       where: { id: Number(taskId) },
       include: taskInclude,
     });
+
     if (!task) {
       return res.status(404).json({
         success: false,
         message: "Task not found",
       });
     }
-    const updatedTask = await prisma.$transaction(async (prisma) => {
-      const assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const assigneeIds = await resolveAssigneeIds(tx, taskData);
 
       if (assigneeIds.length === 0) {
         throw new Error("No valid assignees found for the specified target");
       }
 
-      const task = await prisma.task.update({
+      const task = await tx.task.update({
         where: {
           id: Number(taskId),
         },
         data: {
           title: taskData.title,
           description: taskData.description,
-          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : task.dueDate,
           status: getTaskStatus(taskData.status.trim().toLowerCase()),
-          // Remove or modify this line if you want to handle assignee scope differently
           assigneeScope: getAssigneeScopeValue(
             taskData.assigneeScope.trim().toLowerCase(),
           ),
-          assignorId: taskData.assignorId,
+          assignorId: Number(taskData.assignorId),
           isCheckCf: taskData.isCheckCf || false,
         },
       });
 
-      await prisma.assigneeTask.deleteMany({
+      await tx.assigneeTask.deleteMany({
         where: {
           taskId: task.id,
         },
       });
 
-      await prisma.assigneeTask.createMany({
+      await tx.assigneeTask.createMany({
         data: assigneeIds.map((assigneeId) => ({
           taskId: task.id,
-          assigneeId,
+          assigneeId: Number(assigneeId),
           status: ASSIGNEE_TASK_STATUS.PENDING,
         })),
-        skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
+        skipDuplicates: true,
       });
 
-      return prisma.task.findUnique({
+      return tx.task.findUnique({
         where: { id: task.id },
         include: taskInclude,
       });
@@ -432,21 +433,32 @@ export const confirmTaskCompletion = async (req, res, next) => {
       }
     }
 
-    const updatedAssigneeTask = await prisma.assigneeTask.update({
-      where: { id: assigneeTask.id },
-      data: {
-        confirmedAt: new Date(),
-        evidenceUrl: taskCfData.evidenceUrl,
-        evidencePublicId: taskCfData.evidencePublicId,
-        additionalComments: taskCfData.additionalComments,
-        status: ASSIGNEE_TASK_STATUS.CONFIRMED,
-      },
+    const finalUpdatedAssigneeTask = await prisma.$transaction(async (tx) => {
+      const updatedAssigneeTask = await prisma.assigneeTask.update({
+        where: { id: assigneeTask.id },
+        data: {
+          confirmedAt: new Date(),
+          evidenceUrl: taskCfData.evidenceUrl,
+          evidencePublicId: taskCfData.evidencePublicId,
+          additionalComments: taskCfData.additionalComments,
+          status: ASSIGNEE_TASK_STATUS.CONFIRMED,
+        },
+      });
+
+      const relatedTask = await tx.task.update({
+        where: { id: Number(taskId) },
+        data: {
+          status: TASK_STATUS.IN_PROGRESS,
+        },
+      });
+
+      return updatedAssigneeTask;
     });
 
     res.status(200).json({
       success: true,
       message: "Task completion confirmed successfully",
-      data: updatedAssigneeTask,
+      data: finalUpdatedAssigneeTask,
     });
   } catch (err) {
     return next(err);
