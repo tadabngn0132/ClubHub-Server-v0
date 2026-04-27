@@ -7,7 +7,7 @@ export const createFolder = async (userId, folderName) => {
       mimeType: "application/vnd.google-apps.folder",
     };
     const res = await googleDrive.files.create({
-      resource: fileMetadata,
+      requestBody: fileMetadata,
       fields: "id, name",
     });
     return res.data;
@@ -60,7 +60,7 @@ export const uploadFileToFolder = async (
       body: fileContent,
     };
     const res = await googleDrive.files.create({
-      resource: fileMetadata,
+      requestBody: fileMetadata,
       media,
       fields: "id, name",
     });

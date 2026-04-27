@@ -1,17 +1,17 @@
-import { withUserGoogleSheets } from "./googleAuthContextService.js";
+import { withUserGoogleSheets, withUserGoogleAuth } from "./googleAuthContextService.js";
 
 export const createGoogleSheetFromTemplate = async (
   userId,
   templateId,
   newSheetTitle,
 ) => {
-  return withUserGoogleSheets(userId, async (googleSheets) => {
-    const response = await googleSheets.spreadsheets.copyTo({
-      spreadsheetId: templateId,
+  return withUserGoogleSheets(userId, async ({ googleDrive }) => {
+    const response = await googleDrive.files.copy({
+      fileId: templateId,
       requestBody: {
-        title: newSheetTitle,
+        name: newSheetTitle,
       },
-      fields: "spreadsheetId,title,createdTime,modifiedTime",
+      fields: "id, name, createdTime, modifiedTime",
     });
     return response.data;
   });
