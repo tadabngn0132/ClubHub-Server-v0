@@ -4,6 +4,7 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../utils/AppError.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const chatRoomInclude = {
   members: {
@@ -89,17 +90,17 @@ export const createChatRoomService = async (chatRoomData) => {
   return room;
 };
 
-export const getChatRoomsService = async () => {
+export const getChatRoomsService = async (userRole) => {
   const chatRooms = await prisma.chatRoom.findMany({
-    where: { isDeleted: false },
+    where: { ...withSoftDeleteFilter(userRole) },
     include: chatRoomInclude,
   });
   return chatRooms;
 };
 
-export const getChatRoomByIdService = async (chatRoomId) => {
+export const getChatRoomByIdService = async (chatRoomId, userRole) => {
   const chatRoom = await prisma.chatRoom.findUnique({
-    where: { id: chatRoomId, isDeleted: false },
+    where: { id: chatRoomId, ...withSoftDeleteFilter(userRole) },
     include: chatRoomInclude,
   });
 
@@ -110,10 +111,10 @@ export const getChatRoomByIdService = async (chatRoomId) => {
   return chatRoom;
 };
 
-export const getChatRoomByUserIdService = async (userId) => {
+export const getChatRoomByUserIdService = async (userId, userRole) => {
   const chatRooms = await prisma.chatRoom.findMany({
     where: {
-      isDeleted: false,
+      ...withSoftDeleteFilter(userRole),
       members: {
         some: {
           userId: Number(userId),

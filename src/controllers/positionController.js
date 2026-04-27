@@ -1,5 +1,6 @@
 import { prisma } from "../libs/prisma.js";
 import { getPositionLevel } from "../utils/positionUtil.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const positionIncludes = {
   department: {
@@ -64,6 +65,7 @@ export const createPosition = async (req, res, next) => {
 export const getAllPositions = async (req, res, next) => {
   try {
     const positions = await prisma.position.findMany({
+      where: { ...withSoftDeleteFilter(req.userRole) },
       include: positionIncludes,
     });
 
@@ -84,6 +86,7 @@ export const getPositionById = async (req, res, next) => {
     const position = await prisma.position.findUnique({
       where: {
         id: Number(id),
+        ...withSoftDeleteFilter(req.userRole),
       },
       include: positionIncludes,
     });

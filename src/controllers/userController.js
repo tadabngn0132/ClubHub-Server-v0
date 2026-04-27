@@ -21,6 +21,7 @@ import { deleteChunksBySource } from "../services/documentChunkService.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError } from "../utils/AppError.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const normalizePositionIds = (raw) => {
   if (Array.isArray(raw)) return raw;
@@ -140,6 +141,7 @@ export const getUser = async (req, res, next) => {
     const storedUser = await prisma.user.findUnique({
       where: {
         id: Number(id),
+        ...withSoftDeleteFilter(req.userRole),
       },
       include: userIncludeOptions,
     });
@@ -166,6 +168,7 @@ export const getUser = async (req, res, next) => {
 export const getUsers = async (req, res, next) => {
   try {
     const storedUsers = await prisma.user.findMany({
+      where: { ...withSoftDeleteFilter(req.userRole) },
       include: {
         rootDepartment: {
           select: {

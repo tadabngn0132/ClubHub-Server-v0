@@ -21,6 +21,7 @@ import {
   createNotificationsForUsersSafe,
 } from "../services/notificationService.js";
 import { AppError, BadRequestError } from "../utils/AppError.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 export const createTask = async (req, res, next) => {
   try {
@@ -116,6 +117,7 @@ export const getTasks = async (req, res, next) => {
     const tasks = await prisma.task.findMany({
       skip: offset,
       take: Number(limit),
+      where: { ...withSoftDeleteFilter(req.userRole) },
       include: taskInclude,
     });
 
@@ -133,7 +135,7 @@ export const getTaskById = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const task = await prisma.task.findUnique({
-      where: { id: Number(taskId) },
+      where: { id: Number(taskId), ...withSoftDeleteFilter(req.userRole) },
       include: taskInclude,
     });
     if (!task) {

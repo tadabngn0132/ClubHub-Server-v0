@@ -18,6 +18,7 @@ import { indexMember } from "../services/knowledgeIndexerService.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError } from "../utils/AppError.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const memberApplicationIncludeOptions = {
   cvReview: {
@@ -154,6 +155,7 @@ export const getMemberApplications = async (req, res, next) => {
   try {
     const applications = await prisma.memberApplication.findMany({
       include: memberApplicationIncludeOptions,
+      where: { ...withSoftDeleteFilter(req.userRole) },
     });
     res.status(200).json({
       success: true,
@@ -169,7 +171,7 @@ export const getMemberApplicationById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const application = await prisma.memberApplication.findUnique({
-      where: { id: Number(id) },
+      where: { id: Number(id), ...withSoftDeleteFilter(req.userRole) },
       include: memberApplicationIncludeOptions,
     });
     if (!application) {
@@ -474,10 +476,13 @@ export const updateMemberApplicationFinalReviewDetail = async (
 
         const positionIds = memberPositions.map((pos) => pos.id);
 
-        createdUser = await createUserWithPositionsService({
-          ...finalReviewData,
-          positionIds,
-        }, tx);
+        createdUser = await createUserWithPositionsService(
+          {
+            ...finalReviewData,
+            positionIds,
+          },
+          tx,
+        );
       }
 
       await tx.memberApplication.update({

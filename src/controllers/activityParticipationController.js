@@ -2,6 +2,7 @@ import { prisma } from "../libs/prisma.js";
 import { getParticipationStatus } from "../utils/activityUtil.js";
 import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 import { PARTICIPATION_STATUS } from "../utils/constant.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 export const createActivityParticipation = async (req, res, next) => {
   try {
@@ -93,7 +94,9 @@ export const createActivityParticipation = async (req, res, next) => {
 
 export const getParticipations = async (req, res, next) => {
   try {
-    const participations = await prisma.activityParticipation.findMany();
+    const participations = await prisma.activityParticipation.findMany({
+      where: { ...withSoftDeleteFilter(req.userRole) },
+    });
     res.status(200).json({
       success: true,
       message: "Get all participations successfully",
@@ -108,7 +111,10 @@ export const getParticipationById = async (req, res, next) => {
   try {
     const { participationId } = req.params;
     const participation = await prisma.activityParticipation.findUnique({
-      where: { id: Number(participationId) },
+      where: {
+        id: Number(participationId),
+        ...withSoftDeleteFilter(req.userRole),
+      },
     });
     if (!participation) {
       return res.status(404).json({
@@ -130,7 +136,10 @@ export const getParticipationsByActivityId = async (req, res, next) => {
   try {
     const { activityId } = req.params;
     const participations = await prisma.activityParticipation.findMany({
-      where: { activityId: Number(activityId) },
+      where: {
+        activityId: Number(activityId),
+        ...withSoftDeleteFilter(req.userRole),
+      },
     });
     res.status(200).json({
       success: true,
@@ -146,7 +155,10 @@ export const getParticipationsByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const participations = await prisma.activityParticipation.findMany({
-      where: { userId: Number(userId) },
+      where: {
+        userId: Number(userId),
+        ...withSoftDeleteFilter(req.userRole),
+      },
     });
     res.status(200).json({
       success: true,

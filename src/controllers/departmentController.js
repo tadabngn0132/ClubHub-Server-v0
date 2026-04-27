@@ -1,6 +1,7 @@
 import { prisma } from "../libs/prisma.js";
 import { indexDepartment } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 export const createDepartment = async (req, res, next) => {
   try {
@@ -34,7 +35,9 @@ export const createDepartment = async (req, res, next) => {
 
 export const getAllDepartments = async (req, res, next) => {
   try {
-    const departments = await prisma.department.findMany();
+    const departments = await prisma.department.findMany({
+      where: { ...withSoftDeleteFilter(req.userRole) },
+    });
 
     res.status(200).json({
       success: true,
@@ -53,6 +56,7 @@ export const getDepartmentById = async (req, res, next) => {
     const department = await prisma.department.findUnique({
       where: {
         id: Number(id),
+        ...withSoftDeleteFilter(req.userRole),
       },
     });
 

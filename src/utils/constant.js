@@ -188,7 +188,7 @@ export const ROLE_PERMISSIONS = {
       create: false,
       read: true,
       update: true,
-      softDelete: false,
+      softDelete: true,
       hardDelete: false,
     },
     activities: {

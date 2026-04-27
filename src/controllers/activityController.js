@@ -12,6 +12,7 @@ import { indexActivity } from "../services/knowledgeIndexerService.js";
 import { deleteChunksBySource } from "../services/documentChunkService.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { AppError } from "../utils/AppError.js";
+import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const formatalendarPayload = (activity) => ({
   summary: activity.title,
@@ -141,6 +142,9 @@ export const getActivities = async (req, res, next) => {
     const activities = await prisma.activity.findMany({
       skip: offset,
       take: Number(limit),
+      where: {
+        ...withSoftDeleteFilter(req.userRole),
+      },
     });
 
     res.status(200).json({
@@ -158,7 +162,7 @@ export const getActivityById = async (req, res, next) => {
     const { id } = req.params;
 
     const storedActivity = await prisma.activity.findUnique({
-      where: { id: Number(id) },
+      where: { id: Number(id), ...withSoftDeleteFilter(req.userRole) },
       include: {
         organizer: {
           select: {
@@ -192,7 +196,7 @@ export const getActivitiesBySlug = async (req, res, next) => {
     const { slug } = req.params;
 
     const activity = await prisma.activity.findUnique({
-      where: { slug: slug },
+      where: { slug: slug, ...withSoftDeleteFilter(req.userRole) },
     });
 
     if (!activity) {
