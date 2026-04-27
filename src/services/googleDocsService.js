@@ -23,7 +23,7 @@ export const createGoogleDocTemplate = async (userId, title) => {
       requestBody: {
         title,
       },
-      fields: "documentId,title,createdTime,modifiedTime",
+      fields: "documentId,title",
     });
     return response.data;
   });

@@ -9,6 +9,7 @@ import {
   listGoogleSheetsTemplatesInDrive,
 } from "../controllers/googleDriveController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
+import { uploadImage } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.get(
 router.post(
   "/:folderId/files",
   verifyAccessToken,
+  uploadImage.single("file"),
   uploadFileToGoogleDriveFolder,
 );
 router.get(

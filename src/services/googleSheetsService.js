@@ -1,4 +1,7 @@
-import { withUserGoogleSheets, withUserGoogleAuth } from "./googleAuthContextService.js";
+import {
+  withUserGoogleSheets,
+  withUserGoogleAuth,
+} from "./googleAuthContextService.js";
 
 export const createGoogleSheetFromTemplate = async (
   userId,
@@ -127,12 +130,5 @@ export const exportAttendanceReportToGoogleSheet = async (
 };
 
 export const getEmbedableLinkForGoogleSheet = async (userId, spreadsheetId) => {
-  return withUserGoogleSheets(userId, async (googleSheets) => {
-    const response = await googleSheets.spreadsheets.get({
-      spreadsheetId,
-      fields: "spreadsheetId,title,createdTime,modifiedTime",
-    });
-    const sheetData = response.data;
-    return `https://docs.google.com/spreadsheets/d/${sheetData.spreadsheetId}/edit?usp=sharing`;
-  });
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit?usp=sharing`;
 };

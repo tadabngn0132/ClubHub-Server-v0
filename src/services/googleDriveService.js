@@ -17,8 +17,9 @@ export const createFolder = async (userId, folderName) => {
 export const listFolders = async (userId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
     const res = await googleDrive.files.list({
-      q: "mimeType='application/vnd.google-apps.folder'",
-      fields: "files(id, name)",
+      q: "mimeType='application/vnd.google-apps.folder' and 'root' in parents and trashed=false",
+      fields: "files(id, name, createdTime)",
+      spaces: "drive", // chỉ lấy từ My Drive, không lấy từ sync local
     });
     return res.data.files;
   });

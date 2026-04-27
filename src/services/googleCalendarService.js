@@ -104,13 +104,19 @@ export const deleteGoogleCalendarEvent = async (
   eventId,
   calendarId = "primary",
 ) => {
+  if (!eventId) return { success: true }; // không có event thì skip
   return withUserGoogleCalendar(userId, async (googleCalendar) => {
-    await googleCalendar.events.delete({
-      calendarId,
-      eventId,
-    });
+    await googleCalendar.events.delete({ calendarId, eventId });
     return { success: true };
   });
+};
+
+const formatICSDate = (dateTimeStr) => {
+  return new Date(dateTimeStr)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, ""); // bỏ milliseconds
+  // → "20260427T100000Z"
 };
 
 export const exportICSFile = async (
@@ -134,8 +140,8 @@ UID:${event.id}
 SUMMARY:${event.summary}
 DESCRIPTION:${event.description}
 LOCATION:${event.location}
-DTSTART:${event.start.dateTime.replace(/[-:]/g, "")}
-DTEND:${event.end.dateTime.replace(/[-:]/g, "")}
+DTSTART:${formatICSDate(event.start.dateTime)}
+DTEND:${formatICSDate(event.end.dateTime)}
 END:VEVENT
 END:VCALENDAR`;
     return icsContent;
