@@ -17,7 +17,7 @@ import { createUserWithPositionsService } from "../services/userService.js";
 import { indexMember } from "../services/knowledgeIndexerService.js";
 import { logSystemAction } from "../services/auditLogService.js";
 import { createNotificationSafe } from "../services/notificationService.js";
-import { AppError } from "../utils/AppError.js";
+import { AppError, BadRequestError } from "../utils/AppError.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
 const memberApplicationIncludeOptions = {
@@ -69,13 +69,41 @@ export const createMemberApplication = async (req, res, next) => {
   try {
     const applicationData = req.body;
     const file = req.file;
+    const rootDepartmentId = Number(applicationData.rootDepartmentId);
+    const selectedDepartmentIds = Array.isArray(applicationData.departmentIds)
+      ? [
+          ...new Set(
+            applicationData.departmentIds
+              .map((id) => Number(id))
+              .filter((id) => Number.isInteger(id) && id > 0),
+          ),
+        ]
+      : [];
+
+    if (!Number.isInteger(rootDepartmentId) || rootDepartmentId <= 0) {
+      throw new BadRequestError("Main department is required");
+    }
+
+    if (selectedDepartmentIds.length === 0) {
+      throw new BadRequestError("At least one other department is required");
+    }
+
+    if (selectedDepartmentIds.includes(rootDepartmentId)) {
+      throw new BadRequestError(
+        "Main department cannot be selected again in other departments",
+      );
+    }
+
+    const departmentInterviewIds = [
+      ...new Set([rootDepartmentId, ...selectedDepartmentIds]),
+    ];
 
     if (file) {
       const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
       try {
         const uploadResult = await cloudinary.uploader.upload(base64, {
-          folder: "clubhub/users/avatars",
+          folder: "clubhub/applications/avatars",
           public_id: `${applicationData.email}_avatar_${Date.now()}`,
           resource_type: "image",
         });
@@ -100,6 +128,7 @@ export const createMemberApplication = async (req, res, next) => {
           gender: applicationData.gender,
           major: applicationData.major,
           studentId: applicationData.studentId,
+          rootDepartmentId: rootDepartmentId,
           avatarUrl: applicationData.avatarUrl,
           avatarPublicId: applicationData.avatarPublicId,
           avatarProvider: applicationData.avatarProvider,
@@ -116,7 +145,7 @@ export const createMemberApplication = async (req, res, next) => {
       });
 
       await tx.departmentInterview.createMany({
-        data: applicationData.departmentIds.map((deptId) => ({
+        data: departmentInterviewIds.map((deptId) => ({
           memberApplicationId: application.id,
           departmentId: deptId,
           status: INTERVIEW_STATUS.PENDING,
@@ -476,9 +505,24 @@ export const updateMemberApplicationFinalReviewDetail = async (
 
         const positionIds = memberPositions.map((pos) => pos.id);
 
+        const highestPriorityPassedDeptId = application.departmentInterviews
+          .filter((interview) => interview.status === INTERVIEW_STATUS.PASSED)
+          .sort((a, b) => a.priority - b.priority)[0]?.departmentId;
+
+        let rootDepartmentId;
+
+        if (passedDeptIds.includes(application.rootDepartmentId)) {
+          rootDepartmentId = application.rootDepartmentId;
+        } else if (highestPriorityPassedDeptId) {
+          rootDepartmentId = highestPriorityPassedDeptId;
+        } else {
+          rootDepartmentId = passedDeptIds[0];
+        }
+
         createdUser = await createUserWithPositionsService(
           {
             ...finalReviewData,
+            rootDepartmentId: rootDepartmentId,
             positionIds,
           },
           tx,

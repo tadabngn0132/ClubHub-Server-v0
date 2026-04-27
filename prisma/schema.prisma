@@ -261,6 +261,7 @@ model MemberApplication {
   gender         String   @map("gender")
   major          String   @map("major")
   studentId      String   @map("student_id")
+  rootDepartmentId Int?   @map("root_department_id")
   appliedAt      DateTime @default(now()) @map("applied_at")
   state          MemberApplicationState @default(SUBMITTED) @map("state")
   isDeleted      Boolean  @default(false) @map("is_deleted")
@@ -271,6 +272,7 @@ model MemberApplication {
 
   @@map("memberApplications")
   @@index([email])
+  @@index([rootDepartmentId])
   @@index([state])
 }
 
@@ -297,7 +299,7 @@ model DepartmentInterview {
   departmentId  Int      @map("department_id")
   interviewerId Int?     @map("interviewer_id")
   status        InterviewStatus @default(PENDING) @map("status")
-  priority      Int      @default(1) @map("priority")
+  priority      Int      @default(0) @map("priority")
   interviewedAt DateTime? @map("interviewed_at")
   comment       String?  @map("comment")
   createdAt     DateTime @default(now()) @map("created_at")
