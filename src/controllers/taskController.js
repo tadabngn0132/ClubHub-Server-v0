@@ -26,20 +26,19 @@ export const createTask = async (req, res, next) => {
   try {
     const taskData = req.body;
 
-    const createdTask = await prisma.$transaction(async (prisma) => {
-      const assigneeIds = await resolveAssigneeIds(prisma, taskData.target);
+    const createdTask = await prisma.$transaction(async (tx) => {
+      const assigneeIds = await resolveAssigneeIds(tx, taskData);
 
       if (assigneeIds.length === 0) {
         throw new Error("No valid assignees found for the specified target");
       }
 
-      const newTask = await prisma.task.create({
+      const newTask = await tx.task.create({
         data: {
           title: taskData.title,
           description: taskData.description,
           dueDate: taskData.dueDate ? new Date(taskData.dueDate) : new Date(),
           status: getTaskStatus(taskData.status.trim().toLowerCase()),
-          // Remove or modify this line if you want to handle assignee scope differently
           assigneeScope: getAssigneeScopeValue(
             taskData.assigneeScope.trim().toLowerCase(),
           ),
@@ -48,18 +47,18 @@ export const createTask = async (req, res, next) => {
         },
       });
 
-      await prisma.assigneeTask.createMany({
+      await tx.assigneeTask.createMany({
         data: assigneeIds.map((assigneeId) => ({
           taskId: newTask.id,
-          assigneeId: assigneeId,
+          assigneeId: Number(assigneeId),
           evidenceUrl: taskData.evidenceUrl || "",
           additionalComments: taskData.additionalComments || "",
           status: ASSIGNEE_TASK_STATUS.PENDING,
         })),
-        skipDuplicates: true, // This option will skip creating a new record if the combination of taskId and assigneeId already exists
+        skipDuplicates: true,
       });
 
-      return prisma.task.findUnique({
+      return tx.task.findUnique({
         where: { id: newTask.id },
         include: taskInclude,
       });

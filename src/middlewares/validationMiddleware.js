@@ -446,13 +446,6 @@ export const validateTaskCreation = (req, res, next) => {
     }
   }
 
-  if (!hasAtLeastOneTarget(payload.target || payload)) {
-    return failValidation(
-      res,
-      "At least one target (allClub, departmentIds, or userIds) must be specified",
-    );
-  }
-
   next();
 };
 
@@ -481,14 +474,6 @@ export const validateTaskUpdate = (req, res, next) => {
     ) {
       return failValidation(res, "Task status is invalid");
     }
-  }
-
-  if (!hasAtLeastOneTarget(payload.target || payload)) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "At least one target (allClub, departmentIds, or userIds) must be specified",
-    });
   }
 
   next();

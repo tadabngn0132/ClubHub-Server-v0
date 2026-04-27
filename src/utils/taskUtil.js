@@ -48,76 +48,39 @@ export const getAssigneeScopeValue = (scope) => {
   switch (scope) {
     case "all":
       return ASSIGNEE_SCOPE.ALL;
-    case "committee-dept":
-      return ASSIGNEE_SCOPE.EXPERT_COMMITTEE_DEPT;
-    case "communication-dept":
-      return ASSIGNEE_SCOPE.COMMUNICATION_DEPT;
-    case "design-dept":
-      return ASSIGNEE_SCOPE.DESIGN_DEPT;
-    case "hr-dept":
-      return ASSIGNEE_SCOPE.HUMAN_RESOURCES_DEPT;
-    case "logistics-dept":
-      return ASSIGNEE_SCOPE.LOGISTICS_DEPT;
-    case "content-dept":
-      return ASSIGNEE_SCOPE.CONTENT_DEPT;
-    case "media-dept":
-      return ASSIGNEE_SCOPE.MEDIA_DEPT;
+    case "depts":
+      return ASSIGNEE_SCOPE.DEPTS;
+    case "members":
+      return ASSIGNEE_SCOPE.MEMBERS;
   }
 };
 
-// Utility function to convert an array of values to a unique array of integers
-const toUniqueNumberArray = (arr) => {
-  if (!Array.isArray(arr)) return [];
-  return [...new Set(arr.map(Number).filter(Number.isInteger))];
-};
-
-// Function to resolve assignee IDs based on the provided target object
-export const resolveAssigneeIds = async (tx, target = {}) => {
-  // Extract and process the target properties
-  const allClub = Boolean(target.allClub);
-  const departmentIds = toUniqueNumberArray(target.departmentIds);
-  const userIds = toUniqueNumberArray(target.userIds);
-  const excludeUserIds = new Set(toUniqueNumberArray(target.excludeUserIds));
-
-  const finalSet = new Set();
-
-  // Fetch users based on the specified criteria and populate the final set of assignee IDs
-  // If allClub is true, fetch all active users and add their IDs to the final set
-  if (allClub) {
+export const resolveAssigneeIds = async (tx, taskData) => {
+  if (taskData.assigneeScope === "all") {
     const allUsers = await tx.user.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", isDeleted: false },
       select: { id: true },
     });
-    allUsers.forEach((user) => finalSet.add(user.id));
+    return allUsers.map((user) => user.id);
   }
 
-  // Fetch users from the specified departments and add them to the final set
-  if (departmentIds.length > 0) {
-    const departmentUsers = await tx.userPosition.findMany({
+  if (taskData.assigneeScope === "depts") {
+    const deptUsers = await tx.user.findMany({
       where: {
-        position: { departmentId: { in: departmentIds } },
-        user: { status: "ACTIVE" },
+        status: "ACTIVE",
+        isDeleted: false,
+        departments: {
+          hasSome: taskData.departmentIds,
+        },
       },
-      select: { userId: true },
-      distinct: ["userId"],
-    });
-    departmentUsers.forEach((departmentUser) =>
-      finalSet.add(departmentUser.userId),
-    );
-  }
-
-  // Fetch users from the specified user IDs and add them to the final set
-  if (userIds.length > 0) {
-    const manualUsers = await tx.user.findMany({
-      where: { id: { in: userIds }, status: "ACTIVE" },
       select: { id: true },
     });
-    manualUsers.forEach((manualUser) => finalSet.add(manualUser.id));
+    return deptUsers.map((user) => user.id);
   }
 
-  // Remove any excluded user IDs from the final set
-  excludeUserIds.forEach((id) => finalSet.delete(id));
+  if (taskData.assigneeScope === "members") {
+    return taskData.userIds;
+  }
 
-  // Return the final array of unique assignee IDs
-  return [...finalSet];
+  return [];
 };

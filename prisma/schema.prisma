@@ -526,13 +526,8 @@ enum PositionLevel {
 
 enum TaskAssigneeScope {
   ALL
-  COMMUNICATION_DEPT
-  DESIGN_DEPT
-  CONTENT_DEPT
-  LOGISTICS_DEPT
-  HUMAN_RESOURCES_DEPT
-  EXPERT_COMMITTEE_DEPT
-  MEDIA_DEPT
+  DEPTS
+  MEMBERS
 }
 
 enum AvatarProvider {
