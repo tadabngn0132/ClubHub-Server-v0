@@ -279,22 +279,22 @@ export const updateActivity = async (req, res, next) => {
 
     if (storedActivity.googleCalendarEventId) {
       const calendarPayload = formatalendarPayload(updatedActivity);
-    }
-    
-    const calendarEventData = await updateGoogleCalendarEvent(
-      Number(payload.organizerId || req.userId),
-      storedActivity.googleCalendarEventId,
-      calendarPayload,
-    );
 
-    const finalUpdatedActivity = await prisma.activity.update({
-      where: { id: Number(id) },
-      data: {
-        googleCalendarEventId: calendarEventData.id,
-        meetingLink:
-          calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
-      },
-    });
+      const calendarEventData = await updateGoogleCalendarEvent(
+        Number(payload.organizerId || req.userId),
+        storedActivity.googleCalendarEventId,
+        calendarPayload,
+      );
+
+      const finalUpdatedActivity = await prisma.activity.update({
+        where: { id: Number(id) },
+        data: {
+          googleCalendarEventId: calendarEventData.id,
+          meetingLink:
+            calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+        },
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -401,10 +401,12 @@ export const hardDeleteActivity = async (req, res, next) => {
       );
     }
 
-    await deleteGoogleCalendarEvent(
-      Number(storedActivity.organizerId || req.userId),
-      storedActivity.googleCalendarEventId,
-    );
+    if (storedActivity.googleCalendarEventId) {
+      await deleteGoogleCalendarEvent(
+        Number(storedActivity.organizerId || req.userId),
+        storedActivity.googleCalendarEventId,
+      );
+    }
 
     const deletedActivity = await prisma.activity.delete({
       where: { id: Number(id) },
