@@ -84,16 +84,6 @@ export const createMemberApplication = async (req, res, next) => {
       throw new BadRequestError("Main department is required");
     }
 
-    if (selectedDepartmentIds.length === 0) {
-      throw new BadRequestError("At least one other department is required");
-    }
-
-    if (selectedDepartmentIds.includes(rootDepartmentId)) {
-      throw new BadRequestError(
-        "Main department cannot be selected again in other departments",
-      );
-    }
-
     const departmentInterviewIds = [
       ...new Set([rootDepartmentId, ...selectedDepartmentIds]),
     ];
@@ -137,7 +127,7 @@ export const createMemberApplication = async (req, res, next) => {
         },
       });
 
-      await tx.cvReview.create({
+      await tx.cVReview.create({
         data: {
           memberApplicationId: application.id,
           status: CV_STATUS.PENDING,

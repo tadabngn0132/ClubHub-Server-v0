@@ -601,30 +601,6 @@ export const validateMemberApplicationCreation = (req, res, next) => {
   if (!isPositiveIntegerLike(payload.rootDepartmentId)) {
     return failValidation(res, "Main department is required");
   }
-  if (
-    !Array.isArray(payload.departmentIds) ||
-    payload.departmentIds.length === 0
-  ) {
-    return failValidation(res, "At least one other department is required");
-  }
-  if (
-    payload.departmentIds.some(
-      (departmentId) => !isPositiveIntegerLike(departmentId),
-    )
-  ) {
-    return failValidation(res, "Other departments are invalid");
-  }
-  if (
-    payload.departmentIds.some(
-      (departmentId) =>
-        Number(departmentId) === Number(payload.rootDepartmentId),
-    )
-  ) {
-    return failValidation(
-      res,
-      "Main department cannot be selected again in other departments",
-    );
-  }
 
   next();
 };
