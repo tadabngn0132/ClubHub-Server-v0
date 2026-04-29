@@ -418,7 +418,6 @@ export const softDeleteUser = async (req, res, next) => {
       },
       data: {
         isDeleted: true,
-        status: USER_STATUS.INACTIVE,
       },
     });
 
@@ -639,6 +638,53 @@ export const getUserDashboardStats = async (req, res, next) => {
         recentActivities: recentActivities,
       },
     });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const restoreUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const storedUser = await prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!storedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const restoredUser = await prisma.user.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    const necessaryUserData = removeSensitiveUserData(restoredUser);
+
+    res.status(200).json({
+      success: true,
+      message: "User restored successfully",
+      data: necessaryUserData,
+    });
+
+    void logSystemAction(req.userId ?? Number(id), "user.restore", {
+      targetUserId: Number(id),
+    });
+
+    // Index member into the RAG system
+    indexMember(restoredUser.id).catch((err) =>
+      console.error(`[RAG] Indexing member ${restoredUser.id} failed:`, err),
+    );
   } catch (err) {
     return next(err);
   }

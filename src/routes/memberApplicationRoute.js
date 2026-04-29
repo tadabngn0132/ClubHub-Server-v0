@@ -9,6 +9,7 @@ import {
   updateMemberApplicationDepartmentInterviewDetail,
   updateMemberApplicationFinalReviewDetail,
   withdrawMemberApplication,
+  restoreMemberApplication,
 } from "../controllers/memberApplicationController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -77,6 +78,12 @@ router.put(
   verifyAccessToken,
   requirePermission("memberApplications", "update"),
   withdrawMemberApplication,
+);
+router.put(
+  "/:id/restore",
+  verifyAccessToken,
+  requirePermission("memberApplications", "restore"),
+  restoreMemberApplication,
 );
 
 export default router;

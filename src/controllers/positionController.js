@@ -245,3 +245,38 @@ export const hardDeletePosition = async (req, res, next) => {
     return next(err);
   }
 };
+
+export const restorePosition = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const position = await prisma.position.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!position) {
+      return res.status(404).json({
+        success: false,
+        message: "Position not found",
+      });
+    }
+
+    await prisma.position.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Position restored successfully",
+    });
+  } catch (err) {
+    return next(err);
+  }
+};

@@ -13,6 +13,7 @@ import {
   deleteActivityImage,
   deleteActivityVideo,
   getICSFile,
+  restoreActivity,
 } from "../controllers/activityController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -101,6 +102,12 @@ router.delete(
   verifyAccessToken,
   requirePermission("activities", "delete"),
   hardDeleteActivity,
+);
+router.put(
+  "/:id/restore",
+  verifyAccessToken,
+  requirePermission("activities", "restore"),
+  restoreActivity,
 );
 
 export default router;

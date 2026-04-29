@@ -9,6 +9,7 @@ import {
   hardDeleteUser,
   unlockAccount,
   getUserDashboardStats,
+  restoreUser,
 } from "../controllers/userController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import {
@@ -80,6 +81,12 @@ router.get(
   verifyAccessToken,
   requirePermission("users", "read"),
   getUserDashboardStats,
+);
+router.put(
+  "/:id/restore",
+  verifyAccessToken,
+  requirePermission("users", "restore"),
+  restoreUser,
 );
 
 export default router;

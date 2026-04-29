@@ -262,19 +262,25 @@ export const updateTask = async (req, res, next) => {
 export const softDeleteTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
-    const task = await prisma.task.update({
+    
+    const task = await prisma.task.findUnique({
       where: { id: Number(taskId) },
-      data: {
-        status: TASK_STATUS.CANCELLED,
-        isDeleted: true,
-      },
     });
+
     if (!task) {
       return res.status(404).json({
         success: false,
         message: "Task not found",
       });
     }
+    
+    const task = await prisma.task.update({
+      where: { id: Number(taskId) },
+      data: {
+        isDeleted: true,
+      },
+    });
+    
     res.status(200).json({
       success: true,
       message: "Task deleted successfully",
@@ -530,6 +536,81 @@ export const verifyTaskCompletion = async (req, res, next) => {
       Boolean(taskVerifyData.isVerified),
       taskVerifyData.reviewerComments || "",
     ).catch(console.error);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const restoreTask = async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+
+    const task = await prisma.task.findUnique({
+      where: { id: Number(taskId) },
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    const restoredTask = await prisma.task.update({
+      where: { id: Number(taskId) },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task restored successfully",
+      data: restoredTask,
+    });
+
+    void logSystemAction(
+      req.userId ?? restoredTask.assignorId ?? null,
+      "task.restore",
+      {
+        taskId: restoredTask.id,
+        title: restoredTask.title,
+      },
+    );
+
+    const assignees = await prisma.assigneeTask.findMany({
+      where: { taskId: restoredTask.id },
+      include: {
+        user: {
+          select: {
+            email: true,
+            fullname: true,
+          },
+        },
+      },
+    });
+
+    void createNotificationsForUsersSafe(
+      assignees.map((item) => item.assigneeId),
+      {
+        type: "TASK",
+        message: `Task has been restored: ${restoredTask.title}`,
+      },
+    );
+
+    for (const assignee of assignees) {
+      await sendTaskAssignmentEmail(
+        assignee.user.email,
+        assignee.user.fullname,
+        restoredTask.title,
+        restoredTask.assignedBy?.fullname ?? "Ad/Mod",
+      ).catch(console.error);
+    }
+
+    // Index task mới tạo vào hệ thống RAG
+    indexTask(restoredTask.id).catch((err) =>
+      console.error(`[RAG] Indexing task ${restoredTask.id} failed:`, err),
+    );
   } catch (err) {
     return next(err);
   }

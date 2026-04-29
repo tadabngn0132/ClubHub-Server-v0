@@ -345,7 +345,6 @@ export const softDeleteActivity = async (req, res, next) => {
     const deletedActivity = await prisma.activity.update({
       where: { id: Number(id) },
       data: {
-        status: ACTIVITY_STATUS.CANCELLED,
         isDeleted: true,
       },
     });
@@ -676,6 +675,50 @@ export const getICSFile = async (req, res, next) => {
       `attachment; filename=activity_${storedActivity.slug}.ics`,
     );
     res.status(200).send(icsFileData);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const restoreActivity = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const existingActivity = await prisma.activity.findUnique({
+      where: { id: Number(id) },
+      include: {
+        activityParticipants: true,
+      },
+    });
+
+    if (!existingActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found",
+      });
+    }
+
+    const restoredActivity = await prisma.activity.update({
+      where: { id: Number(id) },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Activity restored successfully",
+      data: restoredActivity,
+    });
+
+    void logSystemAction(
+      req.userId ?? existingActivity.organizerId ?? null,
+      "activity.restore",
+      {
+        activityId: restoredActivity.id,
+        title: restoredActivity.title,
+      },
+    );
   } catch (err) {
     return next(err);
   }

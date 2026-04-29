@@ -9,6 +9,7 @@ import {
   hardDeleteTask,
   confirmTaskCompletion,
   verifyTaskCompletion,
+  restoreTask,
 } from "../controllers/taskController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -76,6 +77,12 @@ router.put(
   verifyAccessToken,
   requirePermission("tasks", "update"),
   verifyTaskCompletion,
+);
+router.put(
+  "/:taskId/restore",
+  verifyAccessToken,
+  requirePermission("tasks", "restore"),
+  restoreTask,
 );
 
 export default router;

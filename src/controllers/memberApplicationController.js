@@ -647,3 +647,44 @@ export const withdrawMemberApplication = async (req, res, next) => {
     return next(err);
   }
 };
+
+export const restoreMemberApplication = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const application = await prisma.memberApplication.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Member application not found",
+      });
+    }
+
+    await prisma.memberApplication.update({
+      where: { id: Number(id) },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    const restoredApplication = await prisma.memberApplication.findUnique({
+      where: { id: Number(id) },
+      include: memberApplicationIncludeOptions,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Member application restored successfully",
+      data: restoredApplication,
+    });
+
+    void logSystemAction(req.userId ?? null, "member_application.restore", {
+      applicationId: application.id,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};

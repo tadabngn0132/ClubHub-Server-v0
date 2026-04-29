@@ -148,8 +148,6 @@ export const softDeleteDepartment = async (req, res, next) => {
       },
       data: {
         isDeleted: true,
-        isActive: false,
-        updatedAt: new Date(),
       },
     });
     res.status(200).json({
@@ -202,6 +200,50 @@ export const hardDeleteDepartment = async (req, res, next) => {
     deleteChunksBySource("department", Number(id)).catch((err) =>
       console.error(
         `[RAG] Deleting chunks for department ${Number(id)} failed:`,
+        err,
+      ),
+    );
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const restoreDepartment = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const department = await prisma.department.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: "Department not found",
+      });
+    }
+
+    const restoredDepartment = await prisma.department.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Department restored successfully",
+      data: restoredDepartment,
+    });
+
+    // Index department into the RAG system    
+    indexDepartment(restoredDepartment.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing department ${restoredDepartment.id} failed:`,
         err,
       ),
     );

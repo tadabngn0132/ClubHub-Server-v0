@@ -6,6 +6,7 @@ import {
   updateDepartment,
   softDeleteDepartment,
   hardDeleteDepartment,
+  restoreDepartment,
 } from "../controllers/departmentController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -53,6 +54,12 @@ router.delete(
   verifyAccessToken,
   requirePermission("departments", "hardDelete"),
   hardDeleteDepartment,
+);
+router.put(
+  "/:id/restore",
+  verifyAccessToken,
+  requirePermission("departments", "restore"),
+  restoreDepartment,
 );
 
 export default router;

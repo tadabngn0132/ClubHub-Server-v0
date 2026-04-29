@@ -6,6 +6,7 @@ import {
   updatePosition,
   softDeletePosition,
   hardDeletePosition,
+  restorePosition,
 } from "../controllers/positionController.js";
 import { verifyAccessToken } from "../middlewares/authMiddleware.js";
 import { requirePermission } from "../middlewares/permissionMiddleware.js";
@@ -53,6 +54,12 @@ router.delete(
   verifyAccessToken,
   requirePermission("positions", "delete"),
   hardDeletePosition,
+);
+router.put(
+  "/:id/restore",
+  verifyAccessToken,
+  requirePermission("positions", "restore"),
+  restorePosition,
 );
 
 export default router;
