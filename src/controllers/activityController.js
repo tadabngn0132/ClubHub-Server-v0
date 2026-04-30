@@ -14,6 +14,47 @@ import { logSystemAction } from "../services/auditLogService.js";
 import { AppError } from "../utils/AppError.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
 
+const activityIncludes = {
+  organizer: {
+    select: {
+      id: true,
+      fullname: true,
+      email: true,
+      avatarUrl: true,
+    },
+  },
+  activityParticipations: {
+    select: {
+      id: true,
+      guestName: true,
+      guestEmail: true,
+      guestPhoneNumber: true,
+      status: true,
+      registeredAt: true,
+      user: {
+        select: {
+          id: true,
+          fullname: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  },
+  images: {
+    select: {
+      id: true,
+      imageUrl: true,
+    },
+  },
+  videos: {
+    select: {
+      id: true,
+      videoUrl: true,
+    },
+  },
+};
+
 const formatalendarPayload = (activity) => ({
   summary: activity.title,
   description: activity.description,
@@ -79,15 +120,12 @@ export const createActivity = async (req, res, next) => {
         organizerId: Number(payload.organizerId),
         thumbnailUrl: payload.thumbnailUrl || null,
         thumbnailPublicId: payload.thumbnailPublicId || null,
-      },
-      include: {
-        organizer: {
-          select: {
-            id: true,
-            fullname: true,
-            email: true,
-          },
-        },
+        requireRegistration: payload.requireRegistration || false,
+        registrationDeadline: payload.registrationDeadline
+          ? new Date(payload.registrationDeadline)
+          : null,
+        maxParticipants: payload.maxParticipants || null,
+        isFeatured: payload.isFeatured || false,
       },
     });
 
@@ -105,6 +143,7 @@ export const createActivity = async (req, res, next) => {
         meetingLink:
           calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
       },
+      include: activityIncludes,
     });
 
     res.status(201).json({
@@ -145,6 +184,7 @@ export const getActivities = async (req, res, next) => {
       where: {
         ...withSoftDeleteFilter(req.userRole),
       },
+      include: activityIncludes,
     });
 
     res.status(200).json({
@@ -163,15 +203,7 @@ export const getActivityById = async (req, res, next) => {
 
     const storedActivity = await prisma.activity.findUnique({
       where: { id: Number(id), ...withSoftDeleteFilter(req.userRole) },
-      include: {
-        organizer: {
-          select: {
-            id: true,
-            fullname: true,
-            email: true,
-          },
-        },
-      },
+      include: activityIncludes,
     });
 
     if (!storedActivity) {
@@ -197,6 +229,7 @@ export const getActivitiesBySlug = async (req, res, next) => {
 
     const activity = await prisma.activity.findUnique({
       where: { slug: slug, ...withSoftDeleteFilter(req.userRole) },
+      include: activityIncludes,
     });
 
     if (!activity) {
@@ -278,8 +311,18 @@ export const updateActivity = async (req, res, next) => {
         organizerId: payload.organizerId,
         thumbnailUrl: payload.thumbnailUrl,
         thumbnailPublicId: payload.thumbnailPublicId,
+        requireRegistration:
+          payload.requireRegistration || storedActivity.requireRegistration,
+        registrationDeadline: payload.registrationDeadline
+          ? new Date(payload.registrationDeadline)
+          : storedActivity.registrationDeadline,
+        maxParticipants:
+          payload.maxParticipants || storedActivity.maxParticipants,
+        isFeatured: payload.isFeatured || storedActivity.isFeatured,
       },
     });
+
+    let finalUpdatedActivity = updatedActivity;
 
     if (storedActivity.googleCalendarEventId) {
       const calendarPayload = formatalendarPayload(updatedActivity);
@@ -290,13 +333,14 @@ export const updateActivity = async (req, res, next) => {
         calendarPayload,
       );
 
-      const finalUpdatedActivity = await prisma.activity.update({
+      finalUpdatedActivity = await prisma.activity.update({
         where: { id: Number(id) },
         data: {
           googleCalendarEventId: calendarEventData.id,
           meetingLink:
             calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
         },
+        include: activityIncludes,
       });
     }
 
@@ -448,6 +492,7 @@ export const getActivitiesByUserId = async (req, res, next) => {
 
     const activities = await prisma.activity.findMany({
       where: { organizerId: Number(userId) },
+      include: activityIncludes,
     });
 
     res.status(200).json({
@@ -686,9 +731,6 @@ export const restoreActivity = async (req, res, next) => {
 
     const existingActivity = await prisma.activity.findUnique({
       where: { id: Number(id) },
-      include: {
-        activityParticipants: true,
-      },
     });
 
     if (!existingActivity) {
@@ -703,6 +745,7 @@ export const restoreActivity = async (req, res, next) => {
       data: {
         isDeleted: false,
       },
+      include: activityIncludes,
     });
 
     res.status(200).json({
