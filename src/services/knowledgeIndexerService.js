@@ -176,46 +176,6 @@ export const indexDepartment = async (departmentId) => {
   });
 };
 
-export const indexMemberApplication = async (applicationId) => {
-  const application = await prisma.memberApplication.findUnique({
-    where: { id: applicationId },
-    include: { user: { select: { fullname: true, email: true } } },
-  });
-
-  if (!application || application.isDeleted) {
-    return deleteChunksBySource("memberApplication", applicationId);
-  }
-
-  return upsertChunk({
-    sourceType: "memberApplication",
-    sourceId: applicationId,
-    content: formatMemberApplication(application),
-    metadata: {
-      fullname: application.user.fullname,
-      email: application.user.email,
-      state: application.state,
-    },
-  });
-};
-
-export const indexActivityParticipation = async (activityParticipationId) => {
-  const participation = await prisma.activityParticipation.findUnique({
-    where: { id: activityParticipationId },
-    include: { user: { select: { fullname: true } } },
-  });
-
-  await upsertChunk({
-    sourceType: "activityParticipation",
-    sourceId: activityParticipationId,
-    content: formatActivityParticipation(participation),
-    metadata: {
-      activityId: participation.activityId,
-      userId: participation.userId,
-      fullname: participation.user.fullname,
-    },
-  });
-};
-
 // ─── Full reindex ─────────────────────────────────────────────────────────────
 // Đọc toàn bộ data từ Prisma/Neon rồi đẩy embedding vào Chroma.
 // Chạy khi server start hoặc ADMIN trigger thủ công.
@@ -258,14 +218,7 @@ export const reindexAll = async () => {
   const t0 = Date.now();
 
   // Đọc IDs từ Prisma/Neon
-  const [
-    activities,
-    tasks,
-    users,
-    departments,
-    memberApplications,
-    activityParticipations,
-  ] = await Promise.all([
+  const [activities, tasks, users, departments] = await Promise.all([
     prisma.activity.findMany({
       where: { isDeleted: false },
       select: { id: true },
@@ -273,14 +226,6 @@ export const reindexAll = async () => {
     prisma.task.findMany({ where: { isDeleted: false }, select: { id: true } }),
     prisma.user.findMany({ where: { isDeleted: false }, select: { id: true } }),
     prisma.department.findMany({
-      where: { isDeleted: false },
-      select: { id: true },
-    }),
-    prisma.memberApplication.findMany({
-      where: { isDeleted: false },
-      select: { id: true },
-    }),
-    prisma.activityParticipation.findMany({
       where: { isDeleted: false },
       select: { id: true },
     }),
@@ -307,21 +252,11 @@ export const reindexAll = async () => {
     indexDepartment,
     "department",
   );
-  await indexBatch(
-    memberApplications.map((r) => r.id),
-    indexMemberApplication,
-    "memberApplication",
-  );
-  await indexBatch(
-    activityParticipations.map((r) => r.id),
-    indexActivityParticipation,
-    "activityParticipation",
-  );
 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
   console.log(
     `[RAG] Full reindex done in ${elapsed}s — ` +
       `${activities.length} activities, ${tasks.length} tasks, ` +
-      `${users.length} members, ${departments.length} departments, ${memberApplications.length} member applications indexed., ${activityParticipations.length} activity participations indexed.`,
+      `${users.length} members, ${departments.length} departments.`,
   );
 };

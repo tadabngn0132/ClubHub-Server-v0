@@ -19,8 +19,6 @@ import { logSystemAction } from "../services/auditLogService.js";
 import { createNotificationSafe } from "../services/notificationService.js";
 import { AppError, BadRequestError } from "../utils/AppError.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
-import { indexMemberApplication } from "../services/knowledgeIndexerService.js";
-import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 const memberApplicationIncludeOptions = {
   cvReview: {
@@ -167,14 +165,6 @@ export const createMemberApplication = async (req, res, next) => {
       applicationId: newApplication.id,
       email: newApplication.email,
     });
-
-    // Index the new member application into the RAG system
-    await indexMemberApplication(newApplication.id).catch((err) =>
-      console.error(
-        `[RAG] Indexing member application ${newApplication.id} after creation failed:`,
-        err,
-      ),
-    );
   } catch (err) {
     return next(err);
   }
@@ -242,14 +232,6 @@ export const softDeleteMemberApplication = async (req, res, next) => {
       success: true,
       message: "Member application deleted successfully",
     });
-    
-    // Delete the member application from the RAG system
-    await deleteChunksBySource("memberApplication", application.id).catch((err) =>
-      console.error(
-        `[RAG] Deleting member application ${application.id} from index after soft deletion failed:`,
-        err,
-      ),
-    );
   } catch (err) {
     return next(err);
   }
@@ -275,14 +257,6 @@ export const hardDeleteMemberApplication = async (req, res, next) => {
       success: true,
       message: "Member application deleted successfully",
     });
-
-    // Delete the member application from the RAG system
-    await deleteChunksBySource("memberApplication", application.id).catch((err) =>
-      console.error(
-        `[RAG] Deleting member application ${application.id} from index after hard deletion failed:`,
-        err,
-      ),
-    );
   } catch (err) {
     return next(err);
   }
@@ -710,14 +684,6 @@ export const restoreMemberApplication = async (req, res, next) => {
     void logSystemAction(req.userId ?? null, "member_application.restore", {
       applicationId: application.id,
     });
-
-    // Index the restored member application into the RAG system
-    await indexMemberApplication(application.id).catch((err) =>
-      console.error(
-        `[RAG] Indexing member application ${application.id} after restoration failed:`,
-        err,
-      ),
-    );
   } catch (err) {
     return next(err);
   }
