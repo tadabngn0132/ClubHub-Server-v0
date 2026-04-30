@@ -6,10 +6,10 @@ import {
 
 export const createGoogleDocFromExistingTemplate = async (req, res, next) => {
   try {
-    const { userId, templateId, newDocTitle } = req.body;
+    const { templateId, newDocTitle } = req.body;
 
     const newDoc = await createGoogleDocFromTemplate(
-      userId,
+      req.userId,
       templateId,
       newDocTitle,
     );
@@ -26,9 +26,9 @@ export const createGoogleDocFromExistingTemplate = async (req, res, next) => {
 
 export const createNewGoogleDocTemplate = async (req, res, next) => {
   try {
-    const { userId, title } = req.body;
+    const { title } = req.body;
 
-    const newDocTemplate = await createGoogleDocTemplate(userId, title);
+    const newDocTemplate = await createGoogleDocTemplate(req.userId, title);
 
     res.status(201).json({
       success: true,

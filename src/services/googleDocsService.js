@@ -1,11 +1,11 @@
-import { withUserGoogleDocs, withUserGoogleAuth } from "./googleAuthContextService.js";
+import { withUserGoogleDocs, withUserGoogleDrive } from "./googleAuthContextService.js";
 
 export const createGoogleDocFromTemplate = async (
   userId,
   templateId,
   newDocTitle,
 ) => {
-  return withUserGoogleDocs(userId, async ({ googleDrive }) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
     const response = await googleDrive.files.copy({
       fileId: templateId,
       requestBody: {
