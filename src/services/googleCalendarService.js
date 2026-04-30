@@ -147,3 +147,68 @@ END:VCALENDAR`;
     return icsContent;
   });
 };
+
+/**
+ * Tạo event trên Google Calendar của participant khi họ đăng ký tham gia activity
+ * @param {number} participantUserId - ID của user/member đăng ký
+ * @param {object} activity - Object activity từ DB
+ * @returns {Promise<object>} - Google Calendar event data hoặc null nếu user không có Google OAuth
+ */
+export const createCalendarEventForParticipant = async (
+  participantUserId,
+  activity,
+  calendarId = "primary",
+) => {
+  try {
+    return await withUserGoogleCalendar(
+      participantUserId,
+      async (googleCalendar) => {
+        const requestBody = {
+          summary: `${activity.title} (Registered)`,
+          description: activity.description || "",
+          location: activity.venueName || activity.venueAddress || "",
+          start: {
+            dateTime: activity.startDate.toISOString(),
+            timeZone: "Asia/Ho_Chi_Minh",
+          },
+          end: {
+            dateTime: activity.endDate.toISOString(),
+            timeZone: "Asia/Ho_Chi_Minh",
+          },
+          conferenceData:
+            activity.locationType === "online" ||
+            activity.locationType === "hybrid"
+              ? {
+                  createRequest: {
+                    requestId: `meet-participant-${activity.id}-${participantUserId}-${Date.now()}-${uuidv4()}`,
+                    conferenceSolutionKey: {
+                      type: "hangoutsMeet",
+                    },
+                  },
+                }
+              : undefined,
+        };
+
+        const response = await googleCalendar.events.insert({
+          calendarId,
+          requestBody,
+          conferenceDataVersion:
+            activity.locationType === "online" ||
+            activity.locationType === "hybrid"
+              ? 1
+              : undefined,
+          fields: "id,summary,start,end,location,description,conferenceData",
+        });
+
+        return response.data;
+      },
+    );
+  } catch (error) {
+    // User không có Google OAuth hoặc token hết hạn - không phải lỗi fatal
+    console.warn(
+      `[Google Calendar] Cannot create event for participant ${participantUserId}:`,
+      error.message,
+    );
+    return null;
+  }
+};

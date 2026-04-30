@@ -3,6 +3,7 @@ import { getParticipationStatus } from "../utils/activityUtil.js";
 import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 import { PARTICIPATION_STATUS } from "../utils/constant.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
+import { createCalendarEventForParticipant } from "../services/googleCalendarService.js";
 
 export const createActivityParticipation = async (req, res, next) => {
   try {
@@ -75,6 +76,19 @@ export const createActivityParticipation = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { id: Number(participationData.userId) },
     });
+
+    // Tạo event trên Google Calendar của participant nếu họ là member có Google OAuth
+    if (participationData.userId) {
+      await createCalendarEventForParticipant(
+        Number(participationData.userId),
+        activity,
+      ).catch((err) =>
+        console.warn(
+          `[Participation] Failed to create calendar event for user ${participationData.userId}:`,
+          err.message,
+        ),
+      );
+    }
 
     await sendEventRegistrationConfirmationEmail(
       user.email,
@@ -158,6 +172,20 @@ export const getParticipationsByUserId = async (req, res, next) => {
       where: {
         userId: Number(userId),
         ...withSoftDeleteFilter(req.userRole),
+      },
+      include: {
+        activity: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            startDate: true,
+            endDate: true,
+            venueName: true,
+            venueAddress: true,
+            thumbnailUrl: true,
+          },
+        },
       },
     });
     res.status(200).json({

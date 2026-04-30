@@ -708,9 +708,15 @@ export const getICSFile = async (req, res, next) => {
       });
     }
 
+    if (!storedActivity.googleCalendarEventId) {
+      return res.status(400).json({
+        success: false,
+        message: "This activity does not have a Google Calendar event",
+      });
+    }
+
     const icsFileData = await exportICSFile(
       userId,
-      storedActivity.id,
       storedActivity.googleCalendarEventId,
     );
 
