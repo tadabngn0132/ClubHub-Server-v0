@@ -40,7 +40,11 @@ import systemLogRoute from "./src/routes/systemLogRoute.js";
 import ragRoute from "./src/routes/ragRoute.js";
 import { reindexAll } from "./src/services/knowledgeIndexerService.js";
 import aiChatRoute from "./src/routes/aiChatRoute.js";
-import { errorHandler, notFoundHandler } from "./src/middlewares/errorHandlerMiddleware.js";
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./src/middlewares/errorHandlerMiddleware.js";
+import { normalizeErrorResponseShape } from "./src/middlewares/responseNormalizerMiddleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,6 +66,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(normalizeErrorResponseShape);
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -115,14 +120,17 @@ async function startServer() {
 
     // Ping Chroma mỗi 10 phút để tránh spin down
     if (process.env.NODE_ENV === "production" && process.env.CHROMA_URL) {
-      setInterval(async () => {
-        try {
-          await fetch(`${process.env.CHROMA_URL}/api/v2/heartbeat`);
-          console.log("[Chroma] Ping OK");
-        } catch {
-          console.warn("[Chroma] Ping failed");
-        }
-      }, 10 * 60 * 1000); // 10 phút
+      setInterval(
+        async () => {
+          try {
+            await fetch(`${process.env.CHROMA_URL}/api/v2/heartbeat`);
+            console.log("[Chroma] Ping OK");
+          } catch {
+            console.warn("[Chroma] Ping failed");
+          }
+        },
+        10 * 60 * 1000,
+      ); // 10 phút
     }
 
     reindexAll().catch((err) =>
