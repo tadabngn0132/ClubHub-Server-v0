@@ -3,6 +3,8 @@ import { getParticipationStatus } from "../utils/activityUtil.js";
 import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 import { PARTICIPATION_STATUS } from "../utils/constant.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
+import { indexActivityParticipation } from "../services/knowledgeIndexerService.js";
+import { deleteChunksBySource } from "../services/documentChunkService.js";
 
 export const createActivityParticipation = async (req, res, next) => {
   try {
@@ -87,6 +89,14 @@ export const createActivityParticipation = async (req, res, next) => {
       message: "Activity participation created successfully",
       data: participation,
     });
+
+    // Index the new activity participation into the RAG system
+    await indexActivityParticipation(participation.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing activity participation ${participation.id} after creation failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     return next(err);
   }
@@ -196,6 +206,14 @@ export const updateParticipationById = async (req, res, next) => {
       message: "Update participation status successfully",
       data: updatedparticipation,
     });
+
+    // Index the updated activity participation into the RAG system
+    await indexActivityParticipation(updatedparticipation.id).catch((err) =>
+      console.error(
+        `[RAG] Indexing activity participation ${updatedparticipation.id} after update failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     return next(err);
   }
@@ -220,6 +238,14 @@ export const deleteParticipation = async (req, res, next) => {
       success: true,
       message: "participation deleted successfully",
     });
+
+    // Delete the activity participation from the RAG system
+    await deleteChunksBySource("activityParticipation", participation.id).catch((err) =>
+      console.error(
+        `[RAG] Deleting activity participation ${participation.id} from index after deletion failed:`,
+        err,
+      ),
+    );
   } catch (err) {
     return next(err);
   }
