@@ -1,6 +1,6 @@
 import {
   withUserGoogleSheets,
-  withUserGoogleAuth,
+  withUserGoogleDrive,
 } from "./googleAuthContextService.js";
 
 export const createGoogleSheetFromTemplate = async (
@@ -8,7 +8,7 @@ export const createGoogleSheetFromTemplate = async (
   templateId,
   newSheetTitle,
 ) => {
-  return withUserGoogleSheets(userId, async ({ googleDrive }) => {
+  return withUserGoogleDrive(userId, async (googleDrive) => {
     const response = await googleDrive.files.copy({
       fileId: templateId,
       requestBody: {
