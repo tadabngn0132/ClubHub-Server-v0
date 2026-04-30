@@ -274,7 +274,7 @@ export const softDeleteTask = async (req, res, next) => {
       });
     }
     
-    const task = await prisma.task.update({
+    const deletedTask = await prisma.task.update({
       where: { id: Number(taskId) },
       data: {
         isDeleted: true,
@@ -284,19 +284,20 @@ export const softDeleteTask = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Task deleted successfully",
+      data: deletedTask,
     });
 
     void logSystemAction(
-      req.userId ?? task.assignorId ?? null,
+      req.userId ?? deletedTask.assignorId ?? null,
       "task.soft_delete",
       {
-        taskId: task.id,
-        title: task.title,
+        taskId: deletedTask.id,
+        title: deletedTask.title,
       },
     );
 
     const assignees = await prisma.assigneeTask.findMany({
-      where: { taskId: task.id },
+      where: { taskId: deletedTask.id },
       include: {
         user: {
           select: {
@@ -311,7 +312,7 @@ export const softDeleteTask = async (req, res, next) => {
       assignees.map((item) => item.assigneeId),
       {
         type: "TASK",
-        message: `Task has been cancelled: ${task.title}`,
+        message: `Task has been cancelled: ${deletedTask.title}`,
       },
     );
 
@@ -319,13 +320,13 @@ export const softDeleteTask = async (req, res, next) => {
       await sendTaskCancelledEmail(
         assignee.user.email,
         assignee.user.fullname,
-        task.title,
+        deletedTask.title,
       ).catch(console.error);
     }
 
     // Xóa chunks liên quan đến task này trong hệ thống RAG
-    deleteChunksBySource("task", task.id).catch((err) =>
-      console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
+    deleteChunksBySource("task", deletedTask.id).catch((err) =>
+      console.error(`[RAG] Deleting chunks for task ${deletedTask.id} failed:`, err),
     );
   } catch (err) {
     return next(err);
@@ -341,10 +342,10 @@ export const hardDeleteTask = async (req, res, next) => {
       select: { assigneeId: true },
     });
 
-    const task = await prisma.task.delete({
+    const deletedTask = await prisma.task.delete({
       where: { id: Number(taskId) },
     });
-    if (!task) {
+    if (!deletedTask) {
       return res.status(404).json({
         success: false,
         message: "Task not found",
@@ -359,13 +360,13 @@ export const hardDeleteTask = async (req, res, next) => {
       assignees.map((item) => item.assigneeId),
       {
         type: "TASK",
-        message: `Task has been removed: ${task.title}`,
+        message: `Task has been removed: ${deletedTask.title}`,
       },
     );
 
     // Xóa chunks liên quan đến task này trong hệ thống RAG
-    deleteChunksBySource("task", task.id).catch((err) =>
-      console.error(`[RAG] Deleting chunks for task ${task.id} failed:`, err),
+    deleteChunksBySource("task", deletedTask.id).catch((err) =>
+      console.error(`[RAG] Deleting chunks for task ${deletedTask.id} failed:`, err),
     );
   } catch (err) {
     return next(err);
