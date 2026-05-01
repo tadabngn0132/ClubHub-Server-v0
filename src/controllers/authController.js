@@ -33,6 +33,32 @@ import { logSystemAction } from "../services/auditLogService.js";
 import { BadRequestError } from "../utils/AppError.js";
 
 const GOOGLE_SCOPE_UPGRADE_ATTEMPTED = "googleScopeUpgradeAttempted";
+const GOOGLE_LINK_CONTEXT_KEY = "googleLinkContext";
+const DEFAULT_GOOGLE_LINK_RETURN_PATH = "/member/setting";
+
+const isSafeRelativePath = (value) => {
+  return (
+    typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//")
+  );
+};
+
+const buildClientRedirectUrl = (path, params = {}) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  const safePath = isSafeRelativePath(path)
+    ? path
+    : DEFAULT_GOOGLE_LINK_RETURN_PATH;
+  const redirectUrl = new URL(safePath, clientUrl);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      redirectUrl.searchParams.set(key, String(value));
+    }
+  });
+
+  return redirectUrl.toString();
+};
 
 const getScopeKeyBySystemRole = (systemRole) => {
   const normalizedRole = String(systemRole || ROLE.MEMBER).toUpperCase();
@@ -403,7 +429,7 @@ export const resetPassword = async (req, res, next) => {
     verifyResetPasswordToken(token, storedUser.id);
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    
+
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: {
@@ -525,8 +551,52 @@ export const googleAuth = async (req, res, next) => {
   }
 };
 
+export const googleLinkStart = async (req, res, next) => {
+  try {
+    const state = crypto.randomBytes(32).toString("hex");
+    const oauth2Client = createOAuthClient();
+    const scopeKey = getScopeKeyBySystemRole(req.userRole);
+    const requiredScopes = roleBasedScopes[scopeKey] || roleBasedScopes.member;
+    const returnTo = isSafeRelativePath(req.body?.returnTo)
+      ? req.body.returnTo
+      : DEFAULT_GOOGLE_LINK_RETURN_PATH;
+
+    req.session.state = state;
+    req.session[GOOGLE_LINK_CONTEXT_KEY] = {
+      userId: req.userId,
+      role: req.userRole,
+      returnTo,
+    };
+
+    req.session.save((saveError) => {
+      if (saveError) {
+        return next(saveError);
+      }
+
+      const authorizationUrl = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        include_granted_scopes: true,
+        prompt: "consent",
+        scope: requiredScopes,
+        state,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Google account linking started successfully",
+        data: {
+          authorizationUrl,
+        },
+      });
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const googleAuthCallback = async (req, res, next) => {
   const { code, state, error } = req.query;
+  const googleLinkContext = req.session?.[GOOGLE_LINK_CONTEXT_KEY] || null;
 
   try {
     const oauth2Client = createOAuthClient();
@@ -534,6 +604,15 @@ export const googleAuthCallback = async (req, res, next) => {
     // TODO: Implement Google authentication callback logic
     // Handle the OAuth 2.0 server response
     if (error) {
+      if (googleLinkContext) {
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message: "Google access was denied",
+          }),
+        );
+      }
+
       return res.status(400).json({
         success: false,
         message: "Access denied",
@@ -541,6 +620,15 @@ export const googleAuthCallback = async (req, res, next) => {
     }
 
     if (state !== req.session.state) {
+      if (googleLinkContext) {
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message: "State mismatch",
+          }),
+        );
+      }
+
       return res.status(400).json({
         success: false,
         message: "State mismatch",
@@ -574,6 +662,15 @@ export const googleAuthCallback = async (req, res, next) => {
     });
 
     if (!storedUser) {
+      if (googleLinkContext) {
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message: "Linked user account was not found",
+          }),
+        );
+      }
+
       res.redirect(
         `${process.env.CLIENT_URL}/auth/callback?success=false&message=${encodeURIComponent(
           "No account associated with this email. Please contact admin to create an account for you.",
@@ -581,6 +678,139 @@ export const googleAuthCallback = async (req, res, next) => {
       );
 
       return;
+    }
+
+    if (googleLinkContext) {
+      if (Number(googleLinkContext.userId) !== storedUser.id) {
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message: "Google link session does not match the active user",
+          }),
+        );
+      }
+
+      if (storedUser.email !== userInfo.email) {
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message: "The Google account email must match your portal email",
+          }),
+        );
+      }
+
+      const userScopeKey = getScopeKeyBySystemRole(
+        googleLinkContext.role || userRole(storedUser),
+      );
+      const requiredScopes =
+        roleBasedScopes[userScopeKey] || roleBasedScopes.member;
+      const grantedScopeString = tokens.scope || "";
+      const alreadyAttemptedScopeUpgrade = Boolean(
+        req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED],
+      );
+
+      if (
+        !hasAllScopes(grantedScopeString, requiredScopes) &&
+        !alreadyAttemptedScopeUpgrade
+      ) {
+        req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED] = true;
+
+        const reauthorizeState = crypto.randomBytes(32).toString("hex");
+        req.session.state = reauthorizeState;
+
+        const reauthorizeUrl = oauth2Client.generateAuthUrl({
+          access_type: "offline",
+          include_granted_scopes: true,
+          prompt: "consent",
+          scope: requiredScopes,
+          state: reauthorizeState,
+        });
+
+        return res.redirect(reauthorizeUrl);
+      }
+
+      delete req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED];
+
+      try {
+        const existingCredentialForOtherUser =
+          await prisma.userGoogleCredential.findFirst({
+            where: {
+              googleId: userInfo.id,
+              userId: {
+                not: storedUser.id,
+              },
+            },
+          });
+
+        if (existingCredentialForOtherUser) {
+          return res.redirect(
+            buildClientRedirectUrl(googleLinkContext.returnTo, {
+              googleLink: "error",
+              message: "This Google account is already linked to another user",
+            }),
+          );
+        }
+
+        const scopeString = grantedScopeString || requiredScopes.join(" ");
+        await upsertUserGoogleCredential(
+          storedUser.id,
+          userInfo.id,
+          tokens,
+          scopeString,
+        );
+
+        await prisma.user.update({
+          where: {
+            id: storedUser.id,
+          },
+          data: {
+            provider: PROVIDER.BOTH,
+          },
+        });
+      } catch (err) {
+        const isMissingRefreshToken =
+          err instanceof Error &&
+          err.message.includes(
+            "Google refresh_token is required for first-time credential creation",
+          );
+
+        if (isMissingRefreshToken && !alreadyAttemptedScopeUpgrade) {
+          req.session[GOOGLE_SCOPE_UPGRADE_ATTEMPTED] = true;
+
+          const reauthorizeState = crypto.randomBytes(32).toString("hex");
+          req.session.state = reauthorizeState;
+
+          const reauthorizeUrl = oauth2Client.generateAuthUrl({
+            access_type: "offline",
+            include_granted_scopes: true,
+            prompt: "consent",
+            scope: requiredScopes,
+            state: reauthorizeState,
+          });
+
+          return res.redirect(reauthorizeUrl);
+        }
+
+        return res.redirect(
+          buildClientRedirectUrl(googleLinkContext.returnTo, {
+            googleLink: "error",
+            message:
+              isMissingRefreshToken && alreadyAttemptedScopeUpgrade
+                ? "Google linking failed: missing refresh token"
+                : err.message || "Google linking failed",
+          }),
+        );
+      }
+
+      delete req.session.state;
+      delete req.session[GOOGLE_LINK_CONTEXT_KEY];
+
+      return res.redirect(
+        buildClientRedirectUrl(googleLinkContext.returnTo, {
+          googleLink: "success",
+          message: "Google account linked successfully",
+        }),
+      );
     }
 
     const existingGoogleCredential =

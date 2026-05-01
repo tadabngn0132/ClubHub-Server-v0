@@ -8,11 +8,12 @@ import {
 
 export const createGoogleSheetFromExistingTemplate = async (req, res, next) => {
   try {
-    const { userId, templateId, newSheetTitle } = req.body;
+    const { templateId, title, folderId } = req.body;
     const result = await createGoogleSheetFromTemplate(
-      userId,
+      req.userId,
       templateId,
-      newSheetTitle,
+      title,
+      folderId,
     );
     res.status(201).json({
       success: true,

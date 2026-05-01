@@ -143,7 +143,17 @@ export const getUser = async (req, res, next) => {
         id: Number(id),
         ...withSoftDeleteFilter(req.userRole),
       },
-      include: userIncludeOptions,
+      include: {
+        ...userIncludeOptions,
+        googleCredentials: {
+          select: {
+            id: true,
+            revokedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     });
 
     if (!storedUser) {
