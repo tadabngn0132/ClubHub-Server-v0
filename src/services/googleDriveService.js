@@ -28,8 +28,8 @@ export const listFolders = async (userId) => {
 export const listFilesInFolder = async (userId, folderId) => {
   return withUserGoogleDrive(userId, async (googleDrive) => {
     const res = await googleDrive.files.list({
-      q: `'${folderId}' in parents`,
-      fields: "files(id, name, mimeType)",
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: "files(id, name, mimeType, modifiedTime, size, webViewLink)",
     });
     return res.data.files;
   });

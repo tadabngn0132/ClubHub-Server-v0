@@ -45,7 +45,10 @@ export const listGoogleDriveFilesInFolder = async (req, res, next) => {
     res.json({
       success: true,
       message: "Files retrieved successfully",
-      data: files,
+      data: {
+        folderId,
+        files,
+      },
     });
   } catch (error) {
     return next(error);
