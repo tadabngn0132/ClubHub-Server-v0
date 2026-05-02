@@ -40,6 +40,7 @@ export const PARTICIPATION_STATUS = {
   ATTENDED: "ATTENDED",
   ABSENT: "ABSENT",
   CANCELLED: "CANCELLED",
+  INVITED: "INVITED",
 };
 
 export const CV_STATUS = {

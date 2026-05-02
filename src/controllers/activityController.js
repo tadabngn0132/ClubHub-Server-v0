@@ -1,6 +1,6 @@
 import { prisma } from "../libs/prisma.js";
 import { getActivityStatus, getActivityType } from "../utils/activityUtil.js";
-import { ACTIVITY_STATUS } from "../utils/constant.js";
+import { ACTIVITY_STATUS, PARTICIPATION_STATUS } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
 import {
   createCalendarEventAndMeetingLink,
@@ -62,6 +62,13 @@ const formatalendarPayload = (activity) => ({
   endDateTime: activity.endDate.toISOString(),
   timeZone: "Asia/Ho_Chi_Minh",
   locationType: activity.locationType,
+  attendees: [
+    activity.activityParticipations?.map((participation) =>
+      activity.requireRegistration
+        ? participation.user?.email
+        : participation.guestEmail,
+    ),
+  ].flat(),
 });
 
 export const createActivity = async (req, res, next) => {
@@ -129,7 +136,27 @@ export const createActivity = async (req, res, next) => {
       },
     });
 
-    const calendarPayload = formatalendarPayload(newActivity);
+    if (
+      payload.designatedParticipantIds &&
+      payload.designatedParticipantIds.length > 0
+    ) {
+      await prisma.activityParticipation.createMany({
+        data: payload.designatedParticipantIds.map((userId) => ({
+          userId: userId,
+          status: PARTICIPATION_STATUS.INVITED,
+          activityId: newActivity.id,
+        })),
+      });
+    }
+
+    const storedActivity = await prisma.activity.findUnique({
+      where: { id: newActivity.id },
+      include: activityIncludes,
+    });
+
+    const calendarPayload = formatalendarPayload(
+      payload.requireRegistration ? newActivity : storedActivity,
+    );
 
     const calendarEventData = await createCalendarEventAndMeetingLink(
       calendarOwnerUserId,
