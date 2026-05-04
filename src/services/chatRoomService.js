@@ -92,7 +92,7 @@ export const createChatRoomService = async (chatRoomData) => {
 
 export const getChatRoomsService = async (userRole) => {
   const chatRooms = await prisma.chatRoom.findMany({
-    where: { ...withSoftDeleteFilter(userRole) },
+    where: { isDeleted: false },
     include: chatRoomInclude,
   });
   return chatRooms;
@@ -100,7 +100,7 @@ export const getChatRoomsService = async (userRole) => {
 
 export const getChatRoomByIdService = async (chatRoomId, userRole) => {
   const chatRoom = await prisma.chatRoom.findUnique({
-    where: { id: chatRoomId, ...withSoftDeleteFilter(userRole) },
+    where: { id: chatRoomId, isDeleted: false },
     include: chatRoomInclude,
   });
 
@@ -114,7 +114,7 @@ export const getChatRoomByIdService = async (chatRoomId, userRole) => {
 export const getChatRoomByUserIdService = async (userId, userRole) => {
   const chatRooms = await prisma.chatRoom.findMany({
     where: {
-      ...withSoftDeleteFilter(userRole),
+      isDeleted: false,
       members: {
         some: {
           userId: Number(userId),
