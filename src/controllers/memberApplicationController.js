@@ -7,6 +7,7 @@ import {
   INTERVIEW_STATUS,
   AVATAR_PROVIDERS,
   MEMBER_APPLICATION_STATE,
+  USER_STATUS,
 } from "../utils/constant.js";
 import cloudinary from "../libs/cloudinary.js";
 import {
@@ -287,7 +288,7 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
         },
       });
 
-      await tx.cvReview.update({
+      await tx.cVReview.update({
         where: { memberApplicationId: Number(id) },
         data: {
           status:
@@ -319,17 +320,17 @@ export const updateMemberApplicationCVReviewDetail = async (req, res, next) => {
         applicationId: updatedApplication.id,
         status: updatedApplication.cvReview.status,
       },
-    );
+    ).catch(console.error);
 
     if (updatedApplication.state === MEMBER_APPLICATION_STATE.CV_PASSED) {
       void createNotificationSafe({
         userId: updatedApplication.finalReview.reviewerId,
         type: "SYSTEM",
         message: `A member application is ready for department interview (Application #${updatedApplication.id}).`,
-      });
+      }).catch(console.error);
     }
 
-    await sendApplicationReviewResultEmail(
+    void sendApplicationReviewResultEmail(
       updatedApplication.email,
       updatedApplication.fullname,
       "CV",
@@ -433,9 +434,9 @@ export const updateMemberApplicationDepartmentInterviewDetail = async (
           (interview) => interview.departmentId === interviewData.departmentId,
         )?.status,
       },
-    );
+    ).catch(console.error);
 
-    await sendApplicationReviewResultEmail(
+    void sendApplicationReviewResultEmail(
       application.email,
       application.fullname,
       "DEPARTMENT_INTERVIEW",
@@ -500,6 +501,7 @@ export const updateMemberApplicationFinalReviewDetail = async (
           .sort((a, b) => a.priority - b.priority)[0]?.departmentId;
 
         let rootDepartmentId;
+        const currentGeneration = Math.max(new Date().getFullYear() - 2022, 0);
 
         if (passedDeptIds.includes(application.rootDepartmentId)) {
           rootDepartmentId = application.rootDepartmentId;
@@ -511,7 +513,19 @@ export const updateMemberApplicationFinalReviewDetail = async (
 
         createdUser = await createUserWithPositionsService(
           {
-            ...finalReviewData,
+            fullname: application.fullname,
+            email: application.email,
+            phoneNumber: application.phoneNumber,
+            dateOfBirth: application.dateOfBirth,
+            gender: application.gender,
+            major: application.major,
+            generation: currentGeneration,
+            joinedAt: new Date(),
+            status: USER_STATUS.ACTIVE,
+            studentId: application.studentId,
+            avatarUrl: application.avatarUrl,
+            avatarPublicId: application.avatarPublicId,
+            avatarProvider: application.avatarProvider,
             rootDepartmentId: rootDepartmentId,
             positionIds,
           },
@@ -570,7 +584,7 @@ export const updateMemberApplicationFinalReviewDetail = async (
         status: finalApplicationResult.finalReview.status,
         createdUserId: createdUser?.id ?? null,
       },
-    );
+    ).catch(console.error);
 
     if (createdUser?.id) {
       void createNotificationSafe({
@@ -580,10 +594,10 @@ export const updateMemberApplicationFinalReviewDetail = async (
           finalApplicationResult.finalReview.status === FINAL_STATUS.PASSED
             ? "Congratulations! Your membership application has been approved."
             : "Your membership application has been reviewed.",
-      });
+      }).catch(console.error);
     }
 
-    await sendApplicationReviewResultEmail(
+    void sendApplicationReviewResultEmail(
       application.email,
       application.fullname,
       "FINAL",
@@ -593,7 +607,7 @@ export const updateMemberApplicationFinalReviewDetail = async (
 
     // Index the new member into the RAG system
     if (createdUser?.id) {
-      indexMember(createdUser.id).catch((err) =>
+      void indexMember(createdUser.id).catch((err) =>
         console.error(
           `[RAG] Indexing member ${createdUser.id} after application approval failed:`,
           err,

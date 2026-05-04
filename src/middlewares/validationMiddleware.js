@@ -611,9 +611,9 @@ export const validateMemberApplicationCVReviewUpdate = (req, res, next) => {
 
   if (!isPositiveIntegerLike(id))
     return failValidation(res, "Member application ID is required");
-  if (isEmpty(payload.cvReviewStatus))
+  if (isEmpty(payload.status))
     return failValidation(res, "CV review status is required");
-  if (!REVIEW_STATUS_VALUES.includes(getNormalized(payload.cvReviewStatus))) {
+  if (!REVIEW_STATUS_VALUES.includes(getNormalized(payload.status))) {
     return failValidation(res, "CV review status must be PASSED or FAILED");
   }
   if (isEmpty(payload.cvReviewComment)) {
@@ -629,10 +629,10 @@ export const validateMemberApplicationFinalReviewUpdate = (req, res, next) => {
 
   if (!isPositiveIntegerLike(id))
     return failValidation(res, "Member application ID is required");
-  if (isEmpty(payload.finalReviewStatus))
+  if (isEmpty(payload.status))
     return failValidation(res, "Final review status is required");
   if (
-    !REVIEW_STATUS_VALUES.includes(getNormalized(payload.finalReviewStatus))
+    !REVIEW_STATUS_VALUES.includes(getNormalized(payload.status))
   ) {
     return failValidation(res, "Final review status must be PASSED or FAILED");
   }
@@ -650,10 +650,10 @@ export const validateDepartmentApplicationCreation = (req, res, next) => {
     return failValidation(res, "Member application ID is required");
   if (!isPositiveIntegerLike(payload.departmentId))
     return failValidation(res, "Department ID is required");
-  if (isEmpty(payload.interviewStatus))
+  if (isEmpty(payload.status))
     return failValidation(res, "Interview status is required");
   if (
-    !INTERVIEW_STATUS_VALUES.includes(getNormalized(payload.interviewStatus))
+    !INTERVIEW_STATUS_VALUES.includes(getNormalized(payload.status))
   ) {
     return failValidation(res, "Interview status is invalid");
   }
@@ -673,12 +673,12 @@ export const validateDepartmentApplicationUpdate = (req, res, next) => {
     return failValidation(res, "Member application ID is required");
   if (!isPositiveIntegerLike(payload.departmentId))
     return failValidation(res, "Department ID is required");
-  if (isEmpty(payload.interviewStatus))
-    return failValidation(res, "Interview status is required");
+  if (isEmpty(payload.status))
+    return failValidation(res, "Status is required");
   if (
-    !INTERVIEW_STATUS_VALUES.includes(getNormalized(payload.interviewStatus))
+    !INTERVIEW_STATUS_VALUES.includes(getNormalized(payload.status))
   ) {
-    return failValidation(res, "Interview status is invalid");
+    return failValidation(res, "Status is invalid");
   }
   if (!isPositiveIntegerLike(payload.priority))
     return failValidation(res, "Priority is required");
