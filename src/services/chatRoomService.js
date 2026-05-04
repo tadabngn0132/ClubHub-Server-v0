@@ -197,7 +197,7 @@ export const getChatRoomMembersService = async (chatRoomId) => {
   return members;
 };
 
-export const addMemberToChatRoomService = async (chatRoomId, userId) => {
+export const addMemberToChatRoomService = async (chatRoomId, userIds) => {
   const chatRoom = await prisma.chatRoom.findUnique({
     where: { id: chatRoomId, isDeleted: false },
   });
@@ -210,28 +210,50 @@ export const addMemberToChatRoomService = async (chatRoomId, userId) => {
     throw new ForbiddenError("Cannot add members to a private chat room");
   }
 
-  const existingMember = await prisma.chatRoomMember.findUnique({
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new BadRequestError("User IDs must be a non-empty array");
+  }
+
+  const normalizedUserIds = userIds.map((id) => Number(id));
+
+  const existingMembers = await prisma.chatRoomMember.findMany({
     where: {
-      roomId_userId: {
-        roomId: chatRoomId,
-        userId: Number(userId),
+      roomId: chatRoomId,
+      userId: {
+        in: normalizedUserIds,
       },
     },
   });
 
-  if (existingMember) {
-    throw new BadRequestError("User is already a member of this chat room");
+  const existingUserIds = existingMembers.map((member) => member.userId);
+  const newUserIds = normalizedUserIds.filter(
+    (id) => !existingUserIds.includes(id),
+  );
+
+  if (newUserIds.length === 0) {
+    throw new BadRequestError(
+      "All users are already members of this chat room",
+    );
   }
 
-  const addedMember = await prisma.chatRoomMember.create({
-    data: {
+  const addedMembers = await prisma.chatRoomMember.createMany({
+    data: newUserIds.map((userId) => ({
       roomId: chatRoomId,
-      userId: Number(userId),
+      userId,
+    })),
+  });
+
+  const createdMembers = await prisma.chatRoomMember.findMany({
+    where: {
+      roomId: chatRoomId,
+      userId: {
+        in: newUserIds,
+      },
     },
     include: chatRoomMemberInclude,
   });
 
-  return addedMember;
+  return createdMembers;
 };
 
 export const removeMemberFromChatRoomService = async (chatRoomId, userId) => {

@@ -131,12 +131,12 @@ export const getChatRoomMembers = async (req, res, next) => {
 export const addMemberToChatRoom = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { userId } = req.body;
-    const addedMember = await addMemberToChatRoomService(id, Number(userId));
+    const { userIds } = req.body;
+    const addedMembers = await addMemberToChatRoomService(id, userIds);
     res.status(201).json({
       success: true,
-      message: "Member added to chat room successfully",
-      data: addedMember,
+      message: "Members added to chat room successfully",
+      data: addedMembers,
     });
   } catch (err) {
     handleError(next, err);
