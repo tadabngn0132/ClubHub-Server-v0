@@ -71,12 +71,45 @@ const formatalendarPayload = (activity) => ({
   ].flat(),
 });
 
+const parseParticipantIdsField = (value) => {
+  if (value === undefined || value === null) return [];
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => Number(item))
+      .filter((item) => Number.isInteger(item) && item > 0);
+  }
+
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return [];
+
+    try {
+      const parsedValue = JSON.parse(trimmedValue);
+      if (Array.isArray(parsedValue)) {
+        return parsedValue
+          .map((item) => Number(item))
+          .filter((item) => Number.isInteger(item) && item > 0);
+      }
+    } catch {
+      return trimmedValue
+        .split(",")
+        .map((item) => Number(item.trim()))
+        .filter((item) => Number.isInteger(item) && item > 0);
+    }
+  }
+
+  return [];
+};
+
 export const createActivity = async (req, res, next) => {
   try {
     const payload = req.body;
     const file = req.file;
     const calendarOwnerUserId = Number(payload.organizerId || req.userId);
-
+    const designatedParticipantIds = parseParticipantIdsField(
+      payload.designatedParticipantIds,
+    );
     // Tạo slug từ tiêu đề hoạt động
     const activitySlug = payload.title
       .toLowerCase()
@@ -127,23 +160,21 @@ export const createActivity = async (req, res, next) => {
         organizerId: Number(payload.organizerId),
         thumbnailUrl: payload.thumbnailUrl || null,
         thumbnailPublicId: payload.thumbnailPublicId || null,
-        requireRegistration: payload.requireRegistration ? Boolean(payload.requireRegistration) : false,
+        requireRegistration:
+          payload.requireRegistration === "true" ? true : false,
         registrationDeadline: payload.registrationDeadline
           ? new Date(payload.registrationDeadline)
           : null,
         maxParticipants: payload.maxParticipants || null,
-        isPublic: payload.isPublic ? Boolean(payload.isPublic) : false,
-        isFeatured: payload.isFeatured ? Boolean(payload.isFeatured) : false,
+        isPublic: payload.isPublic === "true" ? true : false,
+        isFeatured: payload.isFeatured === "true" ? true : false,
       },
     });
 
-    if (
-      payload.designatedParticipantIds &&
-      payload.designatedParticipantIds.length > 0
-    ) {
+    if (designatedParticipantIds.length > 0) {
       await prisma.activityParticipation.createMany({
-        data: payload.designatedParticipantIds.map((userId) => ({
-          userId: userId,
+        data: designatedParticipantIds.map((userId) => ({
+          userId,
           status: PARTICIPATION_STATUS.INVITED,
           activityId: newActivity.id,
         })),
@@ -282,6 +313,9 @@ export const updateActivity = async (req, res, next) => {
     const { id } = req.params;
     const payload = req.body;
     const file = req.file;
+    const designatedParticipantIds = parseParticipantIdsField(
+      payload.designatedParticipantIds,
+    );
 
     const storedActivity = await prisma.activity.findUnique({
       where: { id: Number(id) },
@@ -336,30 +370,83 @@ export const updateActivity = async (req, res, next) => {
         roomNumber: payload.roomNumber,
         type: getActivityType(payload.type.trim().toLowerCase()),
         status: getActivityStatus(payload.status.trim().toLowerCase()),
-        organizerId: payload.organizerId,
+        organizerId: Number(payload.organizerId),
         thumbnailUrl: payload.thumbnailUrl,
         thumbnailPublicId: payload.thumbnailPublicId,
         requireRegistration:
-          payload.requireRegistration ? Boolean(payload.requireRegistration) : storedActivity.requireRegistration,
+          payload.requireRegistration === "true" ? true : false,
         registrationDeadline: payload.registrationDeadline
           ? new Date(payload.registrationDeadline)
           : storedActivity.registrationDeadline,
-        maxParticipants:
-          payload.maxParticipants ? Number(payload.maxParticipants) : storedActivity.maxParticipants,
-        isPublic: payload.isPublic ? Boolean(payload.isPublic) : storedActivity.isPublic,
-        isFeatured: payload.isFeatured ? Boolean(payload.isFeatured) : storedActivity.isFeatured,
+        maxParticipants: payload.maxParticipants
+          ? Number(payload.maxParticipants)
+          : storedActivity.maxParticipants,
+        isPublic: payload.isPublic === "true" ? true : false,
+        isFeatured: payload.isFeatured === "true" ? true : false,
       },
     });
 
-    let finalUpdatedActivity = updatedActivity;
+    if (designatedParticipantIds.length > 0) {
+      // Xóa các participation cũ không còn trong danh sách mới
+      await prisma.activityParticipation.deleteMany({
+        where: {
+          activityId: Number(id),
+          userId: {
+            notIn: designatedParticipantIds,
+          },
+        },
+      });
+
+      // Tạo mới các participation mới
+      const existingParticipations =
+        await prisma.activityParticipation.findMany({
+          where: {
+            activityId: Number(id),
+            userId: {
+              in: designatedParticipantIds,
+            },
+          },
+        });
+
+      const existingUserIds = existingParticipations.map((p) => p.userId);
+      const newParticipations = designatedParticipantIds
+        .filter((userId) => !existingUserIds.includes(userId))
+        .map((userId) => ({
+          userId,
+          activityId: Number(id),
+        }));
+
+      if (newParticipations.length > 0) {
+        await prisma.activityParticipation.createMany({
+          data: newParticipations,
+        });
+      }
+    }
+
+    const storedUpdatedActivity = await prisma.activity.findUnique({
+      where: { id: Number(id) },
+      include: activityIncludes,
+    });
+
+    let finalUpdatedActivity = storedUpdatedActivity;
 
     if (storedActivity.googleCalendarEventId) {
-      const calendarPayload = formatalendarPayload(updatedActivity);
+      const calendarPayload = formatalendarPayload(
+        payload.requireRegistration ? updatedActivity : storedUpdatedActivity,
+      );
+      const shouldCreateConferenceData =
+        !storedActivity.meetingLink &&
+        (storedUpdatedActivity.locationType === "online" ||
+          storedUpdatedActivity.locationType === "hybrid");
 
       const calendarEventData = await updateGoogleCalendarEvent(
         Number(payload.organizerId || req.userId),
         storedActivity.googleCalendarEventId,
         calendarPayload,
+        "primary",
+        {
+          createConferenceData: shouldCreateConferenceData,
+        },
       );
 
       finalUpdatedActivity = await prisma.activity.update({
@@ -367,7 +454,9 @@ export const updateActivity = async (req, res, next) => {
         data: {
           googleCalendarEventId: calendarEventData.id,
           meetingLink:
-            calendarEventData.conferenceData?.entryPoints?.[0]?.uri || null,
+            calendarEventData.conferenceData?.entryPoints?.[0]?.uri ||
+            storedActivity.meetingLink ||
+            null,
         },
         include: activityIncludes,
       });

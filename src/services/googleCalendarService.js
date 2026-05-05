@@ -54,7 +54,14 @@ export const updateGoogleCalendarEvent = async (
   eventId,
   updatedData,
   calendarId = "primary",
+  options = {},
 ) => {
+  const shouldCreateConferenceData = options.createConferenceData ?? true;
+  const shouldAttachConferenceData =
+    shouldCreateConferenceData &&
+    (updatedData.locationType === "online" ||
+      updatedData.locationType === "hybrid");
+
   return withUserGoogleCalendar(userId, async (googleCalendar) => {
     const requestBody = {
       summary: updatedData.summary,
@@ -69,29 +76,24 @@ export const updateGoogleCalendarEvent = async (
         timeZone: updatedData.timeZone || "UTC",
       },
       attendees: updatedData.attendees,
-      conferenceData:
-        updatedData.locationType === "online" ||
-        updatedData.locationType === "hybrid"
-          ? {
-              createRequest: {
-                requestId: `meet-${eventId}-${Date.now()}-${uuidv4()}`,
-                conferenceSolutionKey: {
-                  type: "hangoutsMeet",
-                },
-              },
-            }
-          : undefined,
     };
+
+    if (shouldAttachConferenceData) {
+      requestBody.conferenceData = {
+        createRequest: {
+          requestId: `meet-${eventId}-${Date.now()}-${uuidv4()}`,
+          conferenceSolutionKey: {
+            type: "hangoutsMeet",
+          },
+        },
+      };
+    }
 
     const response = await googleCalendar.events.update({
       calendarId,
       eventId,
       requestBody,
-      conferenceDataVersion:
-        updatedData.locationType === "online" ||
-        updatedData.locationType === "hybrid"
-          ? 1
-          : undefined,
+      conferenceDataVersion: shouldAttachConferenceData ? 1 : undefined,
       fields: "id,summary,start,end,location,description,conferenceData",
     });
 
