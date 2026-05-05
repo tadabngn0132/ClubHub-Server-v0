@@ -333,17 +333,6 @@ export const validateActivityCreation = (req, res, next) => {
     return failValidation(res, "Activity status is invalid");
   }
 
-  if (["online", "hybrid"].includes(locationType)) {
-    if (isEmpty(payload.meetingPlatform))
-      return failValidation(res, "Meeting platform is required");
-    if (
-      isEmpty(payload.meetingLink) ||
-      !URL_REGEX.test(String(payload.meetingLink).trim())
-    ) {
-      return failValidation(res, "Meeting link must be a valid URL");
-    }
-  }
-
   if (["in_person", "hybrid"].includes(locationType)) {
     if (isEmpty(payload.venueName))
       return failValidation(res, "Venue name is required");
@@ -411,15 +400,6 @@ export const validateActivityUpdate = (req, res, next) => {
   }
 
   next();
-};
-
-const hasAtLeastOneTarget = (target) => {
-  if (!target || typeof target !== "object") return false;
-  const hasAllClub = target.allClub === true;
-  const hasDepartments =
-    Array.isArray(target.departmentIds) && target.departmentIds.length > 0;
-  const hasUsers = Array.isArray(target.userIds) && target.userIds.length > 0;
-  return hasAllClub || hasDepartments || hasUsers;
 };
 
 export const validateTaskCreation = (req, res, next) => {

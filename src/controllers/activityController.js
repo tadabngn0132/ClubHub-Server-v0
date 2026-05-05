@@ -127,12 +127,13 @@ export const createActivity = async (req, res, next) => {
         organizerId: Number(payload.organizerId),
         thumbnailUrl: payload.thumbnailUrl || null,
         thumbnailPublicId: payload.thumbnailPublicId || null,
-        requireRegistration: payload.requireRegistration || false,
+        requireRegistration: payload.requireRegistration ? Boolean(payload.requireRegistration) : false,
         registrationDeadline: payload.registrationDeadline
           ? new Date(payload.registrationDeadline)
           : null,
         maxParticipants: payload.maxParticipants || null,
-        isFeatured: payload.isFeatured || false,
+        isPublic: payload.isPublic ? Boolean(payload.isPublic) : false,
+        isFeatured: payload.isFeatured ? Boolean(payload.isFeatured) : false,
       },
     });
 
@@ -339,13 +340,14 @@ export const updateActivity = async (req, res, next) => {
         thumbnailUrl: payload.thumbnailUrl,
         thumbnailPublicId: payload.thumbnailPublicId,
         requireRegistration:
-          payload.requireRegistration || storedActivity.requireRegistration,
+          payload.requireRegistration ? Boolean(payload.requireRegistration) : storedActivity.requireRegistration,
         registrationDeadline: payload.registrationDeadline
           ? new Date(payload.registrationDeadline)
           : storedActivity.registrationDeadline,
         maxParticipants:
-          payload.maxParticipants || storedActivity.maxParticipants,
-        isFeatured: payload.isFeatured || storedActivity.isFeatured,
+          payload.maxParticipants ? Number(payload.maxParticipants) : storedActivity.maxParticipants,
+        isPublic: payload.isPublic ? Boolean(payload.isPublic) : storedActivity.isPublic,
+        isFeatured: payload.isFeatured ? Boolean(payload.isFeatured) : storedActivity.isFeatured,
       },
     });
 
