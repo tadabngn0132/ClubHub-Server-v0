@@ -55,7 +55,7 @@ const activityIncludes = {
   },
 };
 
-const formatalendarPayload = (activity) => ({
+const formatCalendarPayload = (activity) => ({
   summary: activity.title,
   description: activity.description,
   startDateTime: activity.startDate.toISOString(),
@@ -63,12 +63,19 @@ const formatalendarPayload = (activity) => ({
   timeZone: "Asia/Ho_Chi_Minh",
   locationType: activity.locationType,
   attendees: [
-    activity.activityParticipations?.map((participation) =>
-      activity.requireRegistration
-        ? participation.user?.email
-        : participation.guestEmail,
-    ),
-  ].flat(),
+    ...(activity.organizer?.email ? [{ email: activity.organizer.email }] : []),
+    ...(activity.activityParticipations || [])
+      .map((participation) => {
+        const userEmail = participation.user && participation.user.email;
+        const guestEmail = participation.guestEmail;
+        const finalEmail = userEmail ? userEmail : guestEmail;
+        return finalEmail ? { email: finalEmail } : null;
+      })
+      .filter((item) => Boolean(item)),
+  ].filter(
+    (attendeeObj, index, array) =>
+      array.findIndex((a) => a.email === attendeeObj.email) === index,
+  ),
 });
 
 const parseParticipantIdsField = (value) => {
@@ -186,9 +193,7 @@ export const createActivity = async (req, res, next) => {
       include: activityIncludes,
     });
 
-    const calendarPayload = formatalendarPayload(
-      payload.requireRegistration ? newActivity : storedActivity,
-    );
+    const calendarPayload = formatCalendarPayload(storedActivity);
 
     const calendarEventData = await createCalendarEventAndMeetingLink(
       calendarOwnerUserId,
@@ -418,7 +423,11 @@ export const updateActivity = async (req, res, next) => {
 
       if (newParticipations.length > 0) {
         await prisma.activityParticipation.createMany({
-          data: newParticipations,
+          data: newParticipations.map((p) => ({
+            userId: p.userId,
+            activityId: p.activity ? Number(id) : p.activityId,
+            status: PARTICIPATION_STATUS.INVITED,
+          })),
         });
       }
     }
@@ -431,9 +440,7 @@ export const updateActivity = async (req, res, next) => {
     let finalUpdatedActivity = storedUpdatedActivity;
 
     if (storedActivity.googleCalendarEventId) {
-      const calendarPayload = formatalendarPayload(
-        payload.requireRegistration ? updatedActivity : storedUpdatedActivity,
-      );
+      const calendarPayload = formatCalendarPayload(storedUpdatedActivity);
       const shouldCreateConferenceData =
         !storedActivity.meetingLink &&
         (storedUpdatedActivity.locationType === "online" ||
