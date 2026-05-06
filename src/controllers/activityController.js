@@ -37,6 +37,7 @@ const activityIncludes = {
           fullname: true,
           email: true,
           avatarUrl: true,
+          phoneNumber: true,
         },
       },
     },
