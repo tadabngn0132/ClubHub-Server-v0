@@ -1,5 +1,6 @@
 import { prisma } from "../libs/prisma.js";
-import { ACTIVITY_STATUS } from "../utils/constant.js";
+import { ACTIVITY_STATUS, PARTICIPATION_STATUS } from "../utils/constant.js";
+import { registerActivityParticipation } from "../services/activityParticipationRegistrationService.js";
 
 export const getPublicActivities = async (req, res, next) => {
   try {
@@ -133,48 +134,12 @@ export const registerPublicActivity = async (req, res, next) => {
       });
     }
 
-    if (
-      activity.registrationDeadline &&
-      new Date() > new Date(activity.registrationDeadline)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Registration deadline has passed",
-      });
-    }
-
-    if (
-      activity.maxParticipants &&
-      activity.activityParticipations.length >= activity.maxParticipants
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Activity has reached maximum participant limit",
-      });
-    }
-
-    const existedGuest = await prisma.activityParticipation.findFirst({
-      where: {
-        activityId: Number(activityId),
-        guestEmail: email,
-      },
-    });
-
-    if (existedGuest) {
-      return res.status(400).json({
-        success: false,
-        message: "You are already registered for this activity",
-      });
-    }
-
-    const participation = await prisma.activityParticipation.create({
-      data: {
-        activityId: Number(activityId),
-        status: "REGISTERED",
-        guestName: name,
-        guestEmail: email,
-        guestPhoneNumber: phoneNumber,
-      },
+    const participation = await registerActivityParticipation({
+      activity,
+      guestName: name,
+      guestEmail: email,
+      guestPhoneNumber: phoneNumber,
+      status: PARTICIPATION_STATUS.REGISTERED,
     });
 
     res.status(201).json({

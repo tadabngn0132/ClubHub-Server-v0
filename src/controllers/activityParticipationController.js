@@ -1,9 +1,8 @@
 import { prisma } from "../libs/prisma.js";
 import { getParticipationStatus } from "../utils/activityUtil.js";
-import { sendEventRegistrationConfirmationEmail } from "../utils/emailUtil.js";
 import { PARTICIPATION_STATUS } from "../utils/constant.js";
 import { withSoftDeleteFilter } from "../utils/queryUtil.js";
-import { createCalendarEventForParticipant } from "../services/googleCalendarService.js";
+import { registerActivityParticipation } from "../services/activityParticipationRegistrationService.js";
 
 export const createActivityParticipation = async (req, res, next) => {
   try {
@@ -23,78 +22,16 @@ export const createActivityParticipation = async (req, res, next) => {
       });
     }
 
-    if (
-      activity.maxParticipants &&
-      activity.activityParticipations.length >= activity.maxParticipants
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Activity has reached maximum participant limit",
-      });
-    }
-
-    if (
-      activity.registrationDeadline &&
-      new Date() > activity.registrationDeadline
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Registration deadline has passed",
-      });
-    }
-
-    const existingParticipation = await prisma.activityParticipation.findFirst({
-      where: {
-        userId: Number(participationData.userId),
-        activityId: Number(participationData.activityId),
-      },
+    const participation = await registerActivityParticipation({
+      activity,
+      userId: participationData.userId ? Number(participationData.userId) : null,
+      guestName: participationData.guestName || null,
+      guestEmail: participationData.guestEmail || null,
+      guestPhoneNumber: participationData.guestPhoneNumber || null,
+      status: getParticipationStatus(
+        participationData.status.trim().toLowerCase(),
+      ),
     });
-
-    if (existingParticipation) {
-      return res.status(400).json({
-        success: false,
-        message: "User is already registered for this activity",
-        data: existingParticipation,
-      });
-    }
-
-    const participation = await prisma.activityParticipation.create({
-      data: {
-        userId: participationData.userId
-          ? Number(participationData.userId)
-          : null,
-        activityId: Number(participationData.activityId),
-        status: getParticipationStatus(
-          participationData.status.trim().toLowerCase(),
-        ),
-        guestName: participationData.guestName || null,
-        guestEmail: participationData.guestEmail || null,
-        guestPhoneNumber: participationData.guestPhoneNumber || null,
-      },
-    });
-
-    const user = await prisma.user.findUnique({
-      where: { id: Number(participationData.userId) },
-    });
-
-    // Tạo event trên Google Calendar của participant nếu họ là member có Google OAuth
-    if (participationData.userId) {
-      await createCalendarEventForParticipant(
-        Number(participationData.userId),
-        activity,
-      ).catch((err) =>
-        console.warn(
-          `[Participation] Failed to create calendar event for user ${participationData.userId}:`,
-          err.message,
-        ),
-      );
-    }
-
-    await sendEventRegistrationConfirmationEmail(
-      user.email,
-      user.fullname,
-      activity.title,
-    );
 
     res.status(201).json({
       success: true,

@@ -172,7 +172,7 @@ export const createActivity = async (req, res, next) => {
         registrationDeadline: payload.registrationDeadline
           ? new Date(payload.registrationDeadline)
           : null,
-        maxParticipants: payload.maxParticipants || null,
+        maxParticipants: Number(payload.maxParticipants) || null,
         isPublic: payload.isPublic === "true" ? true : false,
         isFeatured: payload.isFeatured === "true" ? true : false,
       },

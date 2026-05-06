@@ -214,3 +214,95 @@ export const createCalendarEventForParticipant = async (
     return null;
   }
 };
+
+/**
+ * Thêm participant làm guest vào event trên Google Calendar của organizer
+ * @param {number} organizerUserId - ID của organizer (chủ sự kiện)
+ * @param {string} eventId - ID của event trên Google Calendar
+ * @param {string} guestEmail - Email của guest
+ * @param {string} calendarId - Calendar ID (mặc định "primary")
+ * @returns {Promise<object|null>} - Updated event data hoặc null nếu lỗi
+ */
+export const addGuestToCalendarEvent = async (
+  organizerUserId,
+  eventId,
+  guestEmail,
+  calendarId = "primary",
+) => {
+  try {
+    return await withUserGoogleCalendar(
+      organizerUserId,
+      async (googleCalendar) => {
+        // Lấy event hiện tại để có danh sách attendees
+        const eventResponse = await googleCalendar.events.get({
+          calendarId,
+          eventId,
+          fields: "attendees,id,summary,start,end,description,location,conferenceData",
+        });
+
+        const event = eventResponse.data;
+        const currentAttendees = event.attendees || [];
+
+        // If event has no end time, updating may fail with "Missing end time"
+        if (!event.end) {
+          console.warn(
+            `[Google Calendar] Event ${eventId} is missing end time; cannot update attendees`,
+          );
+          return null;
+        }
+
+        // Kiểm tra xem guest đã được thêm chưa
+        const guestExists = currentAttendees.some(
+          (attendee) => attendee.email === guestEmail,
+        );
+
+        if (guestExists) {
+          console.log(
+            `[Google Calendar] Guest ${guestEmail} already in event ${eventId}`,
+          );
+          return event;
+        }
+
+        // Thêm guest vào danh sách attendees
+        const updatedAttendees = [
+          ...currentAttendees,
+          {
+            email: guestEmail,
+            responseStatus: "needsAction",
+          },
+        ];
+
+        // Build a full request body including start/end and basic metadata
+        const requestBody = {
+          summary: event.summary,
+          description: event.description,
+          location: event.location,
+          start: event.start,
+          end: event.end,
+          attendees: updatedAttendees,
+          conferenceData: event.conferenceData,
+        };
+
+        // Update event with the new attendees list
+        const updateResponse = await googleCalendar.events.update({
+          calendarId,
+          eventId,
+          requestBody,
+          sendUpdates: "all",
+          fields: "attendees,id,summary,start,end,description,location,conferenceData",
+        });
+
+        console.log(
+          `[Google Calendar] Added guest ${guestEmail} to event ${eventId}`,
+        );
+        return updateResponse.data;
+      },
+    );
+  } catch (error) {
+    console.warn(
+      `[Google Calendar] Cannot add guest ${guestEmail} to event ${eventId}:`,
+      error.message,
+    );
+    return null;
+  }
+};
