@@ -205,15 +205,6 @@ export const checkInParticipant = async (req, res, next) => {
       });
     }
 
-    if (
-      participation.status.toUpperCase() !== PARTICIPATION_STATUS.REGISTERED
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Only registered participants can be checked in",
-      });
-    }
-
     const updatedParticipation = await prisma.activityParticipation.update({
       where: { id: Number(participationId) },
       data: { status: PARTICIPATION_STATUS.ATTENDED },
@@ -231,13 +222,23 @@ export const checkInParticipant = async (req, res, next) => {
 
 export const markParticipantNoShow = async (req, res, next) => {
   try {
-    const { activityId } = req.params;
+    const { participationId } = req.params;
+
+    const participation = await prisma.activityParticipation.findUnique({
+      where: { id: Number(participationId) },
+    });
+
+    if (!participation) {
+      return res.status(404).json({
+        success: false,
+        message: "Participation not found",
+      });
+    }
 
     const updatedParticipations = await prisma.activityParticipation.updateMany(
       {
         where: {
-          activityId: Number(activityId),
-          status: PARTICIPATION_STATUS.REGISTERED,
+          id: Number(participationId),
         },
         data: { status: PARTICIPATION_STATUS.ABSENT },
       },

@@ -70,7 +70,7 @@ router.put(
   checkInParticipant,
 );
 router.put(
-  "/:activityId/no-show",
+  "/:participationId/no-show",
   verifyAccessToken,
   requirePermission("activityParticipations", "update"),
   markParticipantNoShow,
