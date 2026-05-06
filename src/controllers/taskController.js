@@ -443,7 +443,7 @@ export const confirmTaskCompletion = async (req, res, next) => {
     }
 
     const finalUpdatedAssigneeTask = await prisma.$transaction(async (tx) => {
-      const updatedAssigneeTask = await prisma.assigneeTask.update({
+      const updatedAssigneeTask = await tx.assigneeTask.update({
         where: { id: assigneeTask.id },
         data: {
           confirmedAt: new Date(),

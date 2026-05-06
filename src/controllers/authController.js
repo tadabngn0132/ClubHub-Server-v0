@@ -275,8 +275,8 @@ export const register = async (req, res, next) => {
     // Check if user already exists
     const hashedPassword = await bcrypt.hash(userData.password, 12);
 
-    const createdUser = await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.create({
+    const createdUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
         data: {
           email: userData.email,
           hashedPassword: hashedPassword,
@@ -300,7 +300,7 @@ export const register = async (req, res, next) => {
         },
       });
 
-      await prisma.userPosition.create({
+      await tx.userPosition.create({
         data: {
           userId: user.id,
           positionId: Number(userData.positionId),
@@ -308,7 +308,7 @@ export const register = async (req, res, next) => {
         },
       });
 
-      return prisma.user.findUnique({
+      return tx.user.findUnique({
         where: { id: user.id },
         include: userIncludeOptions,
       });
