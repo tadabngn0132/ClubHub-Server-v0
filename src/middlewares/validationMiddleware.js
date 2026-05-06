@@ -687,24 +687,10 @@ export const validateActivityParticipationCreation = (req, res, next) => {
 };
 
 export const validateActivityParticipationUpdate = (req, res, next) => {
-  const { id } = req.params;
+  const { participationId } = req.params;
   const payload = req.body;
 
-  if (!payload.activityId) {
-    return res.status(400).json({
-      success: false,
-      message: "Activity ID is required",
-    });
-  }
-
-  if (!payload.userId) {
-    return res.status(400).json({
-      success: false,
-      message: "User ID is required",
-    });
-  }
-
-  if (!id) {
+  if (!participationId) {
     return res.status(400).json({
       success: false,
       message: "Participation ID is required",

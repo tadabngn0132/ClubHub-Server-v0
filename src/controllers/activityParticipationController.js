@@ -108,7 +108,6 @@ export const getParticipationsByUserId = async (req, res, next) => {
     const participations = await prisma.activityParticipation.findMany({
       where: {
         userId: Number(userId),
-        ...withSoftDeleteFilter(req.userRole),
       },
       include: {
         activity: {
