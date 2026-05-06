@@ -238,7 +238,7 @@ export const login = async (req, res, next) => {
     const refreshCookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       ...(shouldRemember
         ? { maxAge: safeRememberDays * 24 * 60 * 60 * 1000 }
         : {}),
@@ -951,8 +951,8 @@ export const googleAuthCallback = async (req, res, next) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 15 * 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     delete req.session.state;
