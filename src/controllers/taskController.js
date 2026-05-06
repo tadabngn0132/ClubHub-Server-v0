@@ -506,14 +506,32 @@ export const verifyTaskCompletion = async (req, res, next) => {
       });
     }
 
-    const updatedAssigneeTask = await prisma.assigneeTask.update({
-      where: { id: assigneeTask.id },
-      data: {
-        status: taskVerifyData.isVerified
-          ? ASSIGNEE_TASK_STATUS.VERIFIED
-          : ASSIGNEE_TASK_STATUS.REJECTED,
-        reviewerComments: taskVerifyData.reviewerComments || "",
-      },
+    const updatedAssigneeTask = await prisma.$transaction(async (tx) => {
+      const updated = await tx.assigneeTask.update({
+        where: { id: assigneeTask.id },
+        data: {
+          status: taskVerifyData.isVerified
+            ? ASSIGNEE_TASK_STATUS.VERIFIED
+            : ASSIGNEE_TASK_STATUS.REJECTED,
+          reviewerComments: taskVerifyData.reviewerComments || "",
+        },
+      });
+
+      const nonVerifiedCount = await tx.assigneeTask.count({
+        where: {
+          taskId: Number(taskId),
+          status: { not: ASSIGNEE_TASK_STATUS.VERIFIED },
+        },
+      });
+
+      if (nonVerifiedCount === 0) {
+        await tx.task.update({
+          where: { id: Number(taskId) },
+          data: { status: TASK_STATUS.DONE },
+        });
+      }
+
+      return updated;
     });
 
     res.status(200).json({
