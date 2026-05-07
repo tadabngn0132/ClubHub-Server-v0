@@ -647,6 +647,13 @@ export const createActivityImage = async (req, res, next) => {
       });
     }
 
+    if (!payload?.secure_url || !payload?.public_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid image payload",
+      });
+    }
+
     const createdImage = await prisma.activityImage.create({
       data: {
         imageUrl: payload.secure_url,
@@ -737,6 +744,13 @@ export const createActivityVideo = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "Activity not found",
+      });
+    }
+
+    if (!payload?.secure_url || !payload?.public_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid video payload",
       });
     }
 
