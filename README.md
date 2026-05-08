@@ -132,3 +132,5 @@ npx prisma db pull
 ## License
 
 Private
+
+## STATUS: DONE - V2 COMING SOON
